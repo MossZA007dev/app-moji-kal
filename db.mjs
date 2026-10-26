@@ -151,30 +151,55 @@ for (const col of neededCols) {
   }
 }
 
+// Seed default users if empty (Prevents FOREIGN KEY constraint error on fresh deploy)
+try {
+  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
+  if (userCount === 0) {
+    const insertUser = db.prepare(`
+      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const now = Date.now();
+    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 2000, 25, 'full', 'crown', 'cheerful', 353, now - 86400000 * 3);
+    insertUser.run('u2', 'เพื่อนปังปอนด์', '#6FCBB0', 'ok', 2200, 30, 'full', 'none', 'kind', 282, now - 86400000 * 2);
+    insertUser.run('u3', 'คุณนัท', '#FFC285', 'worry', 1800, 20, 'summary', 'none', 'kind', 190, now - 86400000 * 1);
+  }
+} catch (e) {
+  console.warn('Initial users seed warning:', e.message);
+}
+
 // Seed default challenges if empty
-const chalCount = db.prepare('SELECT COUNT(*) as c FROM challenges').get().c;
-if (chalCount === 0) {
-  const insertChal = db.prepare(`
-    INSERT INTO challenges (id, title, description, type, target_days, icon, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  insertChal.run('c1', 'งดน้ำหวาน 3 วันติด', 'เลือกเครื่องดื่มหวาน 0% หรือดื่มน้ำเปล่าแทนน้ำหวานต่อเนื่อง 3 วัน', 'no_sugar_drink', 3, '🧋', Date.now());
-  insertChal.run('c2', 'น้ำตาลไม่เกินเป้า 5 วัน', 'คุมระดับน้ำตาลสะสมต่อวันให้อยู่ในเป้าหมายต่อเนื่อง 5 วัน', 'under_goal_streak', 5, '🎯', Date.now());
-  insertChal.run('c3', 'ดื่มน้ำเปล่า 7 วันสม่ำเสมอ', 'ดื่มน้ำเปล่าอย่างน้อยวันละ 1-2 แก้วเพื่อช่วยระบบเผาผลาญ', 'water_daily', 7, '💧', Date.now());
+try {
+  const chalCount = db.prepare('SELECT COUNT(*) as c FROM challenges').get().c;
+  if (chalCount === 0) {
+    const insertChal = db.prepare(`
+      INSERT INTO challenges (id, title, description, type, target_days, icon, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    insertChal.run('c1', 'งดน้ำหวาน 3 วันติด', 'เลือกเครื่องดื่มหวาน 0% หรือดื่มน้ำเปล่าแทนน้ำหวานต่อเนื่อง 3 วัน', 'no_sugar_drink', 3, '🧋', Date.now());
+    insertChal.run('c2', 'น้ำตาลไม่เกินเป้า 5 วัน', 'คุมระดับน้ำตาลสะสมต่อวันให้อยู่ในเป้าหมายต่อเนื่อง 5 วัน', 'under_goal_streak', 5, '🎯', Date.now());
+    insertChal.run('c3', 'ดื่มน้ำเปล่า 7 วันสม่ำเสมอ', 'ดื่มน้ำเปล่าอย่างน้อยวันละ 1-2 แก้วเพื่อช่วยระบบเผาผลาญ', 'water_daily', 7, '💧', Date.now());
+  }
+} catch (e) {
+  console.warn('Initial challenges seed warning:', e.message);
 }
 
 // Seed sample activities if empty
-const actCount = db.prepare('SELECT COUNT(*) as c FROM activities').get().c;
-if (actCount === 0) {
-  const insertAct = db.prepare(`
-    INSERT INTO activities (id, user_id, type, text, coins, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  const now = Date.now();
-  insertAct.run('act_1', 'u1', 'meal', 'บันทึกมื้ออาหาร "สุกี้น้ำอกไก่" (+5 🪙)', 5, now - 1800000);
-  insertAct.run('act_2', 'u2', 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2, now - 3600000);
-  insertAct.run('act_3', 'u3', 'challenge', 'เข้าร่วมชาเลนจ์ "งดน้ำหวาน 3 วันติด" 🎯 (+15 🪙)', 15, now - 7200000);
-  insertAct.run('act_4', 'u1', 'streak', 'รักษาสถิติบันทึกต่อเนื่อง 3 วันติด! 🔥 (+10 🪙)', 10, now - 10800000);
+try {
+  const actCount = db.prepare('SELECT COUNT(*) as c FROM activities').get().c;
+  if (actCount === 0) {
+    const insertAct = db.prepare(`
+      INSERT INTO activities (id, user_id, type, text, coins, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const now = Date.now();
+    insertAct.run('act_1', 'u1', 'meal', 'บันทึกมื้ออาหาร "สุกี้น้ำอกไก่" (+5 🪙)', 5, now - 1800000);
+    insertAct.run('act_2', 'u2', 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2, now - 3600000);
+    insertAct.run('act_3', 'u3', 'challenge', 'เข้าร่วมชาเลนจ์ "งดน้ำหวาน 3 วันติด" 🎯 (+15 🪙)', 15, now - 7200000);
+    insertAct.run('act_4', 'u1', 'streak', 'รักษาสถิติบันทึกต่อเนื่อง 3 วันติด! 🔥 (+10 🪙)', 10, now - 10800000);
+  }
+} catch (e) {
+  console.warn('Initial activities seed warning:', e.message);
 }
 
 export function getAllUsers() {
