@@ -485,7 +485,7 @@ export function lookupVerifiedDish(query) {
   if (direct) return direct;
 
   // Substring match
-  const stmt = db.prepare('SELECT * FROM verified_dishes WHERE ? LIKE "%" || name_clean || "%" ORDER BY confidence_score DESC LIMIT 1');
+  const stmt = db.prepare("SELECT * FROM verified_dishes WHERE ? LIKE ('%' || name_clean || '%') ORDER BY confidence_score DESC LIMIT 1");
   return stmt.get(clean);
 }
 

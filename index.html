@@ -3670,6 +3670,102 @@ function toggleVoiceInput() {
   rec.start();
 }
 
+// Thai Drink Brands & Sweetness Baseline Knowledge Base
+const THAI_DRINK_BRANDS = [
+  { id: 'standard', name: '🥤 ร้านทั่วไป / คาเฟ่', base100: 32, note: 'มาตรฐานร้านกาแฟ/ชานมทั่วไป หวาน 100% ≈ 8 ช้อนชา' },
+  { id: 'amazon', name: '🦜 Cafe Amazon', base100: 42, note: 'สูตรหวานเข้มข้น หวาน 100% สูงถึง ~10.5 ช้อนชา' },
+  { id: 'chatramue', name: '🧋 ชาตรามือ / Kamu / KOI', base100: 36, note: 'หวานปกติ ~9 ช้อนชา (ถ้าใส่ไข่มุก +12g น้ำตาล)' },
+  { id: 'taobin', name: '🤖 เต่าบิน (Tao Bin)', base100: 28, note: 'หวาน 100% ~7 ช้อนชา (ปรับระดับ 0/20/40/60/80/100%)' },
+  { id: 'street', name: '🛞 ร้านชงโบราณ / รถเข็น', base100: 48, note: 'นมข้นหวาน+น้ำเชื่อมจัดเต็ม หวาน 100% สูงถึง 12+ ช้อนชา!' },
+  { id: 'starbucks', name: '☕ Starbucks', base100: 30, note: 'ไซรัปมาตรฐาน 3-4 ปั๊ม (ปั๊มละ ~5g น้ำตาล)' }
+];
+
+function getSugarEstimate(brandId, sweetnessId, toppings = []) {
+  const brand = THAI_DRINK_BRANDS.find(b => b.id === brandId) || THAI_DRINK_BRANDS[0];
+  let multiplier = 1.0;
+  if (sweetnessId === 'none') multiplier = 0.0;
+  else if (sweetnessId === 'less') multiplier = 0.25;
+  else if (sweetnessId === 'half') multiplier = 0.50;
+  else if (sweetnessId === 'normal') multiplier = 1.00;
+  else if (sweetnessId === 'sweet') multiplier = 1.25;
+
+  let sugarGrams = Math.round(brand.base100 * multiplier * 10) / 10;
+  if (sweetnessId === 'none') sugarGrams = 0;
+
+  // Add toppings
+  if (toppings.includes('boba')) sugarGrams += 12;
+  if (toppings.includes('whip')) sugarGrams += 2;
+  if (toppings.includes('jelly')) sugarGrams += 1;
+
+  sugarGrams = Math.round(sugarGrams * 10) / 10;
+  const teaspoons = Math.round((sugarGrams / 4) * 10) / 10;
+  const whoDailyLimit = 24; // WHO recommended max 24g (6 tsp)
+  const percentOfDaily = Math.round((sugarGrams / whoDailyLimit) * 100);
+
+  let status = 'ok';
+  let statusText = '✨ หวานกำลังดี สบายใจได้ ไม่เกินเกณฑ์';
+  let badgeClass = 'ok';
+
+  if (sugarGrams === 0) {
+    status = 'ok';
+    statusText = '✨ 0 ช้อนชา! ไม่เติมน้ำตาลเพิ่ม ดีต่อสุขภาพที่สุด ไม่อ้วนและไม่เสี่ยงเบาหวาน';
+  } else if (sugarGrams <= 12) {
+    status = 'ok';
+    statusText = `🍡 หวานน้อย (${teaspoons} ช้อนชา) สบายใจได้ ไม่เกินครึ่งหนึ่งของโควตาน้ำตาลประจำวัน`;
+  } else if (sugarGrams <= 24) {
+    status = 'warn';
+    statusText = `⚠️ น้ำตาล ${teaspoons} ช้อนชา เกือบเต็มโควตาที่ WHO แนะนำต่อวัน (24g) แล้วนะ`;
+    badgeClass = 'warn';
+  } else if (sugarGrams <= 40) {
+    status = 'alert';
+    statusText = `🚨 น้ำตาล ${teaspoons} ช้อนชา! เกินโควตาทั้งวันในแก้วเดียว แนะนำลองลดเหลือ 25-50% นะคะ`;
+    badgeClass = 'alert';
+  } else {
+    status = 'alert';
+    statusText = `🚨 น้ำตาลพุ่งสูงถึง ${teaspoons} ช้อนชา (เกินเกณฑ์ 2 เท่า)! จากนมข้นและน้ำเชื่อมเข้มข้น`;
+    badgeClass = 'alert';
+  }
+
+  return {
+    brandName: brand.name,
+    sugarGrams,
+    teaspoons,
+    whoDailyLimit,
+    percentOfDaily,
+    status,
+    statusText,
+    badgeClass,
+    note: brand.note
+  };
+}
+
+function setDrinkBrand(brandId) {
+  if (!draft) return;
+  draft.brand = brandId;
+  const est = getSugarEstimate(draft.brand, draft.sweetness, draft.toppings || []);
+  if (!draft.sugar || draft.sugarFromPreset) {
+    draft.sugar = est.sugarGrams;
+    draft.sugarFromPreset = true;
+  }
+  renderSheet();
+}
+
+function toggleTopping(topId) {
+  if (!draft) return;
+  if (!draft.toppings) draft.toppings = [];
+  if (draft.toppings.includes(topId)) {
+    draft.toppings = draft.toppings.filter(t => t !== topId);
+  } else {
+    draft.toppings.push(topId);
+  }
+  const est = getSugarEstimate(draft.brand, draft.sweetness, draft.toppings);
+  if (!draft.sugar || draft.sugarFromPreset) {
+    draft.sugar = est.sugarGrams;
+    draft.sugarFromPreset = true;
+  }
+  renderSheet();
+}
+
 // Add Meal Sheet & Component Breakdown
 function openSheet() {
   const now = new Date();
@@ -3684,10 +3780,13 @@ function openSheet() {
     name: '',
     kcal: '',
     sugar: '',
+    sugarFromPreset: true,
     txt: '',
     status: '',
+    brand: 'standard',
     sweetness: 'normal',
     portion: 'normal',
+    toppings: [],
     date: todayStr,
     isLateNight,
     todayStr,
@@ -3698,6 +3797,8 @@ function openSheet() {
     clarification: null,
     components: null
   };
+  const initialEst = getSugarEstimate('standard', 'normal', []);
+  draft.sugar = initialEst.sugarGrams;
   renderSheet();
 }
 
@@ -3716,6 +3817,8 @@ function renderSheet() {
     return;
   }
   el.hidden = false;
+
+  const sugarEst = getSugarEstimate(draft.brand || 'standard', draft.sweetness || 'normal', draft.toppings || []);
 
   el.innerHTML = `
     <div class="sh">
@@ -3767,26 +3870,88 @@ function renderSheet() {
 
       <!-- Description Input & Voice Button (Phase 3) -->
       <div style="position:relative;">
-        <textarea rows="2" placeholder="พิมพ์เล่าเมนู เช่น ข้าวผัดกะเพราหมูสับไข่ดาว หรือกดปุ่มไมโครโฟน" oninput="draft.txt=this.value">${esc(draft.txt)}</textarea>
+        <textarea rows="2" placeholder="พิมพ์เล่าเมนู เช่น ชาเขียวเย็น Amazon หวาน 50% หรือข้าวกะเพรา" oninput="draft.txt=this.value">${esc(draft.txt)}</textarea>
         <button id="voiceBtn" class="btn s sm" style="margin-bottom:8px;" onclick="toggleVoiceInput()">🎙️ พูดเล่าเมนู (Voice Input)</button>
       </div>
 
-      <!-- Clarification Controls -->
-      <div style="margin: 6px 0;">
-        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ระดับความหวาน (สำคัญกับน้ำตาลมาก):</label>
-        <div class="pill-group" style="margin:0 0 8px;">
+      <!-- BRAND & SHOP PRESET (Baseline sugar differs by brand) -->
+      <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; margin:8px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink);">🏪 เลือกร้าน/ประเภท (สูตรน้ำตาลต่างกัน):</label>
+          <span style="font-size:11px; color:var(--mute);">สูตรมาตรฐานไทย</span>
+        </div>
+        <div class="fav-scroll" style="padding-bottom:2px;">
+          ${THAI_DRINK_BRANDS.map(b => `
+            <div class="pill ${(draft.brand || 'standard') === b.id ? 'active' : ''}" style="flex-shrink:0; font-size:11.5px; padding:6px 10px;" onclick="setDrinkBrand('${b.id}')">
+              <span>${b.name}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="font-size:11px; color:var(--mute); margin-top:4px;">
+          💡 ${THAI_DRINK_BRANDS.find(b => b.id === (draft.brand || 'standard'))?.note}
+        </div>
+      </div>
+
+      <!-- SWEETNESS LEVEL CONTROLS WITH LIVE SPOON & GRAM ESTIMATOR -->
+      <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; margin:8px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink);">🍯 ระดับความหวานที่สั่ง:</label>
+          <span class="badge ${sugarEst.badgeClass}">${sugarEst.teaspoons} ช้อนชา (~${sugarEst.sugarGrams}g)</span>
+        </div>
+        <div class="pill-group" style="margin:0 0 8px; display:flex; gap:4px;">
           ${[
-            { id: 'none', label: 'ไม่หวาน 0%' },
-            { id: 'less', label: 'หวานน้อย 25%' },
-            { id: 'half', label: 'หวาน 50%' },
-            { id: 'normal', label: 'หวานปกติ 100%' },
-            { id: 'sweet', label: 'หวานมาก 120%' }
+            { id: 'none', label: '0%', sub: '0 ช้อนชา' },
+            { id: 'less', label: '25%', sub: '~2-3 ช้อน' },
+            { id: 'half', label: '50%', sub: '~4-5 ช้อน' },
+            { id: 'normal', label: '100%', sub: '~8-12 ช้อน' },
+            { id: 'sweet', label: '120%', sub: '12+ ช้อน' }
           ].map(s => `
-            <div class="pill ${draft.sweetness === s.id ? 'active' : ''}" onclick="setSweetness('${s.id}')">${s.label}</div>
+            <div class="pill ${draft.sweetness === s.id ? 'active' : ''}" onclick="setSweetness('${s.id}')" style="display:flex; flex-direction:column; align-items:center; padding:6px 4px; flex:1; min-width:55px;">
+              <span style="font-weight:700; font-size:12px;">${s.label}</span>
+              <small style="font-size:9.5px; opacity:0.8;">${s.sub}</small>
+            </div>
           `).join('')}
         </div>
 
-        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ปริมาณอาหาร:</label>
+        <!-- DYNAMIC SUGAR METER CARD -->
+        <div style="background:${sugarEst.status === 'alert' ? 'var(--redS)' : sugarEst.status === 'warn' ? 'var(--warnS)' : 'var(--mintS)'}; border:1px solid ${sugarEst.status === 'alert' ? 'var(--red)' : sugarEst.status === 'warn' ? 'var(--warn)' : 'var(--mint)'}; border-radius:14px; padding:8px 10px; margin-top:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px;">
+            <b style="font-size:12.5px; color:var(--ink);">🥄 น้ำตาลประมาณ: ~${sugarEst.sugarGrams} กรัม (≈ ${sugarEst.teaspoons} ช้อนชา)</b>
+            <span style="font-size:11px; font-weight:700; color:${sugarEst.status === 'alert' ? 'var(--red-ink)' : sugarEst.status === 'warn' ? 'var(--warn-ink)' : 'var(--mint-ink)'};">
+              ${sugarEst.percentOfDaily}% ของเกณฑ์ WHO
+            </span>
+          </div>
+
+          <!-- Progress Bar against 24g WHO daily limit -->
+          <div class="bar-track" style="height:6px; margin:4px 0 6px; background:rgba(0,0,0,0.08);">
+            <div class="bar-fill" style="width:${Math.min(100, sugarEst.percentOfDaily)}%; background:${sugarEst.status === 'alert' ? 'var(--red)' : sugarEst.status === 'warn' ? 'var(--warn)' : 'var(--mint)'};"></div>
+          </div>
+
+          <div style="font-size:11.5px; color:var(--ink); line-height:1.35;">
+            ${sugarEst.statusText}
+          </div>
+        </div>
+
+        <!-- TOPPINGS / ADD-ONS -->
+        <div style="margin-top:10px; border-top:1px dashed var(--line); padding-top:8px;">
+          <label style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:4px;">+ ท็อปปิ้งเพิ่มเติม (มีผลต่อน้ำตาลและแคลอรี):</label>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <div class="pill ${draft.toppings?.includes('boba') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('boba')">
+              🧋 ไข่มุกต้มน้ำตาล (+12g น้ำตาล / +100 kcal)
+            </div>
+            <div class="pill ${draft.toppings?.includes('whip') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('whip')">
+              🍦 วิปครีม (+80 kcal)
+            </div>
+            <div class="pill ${draft.toppings?.includes('jelly') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('jelly')">
+              🌱 บุก/วุ้นไม่อ้วน (+1g น้ำตาล)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PORTION CONTROLS -->
+      <div style="margin: 8px 0 10px;">
+        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ปริมาณอาหาร / ขนาดแก้ว:</label>
         <div class="pill-group" style="margin:0 0 10px;">
           ${[
             { id: 'small', label: 'จาน/แก้วเล็ก' },
@@ -3877,11 +4042,18 @@ function fillDraftFromFavorite(favId) {
 }
 
 function setSweetness(val) {
+  if (!draft) return;
   draft.sweetness = val;
+  const est = getSugarEstimate(draft.brand || 'standard', draft.sweetness, draft.toppings || []);
+  if (!draft.sugar || draft.sugarFromPreset) {
+    draft.sugar = est.sugarGrams;
+    draft.sugarFromPreset = true;
+  }
   renderSheet();
 }
 
 function setPortion(val) {
+  if (!draft) return;
   draft.portion = val;
   renderSheet();
 }
@@ -3892,6 +4064,11 @@ function applyClarification(optText) {
   else if (optText.includes('25%')) draft.sweetness = 'less';
   else if (optText.includes('50%')) draft.sweetness = 'half';
   else if (optText.includes('100%')) draft.sweetness = 'normal';
+  const est = getSugarEstimate(draft.brand || 'standard', draft.sweetness, draft.toppings || []);
+  if (!draft.sugar || draft.sugarFromPreset) {
+    draft.sugar = est.sugarGrams;
+    draft.sugarFromPreset = true;
+  }
   draft.clarification = null;
   analyzeMeal();
 }
@@ -3940,7 +4117,9 @@ async function analyzeMeal() {
         text: draft.txt,
         imageBase64: draft.imageBase64,
         sweetness: draft.sweetness,
-        portion: draft.portion
+        portion: draft.portion,
+        brand: draft.brand || 'standard',
+        toppings: draft.toppings || []
       })
     });
 
@@ -3955,6 +4134,7 @@ async function analyzeMeal() {
     draft.name = result.name || draft.name || 'มื้ออาหาร';
     draft.kcal = result.kcal;
     draft.sugar = result.sugar;
+    draft.sugarFromPreset = false;
     draft.components = result.components || null;
     draft.status = `✨ ${result.note}`;
 

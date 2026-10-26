@@ -43,22 +43,47 @@ const THAI_FOOD_DB = [
   { keywords: ['สุกี้'], name: 'สุกี้น้ำรวมมิตร', baseCal: 320, baseSugar: 6, components: [{ name: 'วุ้นเส้นและผักสด', kcal: 130, sugar: 1 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 0 }, { name: 'น้ำจิ้มสุกี้', kcal: 60, sugar: 5 }] },
 ];
 
-function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal') {
+const BRAND_BASELINES = {
+  amazon: { name: 'Cafe Amazon', factor: 1.35 },
+  street: { name: 'ร้านชงโบราณ / รถเข็น', factor: 1.5 },
+  chatramue: { name: 'ชาตรามือ / ชานมไข่มุก', factor: 1.15 },
+  taobin: { name: 'เต่าบิน (Tao Bin)', factor: 0.95 },
+  starbucks: { name: 'Starbucks', factor: 0.95 },
+  standard: { name: 'ร้านทั่วไป / คาเฟ่', factor: 1.0 }
+};
+
+function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = []) {
   const lower = text.toLowerCase();
   let matched = THAI_FOOD_DB.find(item => item.keywords.some(k => lower.includes(k)));
 
   if (!matched) {
-    const isSweetDrink = lower.includes('ชา') || lower.includes('กาแฟ') || lower.includes('นม') || lower.includes('หวาน');
+    const isSweetDrink = lower.includes('ชา') || lower.includes('กาแฟ') || lower.includes('นม') || lower.includes('หวาน') || lower.includes('amazon') || lower.includes('เต่าบิน');
+    let baseSugar = isSweetDrink ? 24 : 4;
+    let baseKcal = isSweetDrink ? 220 : 450;
+
+    if (isSweetDrink) {
+      const brandFactor = BRAND_BASELINES[brand]?.factor || 1.0;
+      baseSugar *= brandFactor;
+      if (sweetness === 'none') baseSugar = 0;
+      else if (sweetness === 'less') baseSugar *= 0.35;
+      else if (sweetness === 'half') baseSugar *= 0.6;
+      else if (sweetness === 'sweet') baseSugar *= 1.25;
+
+      if (toppings.includes('boba')) { baseSugar += 12; baseKcal += 110; }
+      if (toppings.includes('whip')) { baseSugar += 2; baseKcal += 85; }
+      if (toppings.includes('jelly')) { baseSugar += 1; baseKcal += 15; }
+    }
+
     return {
       name: text.trim() || 'มื้ออาหาร',
-      kcal: isSweetDrink ? 220 : 450,
-      sugar: isSweetDrink ? 20 : 4,
+      kcal: Math.round(baseKcal),
+      sugar: Math.round(baseSugar * 10) / 10,
       confidence: 'medium',
       needs_clarification: isSweetDrink && sweetness === 'normal',
-      clarification_question: isSweetDrink ? 'แก้วนี้หวานกี่ระดับ? เพื่อการคำนวณน้ำตาลที่แม่นยำ' : 'ระบุขนาดหรือส่วนผสมเพิ่มเติมได้นะ',
-      note: 'ประเมินจากฐานข้อมูลอาหารไทยเบื้องต้น (สามารถกดแก้ไขตัวเลขได้ตามต้องการ)',
+      clarification_question: isSweetDrink ? 'แก้วนี้สั่งหวานระดับไหนคะ? เพื่อคำนวณน้ำตาลให้แม่นยำ' : 'ระบุขนาดหรือส่วนผสมเพิ่มเติมได้นะ',
+      note: isSweetDrink ? `ประเมินตามสูตร ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}` : 'ประเมินจากฐานข้อมูลอาหารไทยเบื้องต้น',
       components: [
-        { name: text.trim() || 'มื้อหลัก', kcal: isSweetDrink ? 220 : 450, sugar: isSweetDrink ? 20 : 4 }
+        { name: text.trim() || 'มื้อหลัก', kcal: Math.round(baseKcal), sugar: Math.round(baseSugar * 10) / 10 }
       ],
       is_fallback: true
     };
@@ -68,8 +93,11 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal') {
   let sugar = matched.baseSugar;
 
   if (matched.isDrink) {
+    const brandFactor = BRAND_BASELINES[brand]?.factor || 1.0;
+    sugar *= brandFactor;
+
     if (sweetness === 'none' || lower.includes('ไม่หวาน') || lower.includes('0%')) {
-      sugar = Math.max(0, sugar * 0.05);
+      sugar = Math.max(0, sugar * 0.04);
       cal -= 60;
     } else if (sweetness === 'less' || lower.includes('หวานน้อย') || lower.includes('25%')) {
       sugar = Math.round(sugar * 0.35 * 10) / 10;
@@ -78,9 +106,13 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal') {
       sugar = Math.round(sugar * 0.6 * 10) / 10;
       cal -= 25;
     } else if (sweetness === 'sweet' || lower.includes('หวานมาก') || lower.includes('120%')) {
-      sugar = Math.round(sugar * 1.3 * 10) / 10;
+      sugar = Math.round(sugar * 1.25 * 10) / 10;
       cal += 40;
     }
+
+    if (toppings.includes('boba')) { sugar += 12; cal += 110; }
+    if (toppings.includes('whip')) { sugar += 2; cal += 85; }
+    if (toppings.includes('jelly')) { sugar += 1; cal += 15; }
   }
 
   if (portion === 'small') {
@@ -100,34 +132,52 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal') {
     confidence: 'high',
     needs_clarification: needsClarification,
     clarification_question: needsClarification ? `สั่ง "${matched.name}" ระดับความหวานเท่าไหร่? (ค่านี้คิดจากหวานปกติ 100%)` : null,
-    options: matched.isDrink ? ['ไม่หวาน 0% (~0g)', 'หวานน้อย 25% (~8g)', 'หวานปกติ 100% (~' + matched.baseSugar + 'g)'] : null,
-    note: `คำนวณจากสูตรอาหารไทยมาตรฐาน (${matched.name})`,
+    options: matched.isDrink ? ['ไม่หวาน 0% (~0g)', 'หวานน้อย 25% (~8g)', 'หวานปกติ 100% (~' + Math.round(sugar) + 'g)'] : null,
+    note: `คำนวณจากสูตรอาหารไทยมาตรฐาน (${matched.name}) อิง ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}`,
     components: matched.components || [{ name: matched.name, kcal: Math.round(cal), sugar: Math.round(sugar * 10) / 10 }],
     is_fallback: true
   };
 }
 
-export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, imageMimeType = 'image/jpeg', sweetness = 'normal', portion = 'normal' }) {
+export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, imageMimeType = 'image/jpeg', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = [] }) {
   const settings = getSettings();
   const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    const res = fallbackAnalyze(text, sweetness, portion);
+    const res = fallbackAnalyze(text, sweetness, portion, brand, toppings);
     res.note += ' 💡 (ใส่ Gemini API Key ในเมนูตั้งค่าเพื่อเปิดระบบวิเคราะห์รูปภาพด้วย AI)';
     return res;
   }
 
+  const brandInfo = BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป';
+  const toppingsList = Array.isArray(toppings) ? toppings.join(', ') : '';
+
   const prompt = `
-คุณคือผู้ช่วยโภชนาการที่เชี่ยวชาญอาหารและเครื่องดื่มไทย
+คุณคือผู้ช่วยโภชนาการที่เชี่ยวชาญอาหารและเครื่องดื่มไทยโดยเฉพาะ
 ประเมินอาหารหรือเครื่องดื่มจากรูปภาพ (ถ้ามี) และคำอธิบายของผู้ใช้
 - คำอธิบาย: "${text || '(ไม่มี)'}"
 - ระดับความหวานที่เลือกไว้: "${sweetness}"
+- ร้าน/แบรนด์เครื่องดื่มที่เลือก: "${brandInfo}"
+- ท็อปปิ้งเพิ่มเติม: "${toppingsList || 'ไม่มี'}"
 - ขนาดส่วนที่เลือกไว้: "${portion}"
+
+บริบทเรื่องความหวานของร้านและแบรนด์ในประเทศไทย:
+1. Cafe Amazon: หวาน 100% มีน้ำตาลสูงมาก ~40-45g (10-11 ช้อนชา), หวาน 50% ~21g, หวาน 25% ~11g
+2. ชาตรามือ / Kamu / KOI Thé / ชานมไข่มุก: หวาน 100% ~36-38g (9 ช้อนชา), ถ้าใส่ไข่มุกให้บวกน้ำตาลเพิ่ม +10-12g (+110 kcal)
+3. ร้านชงโบราณ / รถเข็น / ตลาดนัด: ใช้นมข้นหวาน+น้ำเชื่อมจัดเต็ม หวาน 100% สูงถึง ~48-52g (12-13 ช้อนชา)
+4. ตู้เต่าบิน (Tao Bin): หวาน 100% ~28-30g, หวาน 60% ~18g
+5. Starbucks: ไซรัปมาตรฐาน 3-4 ปั๊ม (ปั๊มละ ~5g)
+6. หากผู้ใช้เลือกความหวาน:
+   - "none" (0%): น้ำตาลเติมแต่งเป็น 0g (คงเหลือน้ำตาลธรรมชาติจากนม 0-2g เท่านั้น)
+   - "less" (25%): ให้น้ำตาลประมาณ 25-30% ของสูตรปกติ
+   - "half" (50%): ให้น้ำตาลประมาณ 50-60% ของสูตรปกติ
+   - "normal" (100%): ให้น้ำตาลตามสูตรจริงของร้าน
+   - "sweet" (120%): ให้น้ำตาลประมาณ 125-130%
 
 ข้อกำหนดสำคัญ:
 1. ตอบเป็น JSON object ตัวเดียวเท่านั้น ห้ามมี markdown หรือ backticks
 2. ต้องประเมิน:
-   - "name": ชื่อเมนูสั้นๆ ภาษาไทย (เช่น "ชาไทยเย็นหวานน้อย", "ข้าวมันไก่ต้ม")
+   - "name": ชื่อเมนูสั้นๆ ภาษาไทย (เช่น "ชาเขียวเย็น Cafe Amazon หวาน 50%", "ข้าวมันไก่ต้ม")
    - "kcal": แคลอรีรวมทั้งหมด (ตัวเลขจำนวนเต็ม ห้ามเป็น null)
    - "sugar": น้ำตาลรวมทั้งหมดเป็นกรัม (ตัวเลขทศนิยม 1 ตำแหน่ง ห้ามเป็น null)
    - "confidence": "high" | "medium" | "low"
@@ -135,7 +185,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
    - "options": อาเรย์ของตัวเลือกแนะนำ หรือ null
    - "components": อาเรย์แจกแจงส่วนประกอบในจาน เช่น [{"name":"ข้าวสวย","kcal":200,"sugar":0},{"name":"หมูสับผัดกะเพรา","kcal":310,"sugar":2.5},{"name":"ไข่ดาว","kcal":120,"sugar":0.5}]
-   - "note": คำอธิบายสั้นๆ 1-2 ประโยคเกี่ยวกับน้ำตาลหรือคำแนะนำสุขภาพที่เป็นมิตร
+   - "note": คำอธิบายสั้นๆ 1-2 ประโยค เทียบปริมาณน้ำตาลเป็นช้อนชา (1 ช้อนชา = 4 กรัม) หรือคำแนะนำสุขภาพที่เป็นมิตร
 `;
 
   try {
