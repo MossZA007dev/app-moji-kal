@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โมจิ · นับแคลและน้ำตาล</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF8F5;--card:#fff;--ink:#4A3F44;--mute:#9A8C92;--line:#F3E6E4;--pink:#FF9EB5;--pinkS:#FFE3EA;--mint:#6FCBB0;--mintS:#DDF5EC;--warn:#FFB05C;--red:#FF6B7A;--mo:#FFC2D1;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1F1A1D;--card:#2A2428;--ink:#F3E9ED;--mute:#A99AA1;--line:#3A3237;--pinkS:#4A2E37;--mintS:#23403A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1F1A1D;--card:#2A2428;--ink:#F3E9ED;--mute:#A99AA1;--line:#3A3237;--pinkS:#4A2E37;--mintS:#23403A;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai",system-ui,sans-serif;font-size:15px}
+h1,h2,.hd{font-family:"Mali","Noto Sans Thai",sans-serif;margin:0}
+#app{max-width:480px;margin:0 auto;padding:16px 16px 96px}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.top h1{font-size:24px}.top span{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px}
+.mo{display:flex;gap:10px;align-items:center}
+.mo svg{width:96px;height:96px;flex:none;animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){.mo svg{animation:none}}
+.bub{background:var(--pinkS);border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;line-height:1.5}
+.rings{display:flex;gap:10px}.rings .card{flex:1;margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px}
+.rings svg{width:84px;height:84px}.rings b{font-family:"Mali",sans-serif;font-size:15px}.rings small{color:var(--mute);font-size:12px}
+.btn{border:0;border-radius:16px;padding:13px 18px;font:inherit;font-weight:600;background:var(--pink);color:#4A2A33;cursor:pointer;width:100%}
+.btn.s{background:var(--mintS);color:var(--ink)}.btn.g{background:transparent;color:var(--mute)}
+.add{margin:12px 0}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}.row small{color:var(--mute);display:block}
+.x{border:0;background:none;color:var(--mute);font-size:18px;cursor:pointer}
+.sug{color:var(--red);font-weight:600}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;max-width:150px;border:0;background:none;color:var(--mute);font:inherit;font-size:12px;padding:6px;border-radius:14px;cursor:pointer}
+nav button.on{background:var(--pinkS);color:var(--ink);font-weight:600}nav i{display:block;font-style:normal;font-size:20px}
+#sheet{position:fixed;inset:0;background:rgba(40,25,32,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+#sheet[hidden]{display:none}
+.sh{background:var(--bg);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:92%;overflow:auto}
+.photo{display:flex;align-items:center;justify-content:center;height:120px;border:2px dashed var(--pink);border-radius:18px;color:var(--mute);cursor:pointer;overflow:hidden;margin:10px 0;text-align:center}
+.photo img{width:100%;height:100%;object-fit:cover}
+input,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+textarea{resize:none;margin-bottom:10px}
+.g3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin:10px 0}
+.g3 label{font-size:12px;color:var(--mute)}
+.st{font-size:13px;min-height:20px;margin:8px 0;color:var(--mute)}
+.gap{display:flex;gap:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{color:var(--mute);font-weight:500;text-align:right}td{text-align:right;padding:7px 0;border-top:1px dashed var(--line)}th:first-child,td:first-child{text-align:left}
+.sc{background:linear-gradient(160deg,var(--pinkS),var(--mintS));border-radius:26px;padding:20px;text-align:center}
+.sc .big{display:flex;justify-content:center;gap:24px;margin:10px 0}.sc .big b{font-family:"Mali",sans-serif;font-size:28px;display:block}
+.sc ul{list-style:none;padding:0;margin:10px 0 0;text-align:left;font-size:14px}.sc li{display:flex;justify-content:space-between;padding:3px 0}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:13px;z-index:30}
+.goal{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mut{color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"><div id="main"></div></div>
+<div id="sheet" hidden></div>
+<nav>
+<button data-t="today" onclick="go('today')"><i>🍡</i>วันนี้</button>
+<button data-t="stats" onclick="go('stats')"><i>📊</i>สถิติ</button>
+<button data-t="share" onclick="go('share')"><i>💌</i>แชร์</button>
+</nav>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const key=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmt=n=>Math.round(n*10)/10;
+let S={logs:[],goal:{kcal:2000,sugar:25}};
+try{const r=localStorage.getItem('mochi');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem('mochi',JSON.stringify(S))}catch(e){}};
+let tab='today',draft=null,sample=null,imgOK=false;
+(async()=>{try{if(window.claude){sample=await claude.use('sample');if(sample){const l=await sample.limits();imgOK=!!(l&&l.images)}}}catch(e){}if(draft)renderSheet()})();
+
+function tot(d){return S.logs.filter(l=>l.d===d).reduce((a,l)=>({k:a.k+l.k,s:a.s+l.s,n:a.n+1}),{k:0,s:0,n:0})}
+function moodOf(t){
+ const sp=t.s/S.goal.sugar,kp=t.k/S.goal.kcal;
+ if(!t.n)return['happy','วันนี้ยังไม่ได้บันทึกอะไรเลย ถ่ายรูปมื้อแรกให้โมจิดูหน่อยน้า~'];
+ if(sp>1)return['alert','น้ำตาลเกินแล้ว! ดื่มน้ำเปล่าก่อน แล้วเลี่ยงชานมไข่มุกและขนมหวานไปก่อนนะ'];
+ if(sp>=.85)return['worry','ใกล้เต็มโควตาน้ำตาลแล้วนะ มื้อต่อไปเลือกไม่หวานดีกว่า'];
+ if(kp>1)return['worry','แคลอรีเกินเป้าแล้ว พรุ่งนี้ค่อยๆ ปรับกันนะ'];
+ if(sp>=.5)return['ok','เริ่มหวานแล้วน้า ระวังอีกนิดนะ'];
+ return['happy','ยังหวานน้อยอยู่ เก่งมากเลย!'];
+}
+function mascot(m){
+ const E={happy:'<path d="M38 58q5-8 10 0M72 58q5-8 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+ ok:'<circle cx="43" cy="58" r="3.5" fill="#4A3F44"/><circle cx="77" cy="58" r="3.5" fill="#4A3F44"/>',
+ worry:'<circle cx="43" cy="59" r="3.5" fill="#4A3F44"/><circle cx="77" cy="59" r="3.5" fill="#4A3F44"/><path d="M36 49l13 4M84 49l-13 4" stroke="#4A3F44" stroke-width="2.5" stroke-linecap="round"/>',
+ alert:'<circle cx="43" cy="58" r="6" fill="#4A3F44"/><circle cx="77" cy="58" r="6" fill="#4A3F44"/><circle cx="45" cy="56" r="2" fill="#fff"/><circle cx="79" cy="56" r="2" fill="#fff"/><path d="M100 36q6 9 0 13q-6-4 0-13z" fill="#8FD3F4"/>'};
+ const M={happy:'<path d="M52 70q8 9 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+ ok:'<path d="M54 71q6 5 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+ worry:'<path d="M52 76q8-6 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+ alert:'<ellipse cx="60" cy="75" rx="5" ry="6.5" fill="#4A3F44"/>'};
+ return '<svg viewBox="0 0 120 112"><path d="M60 14C88 14 106 34 106 62c0 24-18 40-46 40S14 86 14 62C14 34 32 14 60 14z" fill="var(--mo)"/><path d="M60 14q-3-9 7-12" fill="none" stroke="#6FCBB0" stroke-width="4" stroke-linecap="round"/><ellipse cx="31" cy="70" rx="8" ry="5" fill="#FF9EB5" opacity=".55"/><ellipse cx="89" cy="70" rx="8" ry="5" fill="#FF9EB5" opacity=".55"/>'+E[m]+M[m]+'</svg>';
+}
+function ring(v,g,col,big,small){
+ const p=Math.min(v/g,1),c=2*Math.PI*34,over=v>g;
+ return '<div class="card"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--line)" stroke-width="8"/><circle cx="42" cy="42" r="34" fill="none" stroke="'+(over?'var(--red)':col)+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(p*c)+' '+c+'" transform="rotate(-90 42 42)"/></svg><b>'+big+'</b><small>'+small+'</small></div>';
+}
+const dateTh=(d)=>d.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'short'});
+
+function todayV(t){
+ const[m,msg]=moodOf(t),items=S.logs.filter(l=>l.d===key()).sort((a,b)=>b.t-a.t);
+ return '<div class="top"><h1>โมจิ 🍡</h1><span>'+dateTh(new Date())+'</span></div>'+
+ '<div class="card mo">'+mascot(m)+'<div class="bub">'+msg+'</div></div>'+
+ '<div class="rings">'+ring(t.k,S.goal.kcal,'var(--pink)',fmt(t.k)+' kcal','เป้า '+S.goal.kcal)+ring(t.s,S.goal.sugar,'var(--mint)',fmt(t.s)+' g','น้ำตาล / '+S.goal.sugar+' g')+'</div>'+
+ '<div class="add"><button class="btn" onclick="openSheet()">+ เพิ่มมื้ออาหาร</button></div>'+
+ '<div class="card"><h2 class="hd" style="font-size:16px">วันนี้กินอะไรไปบ้าง</h2>'+(items.length?items.map(l=>'<div class="row"><div>'+esc(l.n)+'<small>'+fmt(l.k)+' kcal · <span class="'+(l.s>=12?'sug':'')+'">น้ำตาล '+fmt(l.s)+' g</span></small></div><button class="x" onclick="del('+l.t+')">×</button></div>').join(''):'<p class="mut">ยังว่างอยู่เลย</p>')+'</div>';
+}
+function days(n){const a=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);a.push({d,k:key(d),t:tot(key(d))})}return a}
+function statsV(){
+ const D=days(7),G=S.goal.sugar,mx=Math.max(G*1.3,...D.map(x=>x.t.s)),W=['อา','จ','อ','พ','พฤ','ศ','ส'];
+ const bars=D.map((x,i)=>{const h=x.t.s/mx*100,xx=14+i*44;return '<rect x="'+xx+'" y="'+(116-h)+'" width="26" height="'+h+'" rx="8" fill="'+(x.t.s>G?'var(--red)':'var(--mint)')+'"/><text x="'+(xx+13)+'" y="134" text-anchor="middle" font-size="11" fill="var(--mute)">'+W[x.d.getDay()]+'</text>'}).join('');
+ const gy=116-G/mx*100,act=D.filter(x=>x.t.n),avgS=act.length?act.reduce((a,x)=>a+x.t.s,0)/act.length:0,avgK=act.length?act.reduce((a,x)=>a+x.t.k,0)/act.length:0;
+ const top={};S.logs.filter(l=>D.some(x=>x.k===l.d)).forEach(l=>{top[l.n]=(top[l.n]||0)+l.s});
+ const tl=Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,3);
+ return '<div class="top"><h1>สถิติของฉัน</h1><span>7 วันล่าสุด</span></div>'+
+ '<div class="card"><h2 class="hd" style="font-size:16px">น้ำตาลต่อวัน (g)</h2><svg viewBox="0 0 320 140" style="width:100%"><line x1="0" x2="320" y1="'+gy+'" y2="'+gy+'" stroke="var(--pink)" stroke-dasharray="4 4"/><text x="318" y="'+(gy-4)+'" text-anchor="end" font-size="10" fill="var(--pink)">เป้า '+G+' g</text>'+bars+'</svg><p class="mut" style="margin:6px 0 0">เฉลี่ย '+fmt(avgS)+' g · '+Math.round(avgK)+' kcal ต่อวัน (เฉพาะวันที่บันทึก)</p></div>'+
+ '<div class="card"><table><tr><th>วัน</th><th>kcal</th><th>น้ำตาล</th><th>มื้อ</th></tr>'+D.slice().reverse().map(x=>'<tr><td>'+x.d.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</td><td>'+Math.round(x.t.k)+'</td><td class="'+(x.t.s>G?'sug':'')+'">'+fmt(x.t.s)+' g</td><td>'+x.t.n+'</td></tr>').join('')+'</table></div>'+
+ (tl.length?'<div class="card"><h2 class="hd" style="font-size:16px">ตัวการน้ำตาลของสัปดาห์ 🍬</h2>'+tl.map(([n,s])=>'<div class="row"><span>'+esc(n)+'</span><span class="sug">'+fmt(s)+' g</span></div>').join('')+'</div>':'')+
+ '<div class="card"><h2 class="hd" style="font-size:16px">เป้าหมายต่อวัน</h2><div class="goal" style="margin-top:10px"><div><label class="mut">แคลอรี (kcal)</label><input type="number" inputmode="numeric" value="'+S.goal.kcal+'" onchange="setG(\'kcal\',this.value)"></div><div><label class="mut">น้ำตาล (g)</label><input type="number" inputmode="numeric" value="'+S.goal.sugar+'" onchange="setG(\'sugar\',this.value)"></div></div><p class="mut">WHO แนะนำให้น้ำตาลเติมแต่งไม่เกิน 50 g ต่อวัน และดีที่สุดคือไม่เกิน 25 g</p></div>';
+}
+function shareText(t){
+ const it=S.logs.filter(l=>l.d===key()).sort((a,b)=>a.t-b.t);
+ return '🍡 สรุปวันนี้ ('+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short'})+')\n🔥 '+Math.round(t.k)+' / '+S.goal.kcal+' kcal\n🍬 น้ำตาล '+fmt(t.s)+' / '+S.goal.sugar+' g\n\n'+(it.length?it.map(l=>'• '+l.n+' — '+Math.round(l.k)+' kcal · '+fmt(l.s)+' g').join('\n'):'(ยังไม่ได้บันทึก)')+'\n\n— จากโมจิ';
+}
+function shareV(t){
+ const[m]=moodOf(t),it=S.logs.filter(l=>l.d===key()).sort((a,b)=>a.t-b.t);
+ return '<div class="top"><h1>แชร์ให้เพื่อน</h1><span>'+dateTh(new Date())+'</span></div>'+
+ '<div class="sc"><div style="width:84px;margin:0 auto">'+mascot(m)+'</div><div class="hd" style="font-size:16px">วันนี้ฉันกินไป…</div><div class="big"><div><b>'+Math.round(t.k)+'</b><small class="mut">kcal / '+S.goal.kcal+'</small></div><div><b style="color:'+(t.s>S.goal.sugar?'var(--red)':'inherit')+'">'+fmt(t.s)+'</b><small class="mut">น้ำตาล g / '+S.goal.sugar+'</small></div></div><ul>'+(it.length?it.map(l=>'<li><span>'+esc(l.n)+'</span><span class="mut">'+Math.round(l.k)+' kcal · '+fmt(l.s)+' g</span></li>').join(''):'<li class="mut">ยังไม่ได้บันทึกอะไร</li>')+'</ul></div>'+
+ '<div class="gap" style="margin-top:12px"><button class="btn" onclick="doShare()">แชร์</button><button class="btn s" onclick="copyT()">คัดลอกข้อความ</button></div>';
+}
+function render(){
+ const t=tot(key());
+ $('#main').innerHTML=tab==='today'?todayV(t):tab==='stats'?statsV():shareV(t);
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+}
+function go(t){tab=t;render();scrollTo(0,0)}
+function toast(s){const e=document.createElement('div');e.className='toast';e.textContent=s;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function del(t){S.logs=S.logs.filter(l=>l.t!==t);save();render()}
+function setG(k,v){v=+v;if(v>0){S.goal[k]=v;save();render()}}
+async function copyT(){
+ const s=shareText(tot(key()));
+ try{await navigator.clipboard.writeText(s)}catch(e){const a=document.createElement('textarea');a.value=s;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(_){}a.remove()}
+ toast('คัดลอกแล้ว ส่งให้เพื่อนได้เลย 💌');
+}
+async function doShare(){
+ const s=shareText(tot(key()));
+ if(navigator.share){try{await navigator.share({text:s});return}catch(e){if(e&&e.name==='AbortError')return}}
+ copyT();
+}
+/* add-meal sheet */
+function openSheet(){draft={name:'',kcal:'',sugar:'',txt:'',status:''};renderSheet()}
+function closeSheet(){draft=null;renderSheet()}
+function renderSheet(){
+ const el=$('#sheet');
+ if(!draft){el.hidden=true;el.innerHTML='';return}
+ el.hidden=false;
+ el.innerHTML='<div class="sh"><h2 class="hd" style="font-size:18px">เพิ่มมื้ออาหาร</h2>'+
+ '<label class="photo"><input type="file" accept="image/*" hidden onchange="pick(this.files[0])">'+(draft.url?'<img src="'+draft.url+'" alt="รูปอาหาร">':'📷 ถ่ายรูปหรือเลือกรูปอาหาร')+'</label>'+
+ '<textarea rows="2" placeholder="เล่าเพิ่มได้ เช่น ชานมไข่มุก หวานปกติ แก้วใหญ่" oninput="draft.txt=this.value">'+esc(draft.txt)+'</textarea>'+
+ (sample?'<button class="btn s" onclick="analyze()">✨ ให้โมจิวิเคราะห์</button>':'')+
+ '<div class="st">'+esc(draft.status||(sample?'':'ตอนนี้ยังใช้ AI ไม่ได้ กรอกเองได้เลยนะ'))+'</div>'+
+ '<div class="g3"><div><label>ชื่อเมนู</label><input value="'+esc(draft.name)+'" oninput="draft.name=this.value"></div><div><label>kcal</label><input type="number" inputmode="decimal" value="'+draft.kcal+'" oninput="draft.kcal=this.value"></div><div><label>น้ำตาล g</label><input type="number" inputmode="decimal" value="'+draft.sugar+'" oninput="draft.sugar=this.value"></div></div>'+
+ '<div class="gap"><button class="btn g" onclick="closeSheet()">ยกเลิก</button><button class="btn" onclick="saveMeal()">บันทึก</button></div></div>';
+}
+function shrink(f){return new Promise((ok,no)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):no(),'image/jpeg',.8)};im.onerror=no;im.src=u})}
+async function pick(f){
+ if(!f)return;
+ try{const b=await shrink(f);draft.blob=b;draft.url=URL.createObjectURL(b);draft.status=imgOK||!sample?'':'ตอนนี้วิเคราะห์จากรูปไม่ได้ ลองพิมพ์เล่าแทนนะ'}catch(e){draft.status='เปิดรูปนี้ไม่ได้ ลองรูปอื่นนะ'}
+ renderSheet();
+}
+const errCopy=c=>({not_granted:'ต้องอนุญาตให้ใช้ Claude ก่อนนะ หรือกรอกเองก็ได้',rate_limited:'ใช้บ่อยไปนิด รอสักครู่แล้วลองใหม่นะ',image_rejected:'รูปนี้ใช้ไม่ได้ ลองรูปอื่นนะ'}[c]||'โมจิมึนนิดหน่อย ลองอีกครั้งน้า');
+async function analyze(){
+ if(!sample)return;
+ const useImg=draft.blob&&imgOK;
+ if(!useImg&&!draft.txt.trim()){draft.status='ใส่รูปหรือพิมพ์เล่าเมนูก่อนน้า';renderSheet();return}
+ draft.status='โมจิกำลังดูอยู่… 🍡';renderSheet();
+ const p='คุณคือผู้ช่วยโภชนาการ ประเมินอาหารหรือเครื่องดื่มจากรูป (ถ้ามี) และคำอธิบายของผู้ใช้ ประเมินตามปริมาณที่เห็นหรือที่ระบุ ตอบเป็น JSON เท่านั้น รูปแบบ {"name":"ชื่อเมนูสั้นๆ ภาษาไทย","kcal":ตัวเลขรวมทั้งหมด,"sugar":น้ำตาลรวมเป็นกรัม,"note":"ข้อสังเกตสั้นๆ 1 ประโยค"} ถ้าไม่ใช่อาหาร ให้ kcal และ sugar เป็น 0\nคำอธิบายจากผู้ใช้: '+(draft.txt||'(ไม่มี)');
+ try{
+  const o={modelTier:'quick'};if(useImg)o.images=[draft.blob];
+  const r=await sample.json(p,o);
+  draft.name=String(r.name||'');draft.kcal=Math.round(+r.kcal||0);draft.sugar=fmt(+r.sugar||0);
+  draft.status='✨ '+(r.note||'')+' (ค่าประมาณ แก้ไขได้นะ)';
+ }catch(e){draft.status=errCopy(e&&e.code)}
+ if(draft)renderSheet();
+}
+function saveMeal(){
+ const n=(draft.name||'').trim(),k=+draft.kcal||0,s=+draft.sugar||0;
+ if(!n){toast('ใส่ชื่อเมนูก่อนน้า');return}
+ S.logs.push({d:key(),t:Date.now(),n:n,k:k,s:s});save();closeSheet();render();
+ const sp=tot(key()).s/S.goal.sugar;
+ toast(sp>1?'บันทึกแล้ว แต่น้ำตาลเกินแล้วนะ 😣':sp>=.85?'บันทึกแล้ว ใกล้เต็มโควตาน้ำตาลแล้วน้า':'บันทึกแล้ว 🍡');
+}
+render();
+</script>
+</body>
+</html>

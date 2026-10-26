@@ -1,0 +1,13 @@
+{
+  "name": "app-moji-kal",
+  "version": "1.0.0",
+  "description": "โมจิ · นับแคลและน้ำตาล",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "start": "node dev.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

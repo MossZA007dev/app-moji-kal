@@ -1,0 +1,4155 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โมจิ · นับแคลและน้ำตาลกับเพื่อน</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FF9EB5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="โมจิ">
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #FFF8F5;
+  --card: #FFFFFF;
+  --ink: #4A3F44;
+  --mute: #9A8C92;
+  --line: #F3E6E4;
+  --pink: #FF9EB5;
+  --pinkS: #FFE3EA;
+  --mint: #5ABEA3;
+  --mintS: #DCF6EE;
+  --warn: #FF9F43;
+  --warnS: #FFF0E0;
+  --red: #FF5E74;
+  --redS: #FFE5E9;
+  --mo: #FFC2D1;
+  --purple: #A78BFA;
+  --purpleS: #EDE9FE;
+  --pink-ink: #9E2A4B;
+  --mint-ink: #1B6E57;
+  --warn-ink: #B35C00;
+  --red-ink: #B31D31;
+  --purple-ink: #6D28D9;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1B1719;
+    --card: #262024;
+    --ink: #F7EEF2;
+    --mute: #AA9AA2;
+    --line: #382E34;
+    --pinkS: #4A2833;
+    --mintS: #1F3D35;
+    --warnS: #422F1E;
+    --redS: #4A2228;
+    --purpleS: #35254A;
+    --pink-ink: #FFB3C6;
+    --mint-ink: #6EE7B7;
+    --warn-ink: #FCD34D;
+    --red-ink: #FCA5A5;
+    --purple-ink: #C4B5FD;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) .badge.ok { background: #1B382F; color: #6EE7B7; border: 1px solid #059669; }
+  :root:not([data-theme="light"]) .badge.warn { background: #3B2A1A; color: #FCD34D; border: 1px solid #D97706; }
+  :root:not([data-theme="light"]) .badge.alert { background: #3B1B20; color: #FCA5A5; border: 1px solid #DC2626; }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1B1719;
+  --card: #262024;
+  --ink: #F7EEF2;
+  --mute: #AA9AA2;
+  --line: #382E34;
+  --pinkS: #4A2833;
+  --mintS: #1F3D35;
+  --warnS: #422F1E;
+  --redS: #4A2228;
+  --purpleS: #35254A;
+  --pink-ink: #FFB3C6;
+  --mint-ink: #6EE7B7;
+  --warn-ink: #FCD34D;
+  --red-ink: #FCA5A5;
+  --purple-ink: #C4B5FD;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .badge.ok { background: #1B382F; color: #6EE7B7; border: 1px solid #059669; }
+:root[data-theme="dark"] .badge.warn { background: #3B2A1A; color: #FCD34D; border: 1px solid #D97706; }
+:root[data-theme="dark"] .badge.alert { background: #3B1B20; color: #FCA5A5; border: 1px solid #DC2626; }
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .hd {
+  font-family: "Mali", "Noto Sans Thai", sans-serif;
+  margin: 0;
+}
+
+#app {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 12px 14px 105px;
+  position: relative;
+}
+
+/* User Switcher Bar */
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.mini-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-meta b {
+  font-family: "Mali", sans-serif;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.user-meta small {
+  font-size: 11px;
+  color: var(--mute);
+}
+
+/* Streak Pill Banner */
+.streak-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--warnS), var(--pinkS));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+.streak-bar b { color: var(--warn); font-family: "Mali", sans-serif; }
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 4px 0 12px;
+}
+.top h1 { font-size: 22px; }
+.top span { color: var(--mute); font-size: 13px; }
+
+/* Disclaimer Alert */
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--warnS);
+  border: 1px solid rgba(255, 159, 67, 0.25);
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.disclaimer i { font-style: normal; font-size: 14px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.mo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.mo-svg-wrap {
+  width: 88px;
+  height: 88px;
+  flex: none;
+  animation: bob 3.2s ease-in-out infinite;
+}
+@keyframes bob { 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .mo-svg-wrap { animation: none; } }
+
+.bub {
+  background: var(--pinkS);
+  border-radius: 18px 18px 18px 4px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.rings {
+  display: flex;
+  gap: 10px;
+}
+.rings .card {
+  flex: 1;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+}
+.rings svg { width: 80px; height: 80px; }
+.rings b { font-family: "Mali", sans-serif; font-size: 15px; }
+.rings small { color: var(--mute); font-size: 11.5px; }
+
+.btn {
+  border: 0;
+  border-radius: 16px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 600;
+  background: var(--pink);
+  color: #4A2A33;
+  cursor: pointer;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn.s { background: var(--mintS); color: var(--ink); }
+.btn.g { background: transparent; color: var(--mute); }
+.btn.google { background: #FFFFFF; color: #3c4043; border: 1px solid #dadce0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.btn.danger { background: var(--redS); color: #B31D31; }
+.btn.sm { padding: 6px 12px; font-size: 12px; border-radius: 12px; width: auto; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.row:last-child { border: 0; }
+.row small { color: var(--mute); display: block; margin-top: 2px; }
+.x { border: 0; background: none; color: var(--mute); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.sug { color: var(--red); font-weight: 600; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge.ok { background: var(--mintS); color: #216E59; }
+.badge.warn { background: var(--warnS); color: #B35C00; }
+.badge.alert { background: var(--redS); color: #B31D31; }
+
+/* Favorites Carousel */
+.fav-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+}
+.fav-scroll::-webkit-scrollbar { display: none; }
+.fav-pill {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.fav-pill:active { transform: scale(0.96); }
+
+/* Navigation */
+nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+}
+nav button {
+  flex: 1;
+  max-width: 80px;
+  border: 0;
+  background: none;
+  color: var(--mute);
+  font: inherit;
+  font-size: 11px;
+  padding: 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+nav button.on {
+  background: var(--pinkS);
+  color: var(--ink);
+  font-weight: 600;
+}
+nav button i { font-style: normal; font-size: 18px; }
+
+/* Modal Sheet */
+#sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 20, 27, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+}
+#sheet[hidden] { display: none; }
+.sh {
+  background: var(--bg);
+  width: 100%;
+  max-width: 500px;
+  border-radius: 26px 26px 0 0;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.1);
+}
+
+.photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  border: 2px dashed var(--pink);
+  border-radius: 18px;
+  color: var(--mute);
+  cursor: pointer;
+  overflow: hidden;
+  margin: 10px 0;
+  background: var(--card);
+  text-align: center;
+}
+.photo img { width: 100%; height: 100%; object-fit: cover; }
+
+input, textarea, select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--pink);
+}
+textarea { resize: none; margin-bottom: 8px; }
+
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+.pill {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pill.active {
+  background: var(--pinkS);
+  border-color: var(--pink);
+  color: var(--pink-ink);
+  font-weight: 600;
+}
+
+.clarification-box {
+  background: var(--warnS);
+  border: 1px dashed var(--warn);
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.clarification-box b { font-size: 13px; color: var(--warn-ink); display: block; margin-bottom: 6px; }
+
+.component-box {
+  background: var(--card);
+  border: 1px dashed var(--mint);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.component-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--line);
+}
+.component-item:last-child { border: none; }
+
+.g3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.g3 label, .g2 label { font-size: 11.5px; color: var(--mute); margin-bottom: 3px; display: block; }
+.st { font-size: 12.5px; min-height: 20px; margin: 6px 0; color: var(--mute); line-height: 1.4; }
+.gap { display: flex; gap: 8px; }
+
+/* Group Feed Cards */
+.friend-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.friend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.friend-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.friend-profile b { font-family: "Mali", sans-serif; font-size: 15px; }
+.friend-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+.bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.bar-wrap label { width: 44px; color: var(--mute); flex: none; }
+.bar-track {
+  flex: 1;
+  height: 9px;
+  background: var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+.bar-val { width: 75px; text-align: right; color: var(--ink); font-weight: 500; font-size: 11.5px; }
+
+/* Dashboard, Leaderboard & Member Styles (Theme-Adaptive & High Contrast) */
+.feed-tabs {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 4px;
+  gap: 4px;
+  margin: 12px 0 14px;
+}
+.feed-tab-btn {
+  flex: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.feed-tab-btn.active {
+  background: var(--pinkS);
+  color: var(--pink-ink);
+  font-weight: 700;
+  border-color: var(--pink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--warnS);
+  color: var(--warn-ink);
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--warn);
+}
+.activity-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-text {
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.activity-text b, .activity-text strong {
+  color: var(--ink);
+}
+.activity-time {
+  font-size: 11px;
+  color: var(--mute);
+  flex-shrink: 0;
+}
+
+/* Challenge Banner (High contrast in Light & Dark Mode) */
+.challenge-banner {
+  background: linear-gradient(135deg, var(--pinkS), var(--mintS));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.challenge-banner h2 {
+  color: var(--ink) !important;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.challenge-banner p {
+  color: var(--mute) !important;
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+.challenge-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.challenge-item b {
+  color: var(--ink);
+}
+.challenge-item div {
+  color: var(--mute);
+}
+
+/* ============================================================
+   3D ISOMETRIC GAMIFIED LEADERBOARD (REFERENCE SPEC)
+   ============================================================ */
+.lb-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.lb-circle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.lb-circle-btn:active {
+  transform: scale(0.92);
+}
+.lb-header-title-box {
+  text-align: center;
+}
+.lb-header-title {
+  font-family: 'Mali', sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.2;
+}
+.lb-header-sub {
+  font-size: 12px;
+  color: var(--mute);
+  display: block;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Podium Stage Card */
+.lb-stage {
+  position: relative;
+  background: radial-gradient(circle at 50% 25%, rgba(251, 191, 36, 0.2) 0%, rgba(255, 255, 255, 0) 70%), var(--card);
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  padding: 24px 12px 14px;
+  margin-bottom: 14px;
+  overflow: visible;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+.lb-sunburst {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  height: 440px;
+  pointer-events: none;
+  opacity: 0.35;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(251, 191, 36, 0.22) 0deg 12deg,
+    transparent 12deg 24deg
+  );
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 72%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 72%);
+}
+
+/* Floating 3D Decorative Corner Elements */
+.floating-deco {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  animation: floatSlow 3.5s ease-in-out infinite;
+}
+.deco-hexagon {
+  top: -12px;
+  right: -10px;
+}
+.deco-sparkle {
+  bottom: 25px;
+  left: -14px;
+  animation-delay: -1.75s;
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(4deg); }
+}
+
+/* 3 Avatars Row */
+.lb-avatars-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  position: relative;
+  z-index: 4;
+  margin-bottom: -15px;
+  padding: 0 4px;
+}
+.lb-avatar-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lb-avatar-slot:hover {
+  transform: translateY(-4px) scale(1.04);
+}
+.lb-avatar-slot.rank-1 {
+  flex: 1.25;
+  transform: translateY(-4px);
+}
+.lb-avatar-slot.rank-1:hover {
+  transform: translateY(-8px) scale(1.05);
+}
+.lb-avatar-slot.rank-2 {
+  transform: translateY(22px);
+}
+.lb-avatar-slot.rank-3 {
+  transform: translateY(38px);
+}
+
+.lb-avatar-box {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.lb-crown-dot {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+  z-index: 2;
+}
+.lb-squircle {
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid var(--card);
+}
+.lb-squircle.gold {
+  width: 66px;
+  height: 66px;
+  border: 2.5px solid #FCD34D;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.35), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.lb-squircle.blue {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #93C5FD;
+}
+.lb-squircle.peach {
+  width: 52px;
+  height: 52px;
+  border: 2px solid #FDBA74;
+}
+
+.lb-player-name {
+  font-family: 'Mali', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.25;
+  max-width: 95px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-player-name.gold {
+  font-size: 14px;
+}
+.lb-player-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  background: var(--card);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.lb-player-score.gold {
+  color: var(--warn-ink);
+  border-color: rgba(245, 158, 11, 0.3);
+  background: var(--warnS);
+}
+
+/* 3D SVG Podium Wrapper */
+.lb-svg-wrap {
+  position: relative;
+  z-index: 2;
+  margin-top: -10px;
+}
+
+/* Updated Bar */
+.lb-updated-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--mute);
+  margin: 14px 0 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.lb-updated-bar:active {
+  opacity: 0.7;
+}
+
+/* Rank 4+ List */
+.lb-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lb-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.lb-user-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+.lb-user-row:active {
+  transform: scale(0.99);
+}
+.lb-user-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lb-rank-num {
+  width: 42px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Mali', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--mute);
+  flex-shrink: 0;
+}
+.lb-row-squircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lb-row-squircle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lb-row-meta {
+  display: flex;
+  flex-direction: column;
+}
+.lb-row-name {
+  font-family: 'Mali', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lb-me-tag {
+  font-size: 11px;
+  color: var(--pink-ink);
+  font-weight: 600;
+}
+.lb-row-sub {
+  font-size: 11.5px;
+  color: var(--mute);
+  margin-top: 1px;
+}
+.lb-user-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-row-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Member List Grid */
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.member-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Chat with Mochi Styles */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 240px);
+  min-height: 380px;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-msg {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.chat-msg.mochi {
+  align-self: flex-start;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--pinkS);
+  color: var(--ink);
+  border-bottom-right-radius: 4px;
+  font-weight: 500;
+}
+.chat-input-bar {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+}
+.chat-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+  scrollbar-width: none;
+}
+.chat-chips::-webkit-scrollbar { display: none; }
+.chip-btn {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* Monthly Calendar Grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+  margin-top: 10px;
+}
+.calendar-head {
+  font-size: 11px;
+  color: var(--mute);
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+.calendar-day {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--card);
+  transition: transform 0.1s ease;
+}
+.calendar-day:active { transform: scale(0.92); }
+.calendar-day.empty { border: none; background: transparent; cursor: default; }
+.calendar-day.ok { background: var(--mintS); border-color: var(--mint); color: #1E6B56; font-weight: 600; }
+.calendar-day.warn { background: var(--warnS); border-color: var(--warn); color: #B35C00; font-weight: 600; }
+.calendar-day.alert { background: var(--redS); border-color: var(--red); color: #B31D31; font-weight: 600; }
+.calendar-day small { font-size: 8px; margin-top: 1px; }
+
+/* Canvas Confetti */
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 85px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  z-index: 100;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  animation: popIn 0.2s ease;
+}
+@keyframes popIn { from { transform: translate(-50%, 10px); opacity: 0; } }
+
+/* Professional Settings Grouped Layout */
+.settings-sec-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 18px 8px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-group {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  margin-bottom: 12px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.settings-row:last-child {
+  border-bottom: none;
+}
+.settings-row:active {
+  background: var(--pinkS);
+}
+.settings-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.settings-label-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  display: block;
+}
+.settings-label-sub {
+  font-size: 11px;
+  color: var(--mute);
+  display: block;
+  margin-top: 1px;
+}
+.settings-row-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--mute);
+}
+.settings-chev {
+  font-size: 16px;
+  color: var(--mute);
+  margin-left: 2px;
+}
+.settings-hero {
+  background: linear-gradient(135deg, var(--pinkS), var(--mintS));
+  border-radius: 24px;
+  padding: 20px 16px 16px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+}
+.settings-hero-avatar {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 6px;
+  cursor: pointer;
+}
+.settings-hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.settings-hero-stat-box {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  flex: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.settings-hero-stat-box b {
+  display: block;
+  font-size: 14px;
+  font-family: "Mali", sans-serif;
+  color: var(--ink);
+}
+.settings-hero-stat-box small {
+  font-size: 10.5px;
+  color: var(--mute);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 10px 0;
+  line-height: 1.4;
+}
+.checkbox-label input { width: auto; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div id="app">
+  <!-- Top User Switcher Header -->
+  <div class="user-bar">
+    <div class="user-info" onclick="openProfileModal()">
+      <div id="uAvatar" class="mini-avatar"></div>
+      <div class="user-meta">
+        <b id="uName">กำลังโหลด...</b>
+        <small id="uPrivacy">แตะเพื่อจัดการบัญชี / สลับเพื่อน ▾</small>
+      </div>
+    </div>
+    <button class="btn s sm" onclick="openSheet()">+ มื้ออาหาร</button>
+  </div>
+
+  <!-- Streak Banner -->
+  <div id="streakBar" class="streak-bar">
+    <span>🔥 <b id="streakDays">0 วันติด</b> สม่ำเสมอดีมาก!</span>
+    <span style="font-size:11.5px; color:var(--mute);">เป้าหมายสร้างนิสัย 🍡</span>
+  </div>
+
+  <!-- Medical / Educational Disclaimer -->
+  <div class="disclaimer">
+    <i>⚠️</i>
+    <span><b>ค่าประมาณการเพื่อสุขภาพ:</b> ตัวเลขแคลและน้ำตาลเป็นการประเมินเบื้องต้นเพื่อปรับพฤติกรรม ไม่ใช่คำแนะนำทางการแพทย์</span>
+  </div>
+
+  <div id="main"></div>
+</div>
+
+<!-- Bottom Modal Sheet -->
+<div id="sheet" hidden></div>
+
+<!-- Bottom Tab Navigation -->
+<nav>
+  <button data-t="today" onclick="go('today')"><i>🍡</i>วันนี้</button>
+  <button data-t="chat" onclick="go('chat')"><i>💬</i>แชทโมจิ</button>
+  <button data-t="feed" onclick="go('feed')"><i>👥</i>เพื่อน ๆ</button>
+  <button data-t="stats" onclick="go('stats')"><i>📊</i>สถิติ</button>
+  <button data-t="settings" onclick="go('settings')"><i>⚙️</i>ตั้งค่า</button>
+</nav>
+
+<script>
+// Theme Initialization
+(function initTheme() {
+  const savedTheme = localStorage.getItem('moji_theme') || 'auto';
+  if (savedTheme !== 'auto') {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+})();
+
+function getAppTheme() {
+  return localStorage.getItem('moji_theme') || 'auto';
+}
+
+function getThemeLabel() {
+  const t = getAppTheme();
+  if (t === 'dark') return '🌙 โหมดมืด';
+  if (t === 'light') return '☀️ โหมดสว่าง';
+  return '🌓 ตามระบบ';
+}
+
+function openThemeModal() {
+  const current = getAppTheme();
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:6px;">🎨 ธีมและการแสดงผล</h2>
+      <p style="font-size:12.5px; color:var(--mute); margin:0 0 16px;">เลือกสไตล์การแสดงผลที่สบายตาที่สุดสำหรับคุณ คอนทราสต์สูง อ่านง่ายทุกโหมด</p>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('auto')">
+          <div class="settings-row-left">
+            <span style="font-size:22px;">🌓</span>
+            <div>
+              <span class="settings-label-title">ตามการตั้งค่าระบบ (System Default)</span>
+              <span class="settings-label-sub">เปลี่ยนตามธีมของอุปกรณ์คุณโดยอัตโนมัติ</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            ${current === 'auto' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
+          </div>
+        </div>
+
+        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('light')">
+          <div class="settings-row-left">
+            <span style="font-size:22px;">☀️</span>
+            <div>
+              <span class="settings-label-title">โหมดสว่าง (Light Theme)</span>
+              <span class="settings-label-sub">โทนสีพาสเทลโมจินุ่มละมุน สดใสสบายตา</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            ${current === 'light' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
+          </div>
+        </div>
+
+        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('dark')">
+          <div class="settings-row-left">
+            <span style="font-size:22px;">🌙</span>
+            <div>
+              <span class="settings-label-title">โหมดมืด (Dark Theme)</span>
+              <span class="settings-label-sub">โทนสีดาร์กพาสเทล สบายตาในที่มืด ตัวหนังสือคมชัด</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            ${current === 'dark' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
+    </div>
+  `;
+}
+
+function setAppTheme(theme) {
+  localStorage.setItem('moji_theme', theme);
+  if (theme === 'auto') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  closeSheet();
+  render();
+  toast(theme === 'dark' ? 'เปิดโหมดมืดเรียบร้อย 🌙' : theme === 'light' ? 'เปิดโหมดสว่างเรียบร้อย ☀️' : 'ตั้งค่าตามระบบเรียบร้อย 🌓');
+}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const key = (d) => {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+const fmt = n => Math.round((Number(n) || 0) * 10) / 10;
+
+// State
+let users = [];
+let currentUser = null;
+let currentLogs = [];
+let feedData = [];
+let favorites = [];
+let challenges = [];
+let chatHistory = [];
+let userStreak = { current: 0, best: 0 };
+let tab = 'today';
+let feedSubTab = 'activities'; // 'activities' | 'leaderboard' | 'members'
+let activitiesData = [];
+let leaderboardData = [];
+let draft = null;
+let appSettings = {};
+let isListeningVoice = false;
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW register failed:', e));
+}
+
+// Mascot SVG Generator with Hat Accessories
+function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none') {
+  const E = {
+    happy: '<path d="M38 58q5-8 10 0M72 58q5-8 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    ok: '<circle cx="43" cy="58" r="3.5" fill="#4A3F44"/><circle cx="77" cy="58" r="3.5" fill="#4A3F44"/>',
+    worry: '<circle cx="43" cy="59" r="3.5" fill="#4A3F44"/><circle cx="77" cy="59" r="3.5" fill="#4A3F44"/><path d="M36 49l13 4M84 49l-13 4" stroke="#4A3F44" stroke-width="2.5" stroke-linecap="round"/>',
+    alert: '<circle cx="43" cy="58" r="6" fill="#4A3F44"/><circle cx="77" cy="58" r="6" fill="#4A3F44"/><circle cx="45" cy="56" r="2" fill="#fff"/><circle cx="79" cy="56" r="2" fill="#fff"/><path d="M100 36q6 9 0 13q-6-4 0-13z" fill="#8FD3F4"/>',
+    wink: '<path d="M38 58q5-7 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/><circle cx="77" cy="58" r="4" fill="#4A3F44"/>'
+  };
+  const M = {
+    happy: '<path d="M52 70q8 9 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    ok: '<path d="M54 71q6 5 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    worry: '<path d="M52 76q8-6 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    alert: '<ellipse cx="60" cy="75" rx="5" ry="6.5" fill="#4A3F44"/>',
+    wink: '<path d="M54 70q6 6 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>'
+  };
+
+  // Hat / Accessory SVG elements
+  const HATS = {
+    none: '<path d="M60 14q-3-9 7-12" fill="none" stroke="#5ABEA3" stroke-width="4" stroke-linecap="round"/>',
+    flower: '<circle cx="38" cy="18" r="8" fill="#FFB7B2"/><circle cx="38" cy="18" r="4" fill="#FFEAA7"/>',
+    crown: '<polygon points="46,18 52,4 60,14 68,4 74,18" fill="#FFD166" stroke="#E09F3E" stroke-width="1.5"/><circle cx="52" cy="4" r="2" fill="#FF6B6B"/><circle cx="68" cy="4" r="2" fill="#4D96FF"/>',
+    bow: '<path d="M52 14c-6-6-14 0-8 6l8-3z M68 14c6-6 14 0 8 6l-8-3z" fill="#FF6B8B"/><circle cx="60" cy="15" r="3.5" fill="#D81B60"/>',
+    chef: '<path d="M42 20h36v-6c0-6-10-8-10-8s-2-6-8-6-8 6-8 6-10 2-10 8z" fill="#FFFFFF" stroke="#D3C5CA" stroke-width="1.5"/>',
+    sprout: '<path d="M60 16q-6-12 2-14c4 4 0 10-2 14z M60 16q6-12-2-14c-4 4 0 10 2 14z" fill="#2ECC71"/>'
+  };
+
+  const f = E[face] || E.happy;
+  const m = M[face] || M.happy;
+  const h = HATS[hat] || HATS.none;
+
+  return `<svg viewBox="0 0 120 112" width="${size}" height="${size * 0.93}">
+    <path d="M60 14C88 14 106 34 106 62c0 24-18 40-46 40S14 86 14 62C14 34 32 14 60 14z" fill="${color}"/>
+    ${h}
+    <ellipse cx="31" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
+    <ellipse cx="89" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
+    ${f}${m}
+  </svg>`;
+}
+
+// Circular Progress Ring
+function ringSVG(v, g, col, big, small) {
+  const p = Math.min(v / (g || 1), 1);
+  const c = 2 * Math.PI * 34;
+  const over = v > g;
+  return `<div class="card">
+    <svg viewBox="0 0 84 84">
+      <circle cx="42" cy="42" r="34" fill="none" stroke="var(--line)" stroke-width="8"/>
+      <circle cx="42" cy="42" r="34" fill="none" stroke="${over ? 'var(--red)' : col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${p * c} ${c}" transform="rotate(-90 42 42)"/>
+    </svg>
+    <b>${big}</b>
+    <small>${small}</small>
+  </div>`;
+}
+
+// Dynamic Mascot Mood & Gentle Guidance
+function moodOf(totalSugar, goalSugar, totalCal, goalCal, count) {
+  const sp = totalSugar / (goalSugar || 25);
+  const kp = totalCal / (goalCal || 2000);
+  if (!count) return ['happy', 'วันนี้ยังไม่ได้บันทึกอะไรเลย บันทึกหรือถ่ายรูปมื้อแรกให้โมจิดูหน่อยน้า~'];
+  if (sp > 1) return ['alert', 'น้ำตาลเกินเป้าหมายแล้ว! ดื่มน้ำเปล่าเยอะๆ เลี่ยงของหวานก่อนน้า'];
+  if (sp >= 0.85) return ['worry', 'ใกล้เต็มโควตาน้ำตาลแล้วนะ มื้อต่อไปเลือกหวาน 0% ดีกว่า'];
+  if (kp > 1) return ['worry', 'แคลอรีเกินเป้าแล้วนะ ค่อยๆ ปรับสมดุลในมื้อต่อไปกันนะ'];
+  if (count >= 2 && totalCal < 1000) return ['worry', 'วันนี้ทานไปน้อยจัง อย่าลืมทานอาหารให้ครบ 1,200 kcal เพื่อสุขภาพที่ดีน้า โมจิเป็นห่วง 🍡'];
+  if (sp >= 0.5) return ['ok', 'เริ่มหวานขึ้นมาครึ่งทางแล้ว ระวังมื้อบ่ายอีกนิดนะ'];
+  return ['happy', 'วันนี้คุมน้ำตาลได้ยอดเยี่ยม สดชื่นและสุขภาพดี! 🍡'];
+}
+
+// API Services
+async function fetchSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    appSettings = await res.json();
+  } catch (err) {
+    console.error('Fetch settings error:', err);
+  }
+}
+
+async function fetchUsers() {
+  try {
+    const res = await fetch('/api/users');
+    const data = await res.json();
+    users = data.users || [];
+    const savedId = localStorage.getItem('mochi_user_id');
+    currentUser = users.find(u => u.id === savedId) || users[0] || null;
+    if (currentUser) {
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      updateUserHeader();
+      checkPdpaConsent();
+    }
+  } catch (err) {
+    console.error('Fetch users error:', err);
+  }
+}
+
+async function fetchLogs() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${key()}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    currentLogs = data.logs || [];
+  } catch (err) {
+    console.error('Fetch logs error:', err);
+  }
+}
+
+async function fetchFeed() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/feed?date=${key()}&userId=${currentUser.id}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    feedData = data.feed || [];
+  } catch (err) {
+    console.error('Fetch feed error:', err);
+  }
+}
+
+async function fetchActivities() {
+  try {
+    const res = await fetch('/api/activities');
+    const data = await res.json();
+    activitiesData = data.activities || [];
+  } catch (err) {
+    console.error('Fetch activities error:', err);
+  }
+}
+
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch('/api/leaderboard');
+    const data = await res.json();
+    leaderboardData = data.leaderboard || [];
+  } catch (err) {
+    console.error('Fetch leaderboard error:', err);
+  }
+}
+
+async function fetchFavorites() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/favorites?userId=${currentUser.id}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    favorites = data.favorites || [];
+  } catch (err) {
+    console.error('Fetch favorites error:', err);
+  }
+}
+
+async function fetchStreak() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/streak?userId=${currentUser.id}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    userStreak = await res.json();
+    $('#streakDays').textContent = `${userStreak.current} วันติด`;
+  } catch (err) {
+    console.error('Fetch streak error:', err);
+  }
+}
+
+async function fetchChallenges() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/challenges?userId=${currentUser.id}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    challenges = data.challenges || [];
+  } catch (err) {
+    console.error('Fetch challenges error:', err);
+  }
+}
+
+async function fetchChatHistory() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/chat?userId=${currentUser.id}`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    chatHistory = data.messages || [];
+  } catch (err) {
+    console.error('Fetch chat error:', err);
+  }
+}
+
+function updateUserHeader() {
+  if (!currentUser) return;
+  $('#uName').innerHTML = `${esc(currentUser.nickname)} ${currentUser.google_id ? '<span style="color:#4285F4; font-size:12px;" title="เชื่อมต่อ Google">●</span>' : ''}`;
+  if (currentUser.avatar_image) {
+    $('#uAvatar').innerHTML = `<img src="${esc(currentUser.avatar_image)}" alt="Profile">`;
+  } else {
+    $('#uAvatar').innerHTML = mascotSVG(currentUser.avatar_face, currentUser.avatar_color, 36, currentUser.avatar_hat);
+  }
+  const privacyText = currentUser.privacy_level === 'full' ? 'แชร์ชื่อเมนูให้เพื่อน' : currentUser.privacy_level === 'summary' ? 'แชร์เฉพาะตัวเลขรวม' : 'โหมดส่วนตัว';
+  $('#uPrivacy').textContent = `${privacyText} ▾`;
+}
+
+// Check PDPA Consent
+function checkPdpaConsent() {
+  if (currentUser && !currentUser.consent_pdpa) {
+    openPdpaModal();
+  }
+}
+
+function openPdpaModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:12px;">
+        <div style="width:72px; margin:0 auto 8px;">${mascotSVG('happy', '#FF9EB5', 72)}</div>
+        <h2 class="hd" style="font-size:19px;">ยินดีต้อนรับสู่ โมจิ 🍡</h2>
+        <small style="color:var(--mute);">นโยบายความเป็นส่วนตัวและข้อตกลงการใช้งาน</small>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; font-size:13px; line-height:1.5; color:var(--ink); margin-bottom:14px; max-height:160px; overflow-y:auto;">
+        <b>ข้อกำหนด PDPA และการคุ้มครองข้อมูลส่วนบุคคล:</b><br>
+        1. แอปโมจิจะจัดเก็บข้อมูลมื้ออาหาร แคลอรี และน้ำตาล เพื่อการคำนวณและแสดงผลสถิติส่วนบุคคลของท่านเท่านั้น<br>
+        2. ข้อมูลจะไม่ถูกส่งต่อหรือขายให้แก่บุคคลภายนอกโดยเด็ดขาด<br>
+        3. ท่านมีสิทธิ์ในการส่งออกข้อมูล (Export CSV) และขอลบข้อมูลบัญชีของตนเองทั้งหมดได้ทุกเมื่อในเมนูตั้งค่า<br>
+        4. <b>ข้อความปฏิเสธความรับผิดชอบ:</b> ตัวเลขและผลการวิเคราะห์ทั้งหมดเป็นค่าประเมินเบื้องต้นเพื่อปรับพฤติกรรม ไม่ใช่คำแนะนำทางการแพทย์
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="pdpaAgree" checked>
+        <span>ฉันยินยอมให้จัดเก็บและประมวลผลข้อมูลโภชนาการส่วนบุคคลตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="medicalAgree" checked>
+        <span>ฉันรับทราบว่าข้อมูลในแอปเป็นค่าประมาณเพื่อสร้างความตระหนัก ไม่ใช่คำแนะนำทางการแพทย์</span>
+      </label>
+
+      <button class="btn" style="margin-top:14px;" onclick="acceptPdpaConsent()">ยอมรับและเริ่มต้นใช้งาน 🍡</button>
+    </div>
+  `;
+}
+
+async function acceptPdpaConsent() {
+  if (!$('#pdpaAgree').checked || !$('#medicalAgree').checked) {
+    toast('กรุณาทำเครื่องหมายยินยอมทั้งสองข้อก่อนเริ่มต้นใช้งานนะ');
+    return;
+  }
+  try {
+    await fetch('/api/auth/consent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    currentUser.consent_pdpa = 1;
+    closeSheet();
+    toast('ยินดีต้อนรับสู่โมจินะครับ 🍡');
+  } catch (e) {
+    toast('บันทึกความยินยอมไม่สำเร็จ');
+  }
+}
+
+// Confetti Animation Trigger
+function fireConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const confetti = [];
+  const colors = ['#FF9EB5', '#5ABEA3', '#FFD166', '#A78BFA', '#FF8AA6'];
+  for (let i = 0; i < 45; i++) {
+    confetti.push({
+      x: canvas.width / 2,
+      y: canvas.height * 0.4,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 8 + 4,
+      vx: (Math.random() - 0.5) * 12,
+      vy: Math.random() * -12 - 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1
+    });
+  }
+
+  let frame = 0;
+  function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    confetti.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.4;
+      p.alpha -= 0.016;
+      if (p.alpha > 0) {
+        alive = true;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+      }
+    });
+    frame++;
+    if (alive && frame < 90) requestAnimationFrame(update);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  requestAnimationFrame(update);
+}
+
+// Render Views
+function render() {
+  if (tab === 'today') renderToday();
+  else if (tab === 'chat') renderChat();
+  else if (tab === 'feed') renderFeed();
+  else if (tab === 'stats') renderStats();
+  else if (tab === 'settings') renderSettings();
+
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+}
+
+function go(t) {
+  tab = t;
+  if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges()]).then(render);
+  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak()]).then(render);
+  else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).then(render);
+  else if (t === 'chat') fetchChatHistory().then(render);
+  else render();
+  window.scrollTo(0, 0);
+}
+
+// 1. TODAY VIEW
+function renderToday() {
+  const totalCal = currentLogs.reduce((a, b) => a + b.calorie, 0);
+  const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
+  const [mood, msg] = moodOf(totalSugar, currentUser?.sugar_goal, totalCal, currentUser?.calorie_goal, currentLogs.length);
+  const dateTh = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
+
+  $('#main').innerHTML = `
+    <div class="top">
+      <h1>โมจิวันนี้ 🍡</h1>
+      <span>${dateTh}</span>
+    </div>
+
+    <div class="card mo">
+      <div class="mo-svg-wrap">${mascotSVG(mood, currentUser?.avatar_color, 88, currentUser?.avatar_hat)}</div>
+      <div class="bub">${msg}</div>
+    </div>
+
+    <div class="rings">
+      ${ringSVG(totalCal, currentUser?.calorie_goal || 2000, 'var(--pink)', fmt(totalCal) + ' kcal', 'เป้า ' + (currentUser?.calorie_goal || 2000))}
+      ${ringSVG(totalSugar, currentUser?.sugar_goal || 25, 'var(--mint)', fmt(totalSugar) + ' g', 'น้ำตาล / ' + (currentUser?.sugar_goal || 25) + ' g')}
+    </div>
+
+    <!-- Gentle Health Reminder (Pillar 5) -->
+    ${(totalCal > 0 && totalCal < 1200 && currentLogs.length >= 2) ? `
+      <div style="background:var(--warnS); border:1px solid var(--warn); border-radius:14px; padding:10px 14px; margin:8px 0; font-size:12.5px; color:var(--ink); display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">🍡</span>
+        <span>อย่าลืมทานอาหารให้เพียงพอน้า ร่างกายต้องการพลังงานอย่างน้อย 1,200 kcal ต่อวันเพื่อสุขภาพที่ดีและไม่โยโย่นะคะ</span>
+      </div>
+    ` : ''}
+
+    <!-- Quick Favorites Carousel -->
+    ${favorites.length ? `
+      <div style="margin: 8px 0 4px;">
+        <small style="color:var(--mute); font-size:12px; font-weight:600;">⭐ เมนูประจำ (แตะบันทึกทันทีใน 1 วิ):</small>
+        <div class="fav-scroll">
+          ${favorites.map(f => `
+            <div class="fav-pill" onclick="quickLogFavorite('${f.id}')">
+              <span>${esc(f.name)}</span>
+              <span style="color:var(--mute); font-size:11px;">${fmt(f.calorie)}k / ${fmt(f.sugar)}g</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <div style="display:flex; gap:8px; margin: 10px 0 12px;">
+      <button class="btn" style="flex:2;" onclick="openSheet()">+ เพิ่มมื้ออาหาร</button>
+      <button class="btn s sm" style="flex:1;" onclick="triggerWaterLog()">💧 ดื่มน้ำเปล่า</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h2 class="hd" style="font-size:16px;">วันนี้กินอะไรไปบ้าง (${currentLogs.length} มื้อ)</h2>
+        <button class="btn s sm" onclick="openShareModal()">💌 แชร์การ์ดรูป</button>
+      </div>
+      ${currentLogs.length ? currentLogs.map(l => `
+        <div class="row">
+          <div>
+            <b>${esc(l.name)}</b> ${l.is_private ? '<span style="font-size:11px; color:var(--mute);">🔒 ส่วนตัว</span>' : ''}
+            <small>${fmt(l.calorie)} kcal · <span class="${l.sugar >= (currentUser?.sugar_goal * 0.4) ? 'sug' : ''}">น้ำตาล ${fmt(l.sugar)} g</span> ${l.sweetness_level !== 'normal' ? '· ' + esc(l.sweetness_level) : ''}</small>
+          </div>
+          <button class="x" onclick="deleteMeal('${l.id}')">×</button>
+        </div>
+      `).join('') : '<p style="color:var(--mute); margin: 6px 0;">ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย</p>'}
+    </div>
+  `;
+}
+
+async function quickLogFavorite(favId) {
+  const fav = favorites.find(f => f.id === favId);
+  if (!fav) return;
+
+  await fetch('/api/logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: currentUser.id,
+      date: key(),
+      name: fav.name,
+      calorie: fav.calorie,
+      sugar: fav.sugar,
+      portion_size: fav.portion_size,
+      sweetness_level: fav.sweetness_level,
+      is_private: 0
+    })
+  });
+  fireConfetti();
+  await fetchLogs();
+  await fetchStreak();
+  render();
+  toast(`บันทึก "${fav.name}" เรียบร้อยแล้ว 🍡`);
+}
+
+async function triggerWaterLog() {
+  await fetch('/api/logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: currentUser.id,
+      date: key(),
+      name: 'น้ำเปล่าบริสุทธิ์ 1 แก้ว',
+      calorie: 0,
+      sugar: 0,
+      portion_size: 'normal',
+      sweetness_level: 'none',
+      is_private: 0
+    })
+  });
+  fireConfetti();
+  await fetchLogs();
+  await fetchStreak();
+  render();
+  sendPushNotification('โมจิชื่นใจจัง 💧', 'ดื่มน้ำเปล่าดีต่อสุขภาพและช่วยลดความอยากหวานได้ดีมากเลย!');
+  toast('บันทึกการดื่มน้ำแล้ว เก่งมาก 💧');
+}
+
+// 2. CHAT WITH MOCHI VIEW (Phase 3)
+function renderChat() {
+  const remCal = Math.max(0, (currentUser?.calorie_goal || 2000) - currentLogs.reduce((a,b)=>a+b.calorie,0));
+  const remSugar = Math.round(((currentUser?.sugar_goal || 25) - currentLogs.reduce((a,b)=>a+b.sugar,0))*10)/10;
+
+  $('#main').innerHTML = `
+    <div class="top">
+      <h1>คุยกับโมจิ 💬</h1>
+      <span>เหลือ ${remSugar}g น้ำตาล</span>
+    </div>
+
+    <div class="card" style="padding:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+      <div style="width:48px; height:48px; flex-shrink:0;">
+        ${mascotSVG('happy', currentUser?.avatar_color, 48, currentUser?.avatar_hat)}
+      </div>
+      <div style="font-size:12px; line-height:1.4;">
+        <b>โมจิพร้อมช่วยคิดเมนู!</b> ปรึกษาได้เลยว่ามื้อต่อไปกินอะไรดีเพื่อไม่ให้น้ำตาลเกินโควตา
+      </div>
+    </div>
+
+    <!-- Quick Question Chips -->
+    <div class="chat-chips">
+      <button class="chip-btn" onclick="sendQuickMessage('มื้อเย็นกินอะไรดี น้ำตาลเหลือไม่เยอะ')">🍲 มื้อเย็นกินอะไรดี?</button>
+      <button class="chip-btn" onclick="sendQuickMessage('วันนี้น้ำตาลเหลืออีกกี่กรัม?')">🍬 น้ำตาลเหลือเท่าไหร่?</button>
+      <button class="chip-btn" onclick="sendQuickMessage('อยากกินของหวาน มีอะไรแนะนำไม่ให้น้ำตาลเกินไหม')">🍨 อยากกินของหวาน</button>
+      <button class="chip-btn" onclick="sendQuickMessage('ช่วยแนะนำเครื่องดื่มหวานน้อยสดชื่นหน่อย')">🧋 แนะนำเครื่องดื่ม</button>
+    </div>
+
+    <div class="card chat-container">
+      <div class="chat-messages" id="chatMsgList">
+        <div class="chat-msg mochi">
+          สวัสดีจ้า ${esc(currentUser?.nickname)}! วันนี้กินน้ำตาลไปแล้ว ${fmt(currentLogs.reduce((a,b)=>a+b.sugar,0))}g (เหลือโควตาอีก ${remSugar}g น้า) มีอะไรอยากปรึกษาโมจิถามได้เลย 🍡
+        </div>
+        ${chatHistory.map(m => `
+          <div class="chat-msg ${m.role === 'user' ? 'user' : 'mochi'}">
+            ${esc(m.content)}
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="chat-input-bar">
+        <input id="chatInput" placeholder="ถามโมจิ เช่น มื้อเย็นกินอะไรดี..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+        <button class="btn s sm" style="width:auto; padding:0 16px;" onclick="sendChatMessage()">ส่ง</button>
+      </div>
+    </div>
+  `;
+
+  // Scroll to bottom
+  const msgList = document.getElementById('chatMsgList');
+  if (msgList) msgList.scrollTop = msgList.scrollHeight;
+}
+
+function sendQuickMessage(text) {
+  $('#chatInput').value = text;
+  sendChatMessage();
+}
+
+async function sendChatMessage() {
+  const input = $('#chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const msgList = document.getElementById('chatMsgList');
+  // Append user message immediately
+  msgList.innerHTML += `<div class="chat-msg user">${esc(msg)}</div>`;
+  input.value = '';
+  msgList.scrollTop = msgList.scrollHeight;
+
+  // Typing placeholder
+  const typingId = 'typing_' + Date.now();
+  msgList.innerHTML += `<div class="chat-msg mochi" id="${typingId}">โมจิกำลังคิดเมนูให้... 🍡</div>`;
+  msgList.scrollTop = msgList.scrollHeight;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, message: msg })
+    });
+    const data = await res.json();
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) {
+      typingEl.textContent = data.reply;
+    }
+    await fetchChatHistory();
+  } catch (e) {
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.textContent = 'โมจิมึนนิดหน่อย ลองถามใหม่อีกครั้งนะ 🍡';
+  }
+}
+
+// 3. GROUP FEED VIEW, LEADERBOARD, ACTIVITIES & MEMBERS
+function setFeedSubTab(subTab) {
+  feedSubTab = subTab;
+  renderFeed();
+}
+
+function formatTimeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'เมื่อสักครู่';
+  if (m < 60) return `${m} นาทีที่แล้ว`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} ชม. ที่แล้ว`;
+  return `${Math.floor(h / 24)} วันที่แล้ว`;
+}
+
+// 3D Isometric SVG Podium Generator for Leaderboard Spec
+function get3DPodiumSVG(top1, top2, top3) {
+  const t1Id = top1 ? top1.id : '';
+  const t2Id = top2 ? top2.id : '';
+  const t3Id = top3 ? top3.id : '';
+
+  const laurel = (scale = 1) => `
+    <g class="laurel-wreath" transform="scale(${scale})">
+      <path d="M -4,18 C -16,17 -26,6 -24,-12 C -23,-19 -18,-26 -12,-30" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 4,18 C 16,17 26,6 24,-12 C 23,-19 18,-26 12,-30" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round"/>
+      <ellipse cx="-10" cy="14" rx="4.5" ry="2.2" transform="rotate(25 -10 14)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="10" cy="14" rx="4.5" ry="2.2" transform="rotate(-25 10 14)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="-17" cy="9" rx="5" ry="2.4" transform="rotate(40 -17 9)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="17" cy="9" rx="5" ry="2.4" transform="rotate(-40 17 9)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="-21" cy="1" rx="5" ry="2.4" transform="rotate(60 -21 1)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="21" cy="1" rx="5" ry="2.4" transform="rotate(-60 21 1)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="-22" cy="-7" rx="5" ry="2.4" transform="rotate(80 -22 -7)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="22" cy="-7" rx="5" ry="2.4" transform="rotate(-80 22 -7)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="-19" cy="-15" rx="4.5" ry="2.2" transform="rotate(105 -19 -15)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="19" cy="-15" rx="4.5" ry="2.2" transform="rotate(-105 19 -15)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="-13" cy="-22" rx="4" ry="2" transform="rotate(130 -13 -22)" fill="rgba(255,255,255,0.9)"/>
+      <ellipse cx="13" cy="-22" rx="4" ry="2" transform="rotate(-130 13 -22)" fill="rgba(255,255,255,0.9)"/>
+      <circle cx="0" cy="18" r="2" fill="rgba(255,255,255,0.9)"/>
+    </g>
+  `;
+
+  return `
+  <svg viewBox="0 0 340 190" width="100%" height="190" style="overflow:visible; display:block;">
+    <defs>
+      <!-- Gradients for Step 1 (Gold) -->
+      <linearGradient id="gradTop1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FEF08A"/>
+        <stop offset="100%" stop-color="#FCD34D"/>
+      </linearGradient>
+      <linearGradient id="gradFront1" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#F59E0B"/>
+        <stop offset="50%" stop-color="#EAB308"/>
+        <stop offset="100%" stop-color="#F59E0B"/>
+      </linearGradient>
+
+      <!-- Gradients for Step 2 (Blue) -->
+      <linearGradient id="gradTop2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#EFF6FF"/>
+        <stop offset="100%" stop-color="#DBEAFE"/>
+      </linearGradient>
+      <linearGradient id="gradFront2" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#93C5FD"/>
+        <stop offset="70%" stop-color="#60A5FA"/>
+        <stop offset="100%" stop-color="#93C5FD"/>
+      </linearGradient>
+
+      <!-- Gradients for Step 3 (Peach/Coral) -->
+      <linearGradient id="gradTop3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFF7ED"/>
+        <stop offset="100%" stop-color="#FFEDD5"/>
+      </linearGradient>
+      <linearGradient id="gradFront3" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#FDBA74"/>
+        <stop offset="70%" stop-color="#FB923C"/>
+        <stop offset="100%" stop-color="#FDBA74"/>
+      </linearGradient>
+
+      <!-- Drop Shadows -->
+      <filter id="podiumShadow" x="-10%" y="-10%" width="120%" height="130%">
+        <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="rgba(0,0,0,0.1)"/>
+      </filter>
+    </defs>
+
+    <!-- STEP 2 (LEFT - BLUE) -->
+    <g class="step-2" filter="url(#podiumShadow)" style="cursor:pointer;" onclick="${t2Id ? `openMemberDetailModal('${t2Id}')` : ''}">
+      <!-- Top Face -->
+      <polygon points="12,78 116,78 126,56 22,56" fill="url(#gradTop2)"/>
+      <!-- Front Face -->
+      <polygon points="12,78 116,78 116,180 12,180" fill="url(#gradFront2)"/>
+      <!-- Content: 3 Stars, Number 2, Laurel -->
+      <text x="64" y="100" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.95)" letter-spacing="3">★★★</text>
+      <text x="64" y="136" text-anchor="middle" font-family="'Mali', 'Noto Sans Thai', sans-serif" font-weight="800" font-size="38" fill="#FFFFFF">2</text>
+      <g transform="translate(64, 140)">
+        ${laurel(0.95)}
+      </g>
+    </g>
+
+    <!-- STEP 3 (RIGHT - PEACH) -->
+    <g class="step-3" filter="url(#podiumShadow)" style="cursor:pointer;" onclick="${t3Id ? `openMemberDetailModal('${t3Id}')` : ''}">
+      <!-- Top Face -->
+      <polygon points="224,96 328,96 318,74 214,74" fill="url(#gradTop3)"/>
+      <!-- Front Face -->
+      <polygon points="224,96 328,96 328,180 224,180" fill="url(#gradFront3)"/>
+      <!-- Content: 3 Stars, Number 3, Laurel -->
+      <text x="276" y="118" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.95)" letter-spacing="3">★★★</text>
+      <text x="276" y="152" text-anchor="middle" font-family="'Mali', 'Noto Sans Thai', sans-serif" font-weight="800" font-size="36" fill="#FFFFFF">3</text>
+      <g transform="translate(276, 154)">
+        ${laurel(0.9)}
+      </g>
+    </g>
+
+    <!-- STEP 1 (CENTER - GOLD - IN FRONT) -->
+    <g class="step-1" filter="url(#podiumShadow)" style="cursor:pointer;" onclick="${t1Id ? `openMemberDetailModal('${t1Id}')` : ''}">
+      <!-- Left 3D side facet (visible overlap against step 2) -->
+      <polygon points="104,44 116,22 116,56 104,78" fill="#D97706"/>
+      <!-- Right 3D side facet (visible overlap against step 3) -->
+      <polygon points="236,44 224,22 224,74 236,96" fill="#B45309"/>
+      <!-- Top Face -->
+      <polygon points="104,44 236,44 224,22 116,22" fill="url(#gradTop1)"/>
+      <!-- Front Face -->
+      <polygon points="104,44 236,44 236,180 104,180" fill="url(#gradFront1)"/>
+      <!-- Content: 3 Stars, Number 1, Laurel -->
+      <text x="170" y="70" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.95)" letter-spacing="4">★★★</text>
+      <text x="170" y="114" text-anchor="middle" font-family="'Mali', 'Noto Sans Thai', sans-serif" font-weight="800" font-size="48" fill="#FFFFFF">1</text>
+      <g transform="translate(170, 118)">
+        ${laurel(1.15)}
+      </g>
+    </g>
+  </svg>
+  `;
+}
+
+// Modal explaining Leaderboard Coin Rules
+function openLeaderboardInfoModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🏆</span>
+        <h2 class="hd" style="font-size:19px;">กติกาสะสมคอยน์แก๊งโมจิ</h2>
+        <span style="font-size:12px; color:var(--mute);">ทำกิจกรรมสุขภาพรับคอยน์เพื่อชิงอันดับ 1 ของแก๊ง!</span>
+      </div>
+
+      <div class="settings-group" style="margin-bottom:16px;">
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#FFE3EA; color:#D81B60;">🍱</div>
+            <div>
+              <span class="settings-label-title">บันทึกมื้ออาหาร</span>
+              <span class="settings-label-sub">ถ่ายรูปหรือพิมพ์มื้ออาหารทุกมื้อ</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill">+10 🪙</span>
+          </div>
+        </div>
+
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#E0F2FE; color:#0284C7;">💧</div>
+            <div>
+              <span class="settings-label-title">ดื่มน้ำเปล่า</span>
+              <span class="settings-label-sub">บันทึกการดื่มน้ำระหว่างวัน</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill">+5 🪙</span>
+          </div>
+        </div>
+
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">🎯</div>
+            <div>
+              <span class="settings-label-title">พิชิตชาเลนจ์สุขภาพ</span>
+              <span class="settings-label-sub">ลดหวาน ดื่มน้ำ หรือบันทึกครบ 3 มื้อ</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill">+15 🪙</span>
+          </div>
+        </div>
+
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#EDE9FE; color:#6D28D9;">💌</div>
+            <div>
+              <span class="settings-label-title">ส่งกำลังใจให้เพื่อน</span>
+              <span class="settings-label-sub">แตะส่งหัวใจ ไฮไฟฟ์ สู้ๆ ให้เพื่อนในกลุ่ม</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill">+2 🪙</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="closeSheet()">เข้าใจแล้ว ลุยกันเลย! 🍡</button>
+    </div>
+  `;
+}
+
+function renderFeed() {
+  const dateTh = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const monthName = new Date().toLocaleDateString('th-TH', { month: 'long' });
+  const yearAd = new Date().getFullYear();
+  const periodLabel = `${monthName} ${yearAd}`;
+
+  // Sort leaderboard for podium
+  const sortedRank = [...leaderboardData].sort((a, b) => (b.coins || 0) - (a.coins || 0));
+  const top1 = sortedRank[0] || null;
+  const top2 = sortedRank[1] || null;
+  const top3 = sortedRank[2] || null;
+
+  $('#main').innerHTML = `
+    <div class="top" style="align-items:flex-start;">
+      <div>
+        <h1>แก๊งโมจิ 👥</h1>
+        <span style="font-size:12px; color:var(--mute);">วันนี้ (${dateTh})</span>
+      </div>
+      <div class="coin-pill" style="font-size:12px; padding:4px 10px;">
+        🪙 ${currentUser?.coins || 120} คอยน์
+      </div>
+    </div>
+
+    <!-- Sub-tab Switcher (Dashboard / Leaderboard / Members) -->
+    <div class="feed-tabs">
+      <button class="feed-tab-btn ${feedSubTab === 'activities' ? 'active' : ''}" onclick="setFeedSubTab('activities')">
+        <span>⚡ กิจกรรม & มื้อ</span>
+      </button>
+      <button class="feed-tab-btn ${feedSubTab === 'leaderboard' ? 'active' : ''}" onclick="setFeedSubTab('leaderboard')">
+        <span>🏆 อันดับคอยน์</span>
+      </button>
+      <button class="feed-tab-btn ${feedSubTab === 'members' ? 'active' : ''}" onclick="setFeedSubTab('members')">
+        <span>👥 สมาชิก (${users.length})</span>
+      </button>
+    </div>
+
+    <!-- VIEW 1: Activities & Daily Meals Feed -->
+    ${feedSubTab === 'activities' ? `
+      <!-- Recent Activities Stream Card -->
+      <div class="activity-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">⚡ กระดานความเคลื่อนไหวล่าสุด</b>
+          <span style="font-size:11px; color:var(--mute);">อัปเดตสด</span>
+        </div>
+        ${activitiesData.length ? activitiesData.slice(0, 6).map(act => `
+          <div class="activity-item">
+            <div class="mini-avatar" style="width:34px; height:34px; cursor:pointer;" onclick="openMemberDetailModal('${act.user_id}')" title="กดดูโปรไฟล์เพื่อน">
+              ${act.avatar_image ? `<img src="${esc(act.avatar_image)}" alt="">` : mascotSVG(act.avatar_face, act.avatar_color, 34, act.avatar_hat)}
+            </div>
+            <div class="activity-text">
+              <span style="cursor:pointer; font-weight:700; color:var(--ink);" onclick="openMemberDetailModal('${act.user_id}')">${esc(act.nickname)}:</span>
+              <span style="color:var(--ink); opacity:0.9;"> ${esc(act.text)}</span>
+            </div>
+            <span class="activity-time">${formatTimeAgo(act.created_at)}</span>
+          </div>
+        `).join('') : '<p style="color:var(--mute); font-size:12px; margin:4px 0;">ยังไม่มีกิจกรรมล่าสุด เริ่มต้นบันทึกอาหารหรือดื่มน้ำเพื่อรับคอยน์กันเลย 🍡</p>'}
+      </div>
+
+      <!-- Group Challenges Card -->
+      <div class="challenge-banner">
+        <h2 class="hd" style="font-size:16px; margin-bottom:4px;">🎯 ชาเลนจ์สุขภาพของแก๊งเรา</h2>
+        <p style="font-size:12px; margin:0 0 10px;">ร่วมทำภารกิจลดหวานสร้างนิสัยไปด้วยกันแบบไม่กดดัน (+15 🪙)</p>
+        
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${challenges.map(c => `
+            <div class="challenge-item">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:20px;">${c.icon}</span>
+                <div>
+                  <b style="font-size:13px; font-family:'Mali',sans-serif;">${esc(c.title)}</b>
+                  <div style="font-size:11px; color:var(--mute);">${esc(c.description)}</div>
+                </div>
+              </div>
+              ${c.is_joined ? `
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <span class="badge ok">ร่วมแล้ว (${c.progress_days}/${c.target_days} วัน)</span>
+                  <button class="btn g sm" style="padding:4px 8px; font-size:11px;" onclick="leaveChallenge('${c.id}')" title="ออกจากชาเลนจ์">ออก</button>
+                </div>
+              ` : `
+                <button class="btn s sm" style="flex-shrink:0;" onclick="joinChallenge('${c.id}')">+ เข้าร่วม (+15 🪙)</button>
+              `}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Friends Daily Meals -->
+      <div style="margin: 6px 0 10px; font-weight:700; font-size:14px; font-family:'Mali',sans-serif;">🍱 มื้ออาหารของเพื่อนวันนี้:</div>
+      ${feedData.map(item => {
+        const u = item.user;
+        const s = item.stats;
+        const isOverSugar = s.sugar > u.sugar_goal;
+        const sugarStatus = isOverSugar ? 'alert' : s.sugar >= u.sugar_goal * 0.85 ? 'warn' : 'ok';
+        const statusLabel = isOverSugar ? 'น้ำตาลเกิน 🚨' : s.sugar >= u.sugar_goal * 0.85 ? 'ใกล้เต็มโควตา ⚠️' : s.meal_count === 0 ? 'ยังไม่บันทึก 💤' : 'หวานกำลังดี 🍡';
+
+        return `
+          <div class="friend-card">
+            <div class="friend-header">
+              <div class="friend-profile" style="cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
+                <div class="mini-avatar">
+                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" alt="">` : mascotSVG(u.avatar_face, u.avatar_color, 42, u.avatar_hat)}
+                </div>
+                <div>
+                  <b>${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
+                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🪙 ${u.coins || 120}</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="badge ${sugarStatus}">${statusLabel}</span>
+                <button class="btn s sm" style="font-size:11px; padding:4px 8px;" onclick="openMemberDetailModal('${u.id}')">โปรไฟล์ 👤</button>
+              </div>
+            </div>
+
+            <div class="friend-bars">
+              <div class="bar-wrap">
+                <label>แคล</label>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${Math.min(100, s.calorie_percent)}%; background: var(--pink);"></div>
+                </div>
+                <div class="bar-val">${s.calorie} / ${u.calorie_goal}</div>
+              </div>
+              <div class="bar-wrap">
+                <label>น้ำตาล</label>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${Math.min(100, s.sugar_percent)}%; background: ${isOverSugar ? 'var(--red)' : 'var(--mint)'};"></div>
+                </div>
+                <div class="bar-val ${isOverSugar ? 'sug' : ''}">${s.sugar} / ${u.sugar_goal} g</div>
+              </div>
+            </div>
+
+            ${u.privacy_level === 'summary' && !u.is_me ? `
+              <div style="font-size:11.5px; color:var(--mute); text-align:center; padding: 4px 0;">
+                🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
+              </div>
+            ` : item.meals.length ? `
+              <div class="friend-meals">
+                ${item.meals.map(m => `
+                  <div class="meal-item">
+                    <span>${esc(m.name)}</span>
+                    <span style="color:var(--mute);">${fmt(m.calorie)} kcal · <span class="${m.sugar >= 12 ? 'sug' : ''}">${fmt(m.sugar)}g</span></span>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<div style="font-size:11.5px; color:var(--mute); padding: 4px 0;">ยังไม่มีมื้ออาหาร</div>'}
+          </div>
+        `;
+      }).join('')}
+    ` : ''}
+
+    <!-- VIEW 2: 3D Isometric Gamified Leaderboard (Reference Spec) -->
+    ${feedSubTab === 'leaderboard' ? `
+      <!-- Leaderboard Header Bar (✕ Close, Title, Period, ··· Menu) -->
+      <div class="lb-header-bar">
+        <button class="lb-circle-btn" onclick="setFeedSubTab('activities')" title="กลับไปหน้ากิจกรรม">
+          ✕
+        </button>
+        <div class="lb-header-title-box">
+          <h2 class="lb-header-title">Leaderboard</h2>
+          <span class="lb-header-sub">${periodLabel}</span>
+        </div>
+        <button class="lb-circle-btn" onclick="openLeaderboardInfoModal()" title="กติกาการจัดอันดับ">
+          ···
+        </button>
+      </div>
+
+      <!-- 3D Isometric Podium Stage -->
+      <div class="lb-stage">
+        <!-- Radial Sunburst Rays Background -->
+        <div class="lb-sunburst"></div>
+
+        <!-- 3D Decorative Floating Shapes (From Spec) -->
+        <div class="floating-deco deco-hexagon">
+          <svg width="44" height="44" viewBox="0 0 48 48">
+            <defs>
+              <linearGradient id="hexTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FEF08A"/>
+                <stop offset="100%" stop-color="#FCD34D"/>
+              </linearGradient>
+              <linearGradient id="hexLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F59E0B"/>
+                <stop offset="100%" stop-color="#D97706"/>
+              </linearGradient>
+            </defs>
+            <polygon points="24,4 42,14 42,34 24,24 6,34 6,14" fill="url(#hexTop)"/>
+            <polygon points="6,34 24,24 24,44 6,44" fill="url(#hexLeft)"/>
+            <polygon points="42,34 24,24 24,44 42,44" fill="#B45309"/>
+          </svg>
+        </div>
+
+        <div class="floating-deco deco-sparkle">
+          <svg width="42" height="42" viewBox="0 0 48 48">
+            <defs>
+              <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFF59D"/>
+                <stop offset="50%" stop-color="#FDD835"/>
+                <stop offset="100%" stop-color="#F57F17"/>
+              </linearGradient>
+            </defs>
+            <path d="M 24,4 C 24,16 28,20 40,24 C 28,28 24,32 24,44 C 24,32 20,28 8,24 C 20,20 24,16 24,4 Z" fill="url(#sparkleGrad)" filter="drop-shadow(0 4px 10px rgba(245,158,11,0.4))"/>
+          </svg>
+        </div>
+
+        <!-- 3 Floating Avatars Row -->
+        <div class="lb-avatars-row">
+          <!-- Rank 2 Avatar (Left - Blue) -->
+          <div class="lb-avatar-slot rank-2" onclick="${top2 ? `openMemberDetailModal('${top2.id}')` : ''}">
+            <div class="lb-avatar-box">
+              <div class="lb-squircle blue">
+                ${top2 ? (top2.avatar_image ? `<img src="${esc(top2.avatar_image)}">` : mascotSVG(top2.avatar_face, top2.avatar_color, 54, top2.avatar_hat)) : '<span style="font-size:22px; color:var(--mute);">?</span>'}
+              </div>
+            </div>
+            <div class="lb-player-name">${top2 ? esc(top2.nickname) : 'รอผู้ท้าชิง'}</div>
+            <div class="lb-player-score">💎 ${top2 ? fmt(top2.coins) : '0'}</div>
+          </div>
+
+          <!-- Rank 1 Avatar (Center - Gold Winner) -->
+          <div class="lb-avatar-slot rank-1" onclick="${top1 ? `openMemberDetailModal('${top1.id}')` : ''}">
+            <div class="lb-avatar-box">
+              <div class="lb-crown-dot">👑</div>
+              <div class="lb-squircle gold">
+                ${top1 ? (top1.avatar_image ? `<img src="${esc(top1.avatar_image)}">` : mascotSVG(top1.avatar_face, top1.avatar_color, 62, top1.avatar_hat)) : '<span style="font-size:26px; color:var(--mute);">?</span>'}
+              </div>
+            </div>
+            <div class="lb-player-name gold">${top1 ? esc(top1.nickname) : 'รอผู้ท้าชิง'}</div>
+            <div class="lb-player-score gold">💎 ${top1 ? fmt(top1.coins) : '0'}</div>
+          </div>
+
+          <!-- Rank 3 Avatar (Right - Peach) -->
+          <div class="lb-avatar-slot rank-3" onclick="${top3 ? `openMemberDetailModal('${top3.id}')` : ''}">
+            <div class="lb-avatar-box">
+              <div class="lb-squircle peach">
+                ${top3 ? (top3.avatar_image ? `<img src="${esc(top3.avatar_image)}">` : mascotSVG(top3.avatar_face, top3.avatar_color, 52, top3.avatar_hat)) : '<span style="font-size:22px; color:var(--mute);">?</span>'}
+              </div>
+            </div>
+            <div class="lb-player-name">${top3 ? esc(top3.nickname) : 'รอผู้ท้าชิง'}</div>
+            <div class="lb-player-score">💎 ${top3 ? fmt(top3.coins) : '0'}</div>
+          </div>
+        </div>
+
+        <!-- 3D Isometric SVG Podium -->
+        <div class="lb-svg-wrap">
+          ${get3DPodiumSVG(top1, top2, top3)}
+        </div>
+      </div>
+
+      <!-- Updated Bar -->
+      <div class="lb-updated-bar" onclick="fetchLeaderboard().then(render)" title="แตะเพื่อรีเฟรชข้อมูล">
+        <span style="font-size:14px;">🔄</span>
+        <span>Leaderboard updated · อัปเดตล่าสุดเมื่อสักครู่</span>
+      </div>
+
+      <!-- Rank 4+ User Rows -->
+      ${sortedRank.length > 3 ? `
+        <div class="lb-rows-container">
+          ${sortedRank.slice(3).map((u, idx) => {
+            const rankNum = idx + 4;
+            const handle = u.nickname.toLowerCase().replace(/[^a-z0-9]/g, '') || `user${rankNum}`;
+            return `
+              <div class="lb-user-row" onclick="openMemberDetailModal('${u.id}')">
+                <div class="lb-user-row-left">
+                  <div class="lb-rank-num">
+                    <span style="font-size:14px; opacity:0.85;">🏆</span>
+                    <b>${rankNum}</b>
+                  </div>
+                  <div class="lb-row-squircle">
+                    ${u.avatar_image ? `<img src="${esc(u.avatar_image)}">` : mascotSVG(u.avatar_face, u.avatar_color, 44, u.avatar_hat)}
+                  </div>
+                  <div class="lb-row-meta">
+                    <b class="lb-row-name">
+                      ${esc(u.nickname)} ${u.id === currentUser?.id ? '<span class="lb-me-tag">(ฉัน)</span>' : ''}
+                    </b>
+                    <span class="lb-row-sub">@${esc(handle)} · 🔥 ${u.streak || 0} วันติด</span>
+                  </div>
+                </div>
+                <div class="lb-user-row-right">
+                  <span class="lb-row-score">💎 <b>${fmt(u.coins || 120)}</b></span>
+                  <span class="settings-chev">›</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div class="card" style="text-align:center; padding:18px; margin-top:6px;">
+          <span style="font-size:24px; display:block; margin-bottom:4px;">🍡</span>
+          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">แก๊งเรายังมีสมาชิกร่วมท้าชิง 3 คน</b>
+          <p style="font-size:12px; color:var(--mute); margin:4px 0 10px;">ชวนเพื่อนเพิ่มเพื่อมาไต่อันดับคอยน์รับเหรียญทองไปด้วยกันเลย!</p>
+          <button class="btn s sm" onclick="openProfileModal()">+ เพิ่มเพื่อน / สลับบัญชี</button>
+        </div>
+      `}
+    ` : ''}
+
+    <!-- VIEW 3: Members List -->
+    ${feedSubTab === 'members' ? `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <b style="font-size:14px; font-family:'Mali',sans-serif;">สมาชิกในแก๊งทั้งหมด (${users.length} คน)</b>
+        <span style="font-size:11.5px; color:var(--mute);">แตะเพื่อดูโปรไฟล์เพื่อน</span>
+      </div>
+
+      <div class="member-grid">
+        ${users.map(u => `
+          <div class="member-card" onclick="openMemberDetailModal('${u.id}')">
+            <div style="margin-bottom:8px;">
+              ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:58px; height:58px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 58, u.avatar_hat)}
+            </div>
+            <b style="font-size:13.5px; font-family:'Mali',sans-serif; margin-bottom:3px; color:var(--ink);">
+              ${esc(u.nickname)} ${u.id === currentUser?.id ? '<span style="font-size:10px; color:var(--pink);">(ฉัน)</span>' : ''}
+            </b>
+            <span style="font-size:11px; color:var(--mute); margin-bottom:6px;">
+              ${u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส' : u.personality === 'disciplined' ? '📋 มีวินัยเป๊ะ' : '💖 ใจดี อบอุ่น'}
+            </span>
+            <span class="coin-pill" style="margin-bottom:10px;">🪙 ${u.coins || 120} คอยน์</span>
+            <button class="btn s sm" style="width:100%; font-size:11.5px; padding:5px 8px;">ดูโปรไฟล์ 👤</button>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
+// Member Profile Detail Modal & Interactive Cheer System
+async function openMemberDetailModal(userId) {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = '<div class="sh" style="text-align:center; padding:30px;">กำลังโหลดข้อมูลเพื่อน... 🍡</div>';
+
+  try {
+    const res = await fetch(`/api/members/${userId}`, {
+      headers: { 'x-user-id': currentUser?.id || '' }
+    });
+    const data = await res.json();
+    const u = data.user;
+    const stats = data.stats;
+    const badges = data.badges || [];
+    const meals = data.todayMeals || [];
+
+    const personalityText = u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส พลังบวกสูง'
+      : u.personality === 'disciplined' ? '📋 มีวินัย มีแบบแผน ชัดเจน'
+      : '💖 ใจดี อบอุ่น เป็นมิตร';
+
+    el.innerHTML = `
+      <div class="sh">
+        <!-- Profile Header -->
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding: 10px 0 14px; border-bottom: 1px solid var(--line);">
+          <div style="margin-bottom:8px;">
+            ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:84px; height:84px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 84, u.avatar_hat)}
+          </div>
+          <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink);">
+            ${esc(u.nickname)} ${u.is_me ? '<span style="font-size:12px; color:var(--pink);">(ฉัน)</span>' : ''}
+          </b>
+          <span style="font-size:12px; color:var(--mute); margin-top:2px;">${personalityText}</span>
+          <span class="coin-pill" style="margin-top:6px; font-size:12px; padding:4px 12px;">🪙 ${u.coins || 120} โมจิคอยน์</span>
+        </div>
+
+        <!-- 4 Stat Boxes (Theme-Adaptive) -->
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin: 12px 0;">
+          <div style="background:var(--pinkS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:14px; color:var(--pink-ink); display:block;">🔥 ${stats.streak}</b>
+            <small style="font-size:10.5px; color:var(--mute);">วันติด</small>
+          </div>
+          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:14px; color:var(--warn-ink); display:block;">🪙 ${u.coins || 120}</b>
+            <small style="font-size:10.5px; color:var(--mute);">คอยน์</small>
+          </div>
+          <div style="background:var(--mintS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:14px; color:var(--mint-ink); display:block;">🍱 ${stats.totalMeals}</b>
+            <small style="font-size:10.5px; color:var(--mute);">มื้อสะสม</small>
+          </div>
+          <div style="background:var(--purpleS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:14px; color:var(--purple-ink); display:block;" id="modalCheersCount">💖 ${stats.cheersReceived}</b>
+            <small style="font-size:10.5px; color:var(--mute);">กำลังใจ</small>
+          </div>
+        </div>
+
+        <!-- Interactive Send Cheer Section (If not me) -->
+        ${!u.is_me ? `
+          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:16px; padding:10px 12px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <b style="font-size:12.5px; color:var(--warn-ink);">💌 ส่งกำลังใจให้ ${esc(u.nickname)}</b>
+              <small style="font-size:11px; color:var(--mute);">(ได้คนละ +2 🪙)</small>
+            </div>
+            <div style="display:flex; gap:6px; justify-content:space-between;">
+              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'heart')">💖 หัวใจ</button>
+              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'hi5')">✋ ไฮไฟฟ์</button>
+              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'mochi')">🍡 โมจิ</button>
+              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'fire')">🔥 สู้ๆ</button>
+              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'clap')">👏 ปรบมือ</button>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Badges Showcase -->
+        <div style="margin-bottom:12px;">
+          <b style="font-size:13px; font-family:'Mali',sans-serif; display:block; margin-bottom:6px; color:var(--ink);">🏅 ตราสัญลักษณ์สุขภาพ (Badges):</b>
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">
+            ${badges.map(b => `
+              <div style="background:${b.unlocked ? 'var(--mintS)' : 'var(--card)'}; border:1px solid ${b.unlocked ? 'var(--mint)' : 'var(--line)'}; border-radius:12px; padding:6px 8px; display:flex; align-items:center; gap:6px; opacity:${b.unlocked ? '1' : '0.6'};">
+                <span style="font-size:16px;">${b.unlocked ? '✨' : '🔒'}</span>
+                <div>
+                  <b style="font-size:11.5px; display:block; color:${b.unlocked ? 'var(--mint-ink)' : 'var(--mute)'};">${esc(b.title)}</b>
+                  <small style="font-size:10px; color:var(--mute);">${esc(b.desc)}</small>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Today Meals -->
+        <div style="margin-bottom:14px;">
+          <b style="font-size:13px; font-family:'Mali',sans-serif; display:block; margin-bottom:6px; color:var(--ink);">🍱 มื้ออาหารวันนี้:</b>
+          ${u.privacy_level === 'summary' && !u.is_me ? `
+            <div style="font-size:12px; color:var(--mute); background:var(--card); border:1px solid var(--line); padding:10px; border-radius:12px; text-align:center;">
+              🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
+            </div>
+          ` : meals.length ? `
+            <div class="friend-meals" style="max-height:140px; overflow-y:auto;">
+              ${meals.map(m => `
+                <div class="meal-item">
+                  <span>${esc(m.name)}</span>
+                  <span style="color:var(--mute);">${fmt(m.calorie)} kcal · ${fmt(m.sugar)}g</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div style="font-size:12px; color:var(--mute); padding:6px 0;">ยังไม่มีบันทึกมื้ออาหารวันนี้</div>'}
+        </div>
+
+        <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
+      </div>
+    `;
+  } catch (err) {
+    el.innerHTML = '<div class="sh" style="text-align:center; padding:20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล <button class="btn g sm" onclick="closeSheet()">ปิด</button></div>';
+  }
+}
+
+async function sendCheerFromModal(toUserId, cheerType) {
+  try {
+    const res = await fetch('/api/cheer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser?.id || '' },
+      body: JSON.stringify({ fromUserId: currentUser?.id, toUserId, cheerType })
+    });
+    const data = await res.json();
+    if (data.success) {
+      fireConfetti();
+      toast(`ส่งกำลังใจ "${data.label}" ให้ ${data.toNickname} แล้ว! (+2 🪙)`);
+      if (currentUser) {
+        currentUser.coins = (currentUser.coins || 120) + 2;
+      }
+      await fetchActivities();
+      await fetchLeaderboard();
+      // Refresh member detail
+      openMemberDetailModal(toUserId);
+    }
+  } catch (err) {
+    toast('ส่งกำลังใจไม่สำเร็จ');
+  }
+}
+
+async function joinChallenge(chalId) {
+  try {
+    const res = await fetch('/api/challenges/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ challengeId: chalId, userId: currentUser.id })
+    });
+    const data = await res.json();
+    challenges = data.challenges || [];
+    render();
+    fireConfetti();
+    toast('เข้าร่วมชาเลนจ์เรียบร้อยแล้ว ลุยกันเลย! 🎯');
+  } catch (e) {
+    toast('เข้าร่วมไม่สำเร็จ');
+  }
+}
+
+async function leaveChallenge(chalId) {
+  if (!confirm('ต้องการออกจากชาเลนจ์นี้ใช่ไหม? (สามารถกลับมาร่วมใหม่ได้เสมอ)')) return;
+  try {
+    const res = await fetch('/api/challenges/leave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ challengeId: chalId, userId: currentUser.id })
+    });
+    const data = await res.json();
+    challenges = data.challenges || [];
+    render();
+    toast('ออกจากชาเลนจ์แล้ว พักผ่อนให้สบายใจนะ 🍡');
+  } catch (e) {
+    toast('เกิดข้อผิดพลาดในการออกจากชาเลนจ์');
+  }
+}
+
+// 4. STATS VIEW
+async function renderStats() {
+  $('#main').innerHTML = '<div style="text-align:center; padding: 40px;">กำลังคำนวณสถิติและปฏิทิน...</div>';
+
+  const [allLogsRes, calendarRes] = await Promise.all([
+    fetch(`/api/logs?userId=${currentUser.id}`),
+    fetch(`/api/calendar?userId=${currentUser.id}`)
+  ]);
+  const { logs: allLogs } = await allLogsRes.json();
+  const calendarData = await calendarRes.json();
+
+  const D = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = key(d);
+    const dayLogs = allLogs.filter(l => l.date === dateStr);
+    const sugar = dayLogs.reduce((a, b) => a + b.sugar, 0);
+    const cal = dayLogs.reduce((a, b) => a + b.calorie, 0);
+    D.push({ d, dateStr, sugar, cal, count: dayLogs.length });
+  }
+
+  const G = currentUser.sugar_goal;
+  const mx = Math.max(G * 1.3, ...D.map(x => x.sugar), 10);
+  const W = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  const bars = D.map((x, i) => {
+    const h = (x.sugar / mx) * 100;
+    const xx = 14 + i * 44;
+    return `
+      <rect x="${xx}" y="${116 - h}" width="26" height="${h}" rx="8" fill="${x.sugar > G ? 'var(--red)' : 'var(--mint)'}"/>
+      <text x="${xx + 13}" y="134" text-anchor="middle" font-size="11" fill="var(--mute)">${W[x.d.getDay()]}</text>
+    `;
+  }).join('');
+  const gy = 116 - (G / mx) * 100;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNameTh = now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+  let calCells = '';
+  for (let i = 0; i < firstDay; i++) {
+    calCells += `<div class="calendar-day empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayInfo = calendarData.days[dateKey];
+    const statusClass = dayInfo ? dayInfo.status : '';
+    calCells += `
+      <div class="calendar-day ${statusClass}" onclick="showDayDetail('${dateKey}')">
+        <span>${d}</span>
+        ${dayInfo ? `<small>${dayInfo.total_sugar}g</small>` : ''}
+      </div>
+    `;
+  }
+
+  $('#main').innerHTML = `
+    <div class="top">
+      <h1>สถิติและความสม่ำเสมอ 📊</h1>
+      <span>🔥 ${userStreak.current} วันติด</span>
+    </div>
+
+    <!-- Achievement Badges -->
+    <div class="card" style="padding:12px;">
+      <h2 class="hd" style="font-size:15px; margin-bottom:8px;">🏆 เหรียญรางวัลความสม่ำเสมอ</h2>
+      <div style="display:flex; justify-content:space-around; text-align:center;">
+        <div>
+          <span style="font-size:24px; filter:${allLogs.length ? 'none' : 'grayscale(1)'};">🍡</span>
+          <div style="font-size:11px; font-weight:600;">ก้าวแรก</div>
+        </div>
+        <div>
+          <span style="font-size:24px; filter:${userStreak.current >= 3 ? 'none' : 'grayscale(1)'};">🔥</span>
+          <div style="font-size:11px; font-weight:600;">ติดไฟ 3 วัน</div>
+        </div>
+        <div>
+          <span style="font-size:24px; filter:${userStreak.current >= 7 ? 'none' : 'grayscale(1)'};">🌟</span>
+          <div style="font-size:11px; font-weight:600;">7 วันต่อเนื่อง</div>
+        </div>
+        <div>
+          <span style="font-size:24px; filter:${allLogs.some(l => l.name.includes('น้ำเปล่า')) ? 'none' : 'grayscale(1)'};">💧</span>
+          <div style="font-size:11px; font-weight:600;">นักดื่มน้ำ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Calendar -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="hd" style="font-size:16px;">ปฏิทินคุมหวานรายเดือน 🗓️</h2>
+        <span style="font-size:12px; color:var(--mute);">${monthNameTh}</span>
+      </div>
+      <div style="font-size:11.5px; color:var(--mute); margin-top:2px;">
+        🟢 ในเป้า (≤${G}g) · 🟡 ใกล้เต็ม · 🔴 เกินเป้า
+      </div>
+      <div class="calendar-grid">
+        ${['อา','จ','อ','พ','พฤ','ศ','ส'].map(w => `<div class="calendar-head">${w}</div>`).join('')}
+        ${calCells}
+      </div>
+    </div>
+
+    <!-- 7 Days Trend -->
+    <div class="card">
+      <h2 class="hd" style="font-size:16px;">น้ำตาลต่อวัน (g)</h2>
+      <svg viewBox="0 0 320 140" style="width:100%; margin-top:8px;">
+        <line x1="0" x2="320" y1="${gy}" y2="${gy}" stroke="var(--pink)" stroke-dasharray="4 4"/>
+        <text x="318" y="${gy - 4}" text-anchor="end" font-size="10" fill="var(--pink)">เป้า ${G} g</text>
+        ${bars}
+      </svg>
+    </div>
+
+    <div class="card">
+      <h2 class="hd" style="font-size:16px; margin-bottom:10px;">💾 จัดการและสำรองข้อมูล (CSV)</h2>
+      <a href="/api/export/csv?userId=${currentUser.id}" class="btn s" style="text-decoration:none; text-align:center;">
+        📥 ดาวน์โหลดสำรองข้อมูลทั้งหมด (CSV)
+      </a>
+    </div>
+  `;
+}
+
+async function showDayDetail(dateStr) {
+  const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${dateStr}`);
+  const { logs } = await res.json();
+  const totalCal = logs.reduce((a, b) => a + b.calorie, 0);
+  const totalSugar = logs.reduce((a, b) => a + b.sugar, 0);
+
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:17px; margin-bottom:6px;">สรุปวันที่ ${dateStr} 🍡</h2>
+      <div style="display:flex; justify-content:space-around; background:var(--card); border-radius:16px; padding:12px; margin-bottom:12px;">
+        <div style="text-align:center;">
+          <small style="color:var(--mute);">แคลอรีรวม</small>
+          <b style="display:block; font-size:18px;">${Math.round(totalCal)} kcal</b>
+        </div>
+        <div style="text-align:center;">
+          <small style="color:var(--mute);">น้ำตาลรวม</small>
+          <b style="display:block; font-size:18px; color:${totalSugar > currentUser.sugar_goal ? 'var(--red)' : 'var(--mint)'};">${fmt(totalSugar)} g</b>
+        </div>
+      </div>
+      <div style="max-height:200px; overflow-y:auto; margin-bottom:12px;">
+        ${logs.length ? logs.map(l => `
+          <div class="row">
+            <span>${esc(l.name)}</span>
+            <span style="color:var(--mute); font-size:12px;">${fmt(l.calorie)} kcal · ${fmt(l.sugar)} g</span>
+          </div>
+        `).join('') : '<p style="text-align:center; color:var(--mute);">ไม่มีรายการบันทึกในวันนี้</p>'}
+      </div>
+      <button class="btn g" onclick="closeSheet()">ปิด</button>
+    </div>
+  `;
+}
+
+// 5. SETTINGS VIEW (Professional Categorized UX/UI)
+async function renderSettings() {
+  await fetchSettings();
+  const quotaRes = await fetch(`/api/auth/quota?userId=${currentUser.id}`);
+  const quota = await quotaRes.json();
+
+  const hatLabels = {
+    none: 'ต้นกล้า 🌱',
+    flower: 'ซากุระ 🌸',
+    crown: 'มงกุฎ 👑',
+    bow: 'โบว์ 🎀',
+    chef: 'เชฟ 👨‍🍳'
+  };
+
+  const personalityLabels = {
+    kind: 'ใจดี อบอุ่น 💖',
+    cheerful: 'ร่าเริง สดใส 🌟',
+    disciplined: 'มีวินัยเป๊ะ 📋'
+  };
+
+  const privacyLabels = {
+    full: 'แชร์ครบถ้วน',
+    summary: 'เฉพาะตัวเลข',
+    private: 'โหมดส่วนตัว'
+  };
+
+  $('#main').innerHTML = `
+    <!-- Hero Profile Header -->
+    <div class="settings-hero">
+      <div class="settings-hero-avatar" onclick="openWardrobeModal()">
+        ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat)}
+      </div>
+      <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">
+        ${esc(currentUser?.nickname)}
+      </b>
+      <div style="font-size:12px; color:var(--mute); margin-top:2px;">
+        ${currentUser?.google_id ? '<span style="color:#4285F4; font-weight:600;">● Google Account</span> · ' + esc(currentUser?.email || '') : 'บัญชีในเครื่อง (ยังไม่ผูก Google)'}
+      </div>
+
+      <div class="settings-hero-stats">
+        <div class="settings-hero-stat-box">
+          <b>🔥 ${userStreak.current} วัน</b>
+          <small>ความสม่ำเสมอ</small>
+        </div>
+        <div class="settings-hero-stat-box">
+          <b>🎯 ${currentUser?.calorie_goal}</b>
+          <small>kcal ต่อวัน</small>
+        </div>
+        <div class="settings-hero-stat-box">
+          <b>🍬 ${currentUser?.sugar_goal} g</b>
+          <small>น้ำตาลเป้าหมาย</small>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn s sm" style="flex:1;" onclick="openProfileModal()">👥 สลับเพื่อน / เพิ่มสมาชิก</button>
+        <button class="btn sm" style="flex:1;" onclick="openEditProfileModal()">✏️ แก้ไขข้อมูล</button>
+      </div>
+    </div>
+
+    <!-- Category 1: สุขภาพและเป้าหมาย -->
+    <div class="settings-sec-title">🎯 สุขภาพและเป้าหมายโภชนาการ</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openEditProfileModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FFE3EA; color:#D81B60;">🎯</div>
+          <div>
+            <span class="settings-label-title">เป้าหมายแคลอรีและน้ำตาล</span>
+            <span class="settings-label-sub">ตั้งเป้าพลังงานและน้ำตาลรายวัน</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${currentUser?.calorie_goal}k / ${currentUser?.sugar_goal}g</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openBmrCalculatorModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">⚖️</div>
+          <div>
+            <span class="settings-label-title">คำนวณเป้าหมายตามร่างกาย (BMR / TDEE)</span>
+            <span class="settings-label-sub">สูตร Mifflin-St Jeor อิงเพศ ส่วนสูง น้ำหนัก</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">คำนวณ</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category 2: ปรับแต่งตัวละครโมจิ -->
+    <div class="settings-sec-title">👒 ตัวละครโมจิและสไตล์</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openWardrobeModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FFF0E0; color:#B35C00;">👒</div>
+          <div>
+            <span class="settings-label-title">ห้องแต่งตัวและเครื่องประดับ</span>
+            <span class="settings-label-sub">หมวก โบว์ มงกุฎ และสีตัวละคร</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${hatLabels[currentUser?.avatar_hat] || 'ต้นกล้า 🌱'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openWardrobeModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#EDE9FE; color:#6D28D9;">💬</div>
+          <div>
+            <span class="settings-label-title">บุคลิกการตอบแชทของโมจิ</span>
+            <span class="settings-label-sub">น้ำเสียงในการพูดคุยและแนะนำเมนู</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${personalityLabels[currentUser?.personality] || 'ใจดี 💖'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openThemeModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FFE3EA; color:#D81B60;">🎨</div>
+          <div>
+            <span class="settings-label-title">ธีมและการแสดงผล (สว่าง / มืด)</span>
+            <span class="settings-label-sub">เลือกโหมดสว่าง โหมดมืด หรือตามระบบเครื่อง</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${getThemeLabel()}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category 3: ความเป็นส่วนตัวและการแชร์ -->
+    <div class="settings-sec-title">🔒 ความเป็นส่วนตัวและการแจ้งเตือน</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openPrivacyModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#EDE9FE; color:#5B21B6;">👁️</div>
+          <div>
+            <span class="settings-label-title">การแชร์ในฟีดกลุ่มเพื่อน</span>
+            <span class="settings-label-sub">เลือกว่าจะให้เพื่อนเห็นอะไรบ้าง</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${privacyLabels[currentUser?.privacy_level] || 'แชร์ครบถ้วน'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="enablePushNotifications()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FFF0E0; color:#D96B00;">🔔</div>
+          <div>
+            <span class="settings-label-title">การแจ้งเตือน (Push Notifications)</span>
+            <span class="settings-label-sub">เตือนมื้ออาหาร น้ำตาลใกล้เต็ม และเตือนดื่มน้ำ</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ${('Notification' in window && Notification.permission === 'granted') ? 'ok' : 'warn'}">
+            ${('Notification' in window && Notification.permission === 'granted') ? 'เปิดแล้ว' : 'แตะเปิด'}
+          </span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="location.href='/api/export/csv?userId='+currentUser.id">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">💾</div>
+          <div>
+            <span class="settings-label-title">ส่งออกข้อมูลทั้งหมด (CSV)</span>
+            <span class="settings-label-sub">ดาวน์โหลดประวัติโภชนาการสำหรับ Excel</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>ดาวน์โหลด</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="triggerBackup()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#E0F2FE; color:#0369A1;">📦</div>
+          <div>
+            <span class="settings-label-title">สำรองข้อมูลอัตโนมัติ (Auto Backup)</span>
+            <span class="settings-label-sub">สำรองไฟล์ JSON รายสัปดาห์ / แตะเพื่อสำรองทันที</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">สำรองทันที</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category 4: บัญชีและระบบอัจฉริยะ -->
+    <div class="settings-sec-title">⚡ บัญชีและระบบ AI</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="promptGoogleSignIn()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#E8F0FE; color:#1967D2;">🔐</div>
+          <div>
+            <span class="settings-label-title">การเชื่อมต่อบัญชี Google</span>
+            <span class="settings-label-sub">${currentUser?.google_id ? esc(currentUser?.email || 'ผูกแล้ว') : 'เชื่อมต่อเพื่อซิงก์ข้อมูลข้ามเครื่อง'}</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ${currentUser?.google_id ? 'ok' : 'warn'}">${currentUser?.google_id ? 'เชื่อมต่อแล้ว' : 'ยังไม่ผูก'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <!-- AI Quota Row with Progress Bar -->
+      <div class="settings-row" style="cursor:default;">
+        <div class="settings-row-left" style="flex:1;">
+          <div class="settings-icon-box" style="background:#FFE3EA; color:#C2185B;">🤖</div>
+          <div style="flex:1; margin-right:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="settings-label-title">โควตาการใช้วิเคราะห์ AI</span>
+              <span class="badge ${quota.remaining > 3 ? 'ok' : 'warn'}">เหลือ ${quota.remaining} / ${quota.limit}</span>
+            </div>
+            <div class="bar-track" style="height:6px; margin-top:6px;">
+              <div class="bar-fill" style="width:${(quota.current / quota.limit) * 100}%; background:var(--pink);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openIntegrationsModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#F3E8FF; color:#7E22CE;">🔑</div>
+          <div>
+            <span class="settings-label-title">คีย์เชื่อมต่อระบบ (API Keys)</span>
+            <span class="settings-label-sub">Google Client ID และ Gemini API Key</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>${appSettings.hasGeminiKey ? 'ตั้งค่าแล้ว' : 'ยังไม่ตั้ง'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openPwaGuideModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#DCFCE7; color:#15803D;">📲</div>
+          <div>
+            <span class="settings-label-title">วิธีติดตั้งแอปบนมือถือ (PWA Guide)</span>
+            <span class="settings-label-sub">3 ขั้นตอนเพิ่มลงหน้าจอโฮม iOS / Android</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">วิธีทำ</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category 5: สิทธิความเป็นส่วนตัวและความปลอดภัย (PDPA) -->
+    <div class="settings-sec-title" style="color:#B31D31;">⚠️ สิทธิข้อมูลส่วนบุคคล (PDPA)</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openPdpaModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FEE2E2; color:#B91C1C;">📜</div>
+          <div>
+            <span class="settings-label-title">นโยบายความเป็นส่วนตัวและข้อตกลง</span>
+            <span class="settings-label-sub">อ่านรายละเอียดการคุ้มครองข้อมูลสุขภาพ</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="deleteMyAccount()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FEE2E2; color:#B91C1C;">🗑️</div>
+          <div>
+            <span class="settings-label-title" style="color:#B91C1C;">ลบบัญชีและประวัติอาหารทั้งหมด</span>
+            <span class="settings-label-sub">ลบข้อมูลออกจากเซิร์ฟเวอร์อย่างถาวร</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; padding:16px 0 24px; color:var(--mute); font-size:11px;">
+      โมจิ · นับแคลและน้ำตาล เวอร์ชัน 3.0 (Professional Edition)<br>
+      Made with 🍡 for healthier lifestyles
+    </div>
+  `;
+}
+
+// Sub-Modal: Edit Profile Details
+function openEditProfileModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แก้ไขข้อมูลส่วนตัว ✏️</h2>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--mute);">ชื่อเล่น</label>
+        <input id="editModalNickname" value="${esc(currentUser?.nickname)}">
+      </div>
+
+      <div class="g2">
+        <div>
+          <label>เป้าแคลอรีต่อวัน (kcal)</label>
+          <input type="number" id="editModalCal" value="${currentUser?.calorie_goal}" min="1200" max="4000">
+          <small style="font-size:11px; color:var(--mute);">ขั้นต่ำ 1,200 เพื่อสุขภาพ</small>
+        </div>
+        <div>
+          <label>เป้าน้ำตาลต่อวัน (g)</label>
+          <input type="number" id="editModalSugar" value="${currentUser?.sugar_goal}" min="10" max="60">
+          <small style="font-size:11px; color:var(--mute);">WHO แนะนำไม่เกิน 25g</small>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="btn" onclick="saveProfileFromModal()">บันทึกการเปลี่ยนแปลง</button>
+        <button class="btn g" style="margin-top:6px;" onclick="closeSheet()">ยกเลิก</button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveProfileFromModal() {
+  const nickname = $('#editModalNickname')?.value.trim() || currentUser.nickname;
+  let cal = Math.max(1200, Number($('#editModalCal')?.value) || currentUser.calorie_goal);
+  let sugar = Math.max(10, Math.min(60, Number($('#editModalSugar')?.value) || currentUser.sugar_goal));
+
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nickname,
+        calorie_goal: cal,
+        sugar_goal: sugar
+      })
+    });
+    const data = await res.json();
+    currentUser = data.user;
+    closeSheet();
+    updateUserHeader();
+    renderSettings();
+    toast('บันทึกข้อมูลเรียบร้อยแล้ว 🍡');
+  } catch (e) {
+    toast('เกิดข้อผิดพลาดในการบันทึก');
+  }
+}
+
+// Sub-Modal: Wardrobe Customizer
+function openWardrobeModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:12px;">
+        <h2 class="hd" style="font-size:18px;">ห้องแต่งตัวโมจิ 👒</h2>
+        <div id="wardrobeModalPreview" style="margin:8px auto; width:96px; height:96px;">
+          ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat)}
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--mute);">เครื่องประดับบนหัว</label>
+        <div class="pill-group">
+          ${[
+            { id: 'none', label: 'ต้นกล้า 🌱' },
+            { id: 'flower', label: 'ซากุระ 🌸' },
+            { id: 'crown', label: 'มงกุฎทอง 👑' },
+            { id: 'bow', label: 'โบว์ชมพู 🎀' },
+            { id: 'chef', label: 'หมวกเชฟ 👨‍🍳' }
+          ].map(h => `
+            <div class="pill ${currentUser?.avatar_hat === h.id ? 'active' : ''}" onclick="applyHatPreview('${h.id}')">${h.label}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--mute);">สีประจำตัวโมจิ</label>
+        <div class="pill-group">
+          ${[
+            { name: 'ชมพูพีช', col: '#FF9EB5' },
+            { name: 'มัทฉะมินต์', col: '#6FCBB0' },
+            { name: 'ส้มพุดดิ้ง', col: '#FFB05C' },
+            { name: 'ม่วงทาโร่', col: '#A78BFA' },
+            { name: 'ชานม', col: '#D4A373' },
+            { name: 'นมสด', col: '#F4DEE4' }
+          ].map(c => `
+            <div class="pill ${currentUser?.avatar_color === c.col ? 'active' : ''}" onclick="applyColorPreview('${c.col}')">
+              <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${c.col}; margin-right:4px;"></span>${c.name}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; color:var(--mute);">บุคลิกในการตอบแชท</label>
+        <div class="pill-group">
+          ${[
+            { id: 'kind', label: 'ใจดี อบอุ่น 💖' },
+            { id: 'cheerful', label: 'ร่าเริง สดใส 🌟' },
+            { id: 'disciplined', label: 'จริงจัง มีวินัย 📋' }
+          ].map(p => `
+            <div class="pill ${currentUser?.personality === p.id ? 'active' : ''}" onclick="applyPersonalityPreview('${p.id}')">${p.label}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <button class="btn" onclick="saveWardrobeSettings()">เสร็จสิ้น</button>
+    </div>
+  `;
+}
+
+function applyHatPreview(h) {
+  currentUser.avatar_hat = h;
+  $('#wardrobeModalPreview').innerHTML = mascotSVG(currentUser.avatar_face, currentUser.avatar_color, 96, h);
+  openWardrobeModal();
+}
+
+function applyColorPreview(col) {
+  currentUser.avatar_color = col;
+  $('#wardrobeModalPreview').innerHTML = mascotSVG(currentUser.avatar_face, col, 96, currentUser.avatar_hat);
+  openWardrobeModal();
+}
+
+function applyPersonalityPreview(p) {
+  currentUser.personality = p;
+  openWardrobeModal();
+}
+
+async function saveWardrobeSettings() {
+  await saveProfileChanges();
+  closeSheet();
+  renderSettings();
+}
+
+// Sub-Modal: Privacy Settings
+function openPrivacyModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">ความเป็นส่วนตัวในฟีดกลุ่ม 🔒</h2>
+      <p style="font-size:12.5px; color:var(--mute); margin-bottom:12px;">
+        คุณสามารถกำหนดระดับการแสดงผลของตนเองในฟีดเพื่อนได้ตลอดเวลา
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        ${[
+          { id: 'full', title: 'แชร์ครบถ้วน', desc: 'เพื่อนเห็นทั้งตัวเลขรวมและชื่อเมนูอาหารที่กิน' },
+          { id: 'summary', title: 'แชร์เฉพาะตัวเลขรวม', desc: 'เพื่อนเห็นแค่กราฟแคลและน้ำตาล ไม่เห็นชื่อเมนูอาหาร' },
+          { id: 'private', title: 'โหมดส่วนตัว', desc: 'ซ่อนโปรไฟล์ของตนเองออกจากฟีดเพื่อนทั้งหมด' }
+        ].map(p => `
+          <div class="row" style="cursor:pointer; padding:12px; background:${currentUser?.privacy_level === p.id ? 'var(--pinkS)' : 'var(--card)'}; border-radius:14px;" onclick="selectPrivacyLevel('${p.id}')">
+            <div>
+              <b>${p.title}</b>
+              <small style="color:var(--mute);">${p.desc}</small>
+            </div>
+            ${currentUser?.privacy_level === p.id ? '<span style="font-weight:bold; color:var(--pink);">✓</span>' : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <button class="btn g" onclick="closeSheet()">ปิด</button>
+    </div>
+  `;
+}
+
+async function selectPrivacyLevel(lvl) {
+  currentUser.privacy_level = lvl;
+  await saveProfileChanges();
+  closeSheet();
+  renderSettings();
+  toast('อัปเดตการแชร์เรียบร้อยแล้ว 🔒');
+}
+
+// Sub-Modal: Developer API Keys
+function openIntegrationsModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">🔑 คีย์เชื่อมต่อระบบ (API Settings)</h2>
+      <p style="font-size:12px; color:var(--mute); margin-bottom:12px;">
+        ตั้งค่าคีย์สำหรับ Google Sign-In และ Google Gemini AI (ประมวลผลบนเซิร์ฟเวอร์อย่างปลอดภัย)
+      </p>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--mute);">Google Client ID</label>
+        <input id="setGoogleClientId" value="${esc(appSettings.googleClientId || '')}" placeholder="เช่น xxxxx.apps.googleusercontent.com">
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; color:var(--mute);">Google Gemini API Key</label>
+        <input type="password" id="geminiKeyInput" placeholder="${appSettings.hasGeminiKey ? 'มี API Key แล้ว (' + appSettings.maskedKey + ')' : 'วาง Gemini API Key ที่นี่'}">
+      </div>
+
+      <button class="btn" onclick="saveIntegrationSettingsFromModal()">บันทึกการตั้งค่า</button>
+      <button class="btn g" style="margin-top:6px;" onclick="closeSheet()">ยกเลิก</button>
+    </div>
+  `;
+}
+
+async function saveIntegrationSettingsFromModal() {
+  const gKey = $('#geminiKeyInput')?.value.trim();
+  const gClient = $('#setGoogleClientId')?.value.trim();
+
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        geminiApiKey: gKey || undefined,
+        googleClientId: gClient
+      })
+    });
+    toast('บันทึกการตั้งค่าเชื่อมต่อแล้ว ✨');
+    await fetchSettings();
+    closeSheet();
+    renderSettings();
+  } catch (e) {
+    toast('บันทึกไม่สำเร็จ');
+  }
+}
+
+// Sub-Modal: PWA 3-Line Install Guide (Pillar 4)
+function openPwaGuideModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">📲 ติดตั้งเป็นแอปบนมือถือ (PWA)</h2>
+      <p style="font-size:12px; color:var(--mute); margin-bottom:12px;">
+        เพิ่มลงหน้าจอหลัก ใช้งานเต็มจอ รวดเร็ว และรองรับออฟไลน์เสมือนแอปจริง
+      </p>
+
+      <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:14px; padding:12px 14px; margin-bottom:12px; font-size:13px; line-height:1.6; color:#166534;">
+        <b style="font-size:14px; color:#15803D;">🍏 สำหรับ iPhone / iPad (Safari):</b><br>
+        1. แตะปุ่ม <b>แชร์ (Share 📤)</b> ที่แถบเมนูด้านล่าง Safari<br>
+        2. เลื่อนลงแล้วแตะ <b>"เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen ➕)</b><br>
+        3. กด <b>"เพิ่ม" (Add)</b> มุมบนขวา เป็นอันเสร็จสิ้น!<br><br>
+        <b style="font-size:14px; color:#15803D;">🤖 สำหรับ Android (Chrome):</b><br>
+        1. แตะจุด 3 จุด (⋮) ที่มุมขวาบนของเบราว์เซอร์ Chrome<br>
+        2. เลือก <b>"ติดตั้งแอป" (Install App)</b> หรือ "เพิ่มลงในหน้าจอหลัก"<br>
+        3. กดยืนยัน ไอคอนโมจิจะปรากฏบนหน้าจอหลักพร้อมเปิดใช้ทันที
+      </div>
+
+      <button class="btn" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
+    </div>
+  `;
+}
+
+// Trigger Manual Instant Backup (Pillar 2)
+async function triggerBackup() {
+  try {
+    const res = await fetch('/api/backup');
+    const data = await res.json();
+    toast(data.message || 'สำรองข้อมูลเรียบร้อยแล้ว');
+  } catch (err) {
+    toast('สำรองข้อมูลไม่สำเร็จ');
+  }
+}
+
+function changeAvatarHat(hat) {
+  currentUser.avatar_hat = hat;
+  $('#settingsAvatarPreview').innerHTML = mascotSVG(currentUser.avatar_face, currentUser.avatar_color, 96, hat);
+  saveProfileChanges();
+}
+
+function changePersonality(p) {
+  currentUser.personality = p;
+  saveProfileChanges();
+}
+
+function changeAvatarColor(col) {
+  currentUser.avatar_color = col;
+  $('#settingsAvatarPreview').innerHTML = mascotSVG(currentUser.avatar_face, col, 96, currentUser.avatar_hat);
+  renderSettings();
+}
+
+async function saveProfileChanges() {
+  const nickname = $('#setNickname')?.value.trim() || currentUser.nickname;
+  let cal = Math.max(1200, Number($('#setCal')?.value) || currentUser.calorie_goal);
+  let sugar = Math.max(10, Math.min(60, Number($('#setSugar')?.value) || currentUser.sugar_goal));
+  const privacy = $('#setPrivacy')?.value || currentUser.privacy_level;
+
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nickname,
+        avatar_color: currentUser.avatar_color,
+        avatar_face: currentUser.avatar_face,
+        avatar_hat: currentUser.avatar_hat,
+        personality: currentUser.personality,
+        calorie_goal: cal,
+        sugar_goal: sugar,
+        privacy_level: privacy
+      })
+    });
+    const data = await res.json();
+    currentUser = data.user;
+    updateUserHeader();
+    toast('บันทึกเรียบร้อยแล้ว 🍡');
+  } catch (e) {
+    toast('เกิดข้อผิดพลาดในการบันทึก');
+  }
+}
+
+// BMR Modal
+function openBmrCalculatorModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">คำนวณเป้าหมายสุขภาพ (BMR/TDEE) ⚖️</h2>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:12px; color:var(--mute);">เพศกำเนิด</label>
+        <div class="pill-group">
+          <div class="pill ${currentUser?.gender === 'female' ? 'active' : ''}" id="bmrFemale" onclick="selectBmrGender('female')">ผู้หญิง 👩</div>
+          <div class="pill ${currentUser?.gender === 'male' ? 'active' : ''}" id="bmrMale" onclick="selectBmrGender('male')">ผู้ชาย 👨</div>
+        </div>
+      </div>
+
+      <div class="g3">
+        <div>
+          <label>อายุ (ปี)</label>
+          <input type="number" id="bmrAge" value="${currentUser?.age || 25}">
+        </div>
+        <div>
+          <label>ส่วนสูง (cm)</label>
+          <input type="number" id="bmrHeight" value="${currentUser?.height || 160}">
+        </div>
+        <div>
+          <label>น้ำหนัก (kg)</label>
+          <input type="number" id="bmrWeight" value="${currentUser?.weight || 52}">
+        </div>
+      </div>
+
+      <div style="margin: 10px 0;">
+        <label style="font-size:12px; color:var(--mute);">ระดับกิจกรรมประจำวัน</label>
+        <select id="bmrActivity">
+          <option value="sedentary">นั่งทำงานเป็นหลัก</option>
+          <option value="light" selected>ออกกำลังกาย 1-3 วัน/สัปดาห์</option>
+          <option value="moderate">ออกกำลังกาย 3-5 วัน/สัปดาห์</option>
+          <option value="active">ออกกำลังกายหนัก 6-7 วัน/สัปดาห์</option>
+        </select>
+      </div>
+
+      <div id="bmrResultBox" style="background:var(--mintS); border-radius:16px; padding:12px; text-align:center; margin:12px 0;">
+        <div style="display:flex; justify-content:space-around;">
+          <div>
+            <b id="recCal" style="font-size:20px; font-family:'Mali',sans-serif; color:#216E59;">1,750 kcal</b>
+            <div style="font-size:11px; color:var(--mute);">พลังงานแนะนำ</div>
+          </div>
+          <div>
+            <b id="recSugar" style="font-size:20px; font-family:'Mali',sans-serif; color:#216E59;">25 g</b>
+            <div style="font-size:11px; color:var(--mute);">น้ำตาลแนะนำ (WHO)</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn s" style="margin-bottom:8px;" onclick="calculateBmrResult()">คำนวณค่าใหม่</button>
+      <button class="btn" onclick="applyBmrResults()">นำเป้าหมายนี้ไปใช้ 🍡</button>
+      <button class="btn g" style="margin-top:4px;" onclick="closeSheet()">ยกเลิก</button>
+    </div>
+  `;
+  calculateBmrResult();
+}
+
+let selectedGender = 'female';
+function selectBmrGender(g) {
+  selectedGender = g;
+  $('#bmrFemale').classList.toggle('active', g === 'female');
+  $('#bmrMale').classList.toggle('active', g === 'male');
+  calculateBmrResult();
+}
+
+let calcGoalCal = 2000;
+let calcGoalSugar = 25;
+
+function calculateBmrResult() {
+  const age = Number($('#bmrAge').value) || 25;
+  const h = Number($('#bmrHeight').value) || 160;
+  const w = Number($('#bmrWeight').value) || 52;
+  const act = $('#bmrActivity').value;
+
+  let bmr = 10 * w + 6.25 * h - 5 * age;
+  if (selectedGender === 'male') bmr += 5;
+  else bmr -= 161;
+
+  const actMultipliers = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
+  const tdee = bmr * (actMultipliers[act] || 1.375);
+
+  const minCal = selectedGender === 'male' ? 1500 : 1200;
+  calcGoalCal = Math.round(Math.max(minCal, tdee - 250));
+  calcGoalSugar = 25;
+
+  $('#recCal').textContent = `${calcGoalCal} kcal`;
+  $('#recSugar').textContent = `${calcGoalSugar} g`;
+}
+
+async function applyBmrResults() {
+  try {
+    const age = Number($('#bmrAge').value) || 25;
+    const h = Number($('#bmrHeight').value) || 160;
+    const w = Number($('#bmrWeight').value) || 52;
+    const act = $('#bmrActivity').value;
+
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        calorie_goal: calcGoalCal,
+        sugar_goal: calcGoalSugar,
+        gender: selectedGender,
+        age,
+        height: h,
+        weight: w,
+        activity_level: act
+      })
+    });
+    const data = await res.json();
+    currentUser = data.user;
+    closeSheet();
+    updateUserHeader();
+    render();
+    toast(`อัปเดตเป้าหมายใหม่: ${calcGoalCal} kcal / ${calcGoalSugar}g น้ำตาล 🍡`);
+  } catch (e) {
+    toast('บันทึกเป้าหมายไม่สำเร็จ');
+  }
+}
+
+// Share Modal (PNG Download)
+function openShareModal() {
+  const totalCal = currentLogs.reduce((a, b) => a + b.calorie, 0);
+  const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
+  const dateTh = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แชร์การ์ดสุขภาพ 💌</h2>
+      <div style="max-width:320px; margin:0 auto 10px; border-radius:20px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.1);">
+        <canvas id="shareCanvas" width="800" height="960" style="width:100%; display:block;"></canvas>
+      </div>
+      <div class="gap">
+        <button class="btn" onclick="downloadShareImage()">📷 บันทึกรูปภาพ (PNG)</button>
+        <button class="btn s" onclick="copyShareText()">คัดลอกข้อความ</button>
+      </div>
+      <button class="btn g" style="margin-top:6px;" onclick="closeSheet()">ปิด</button>
+    </div>
+  `;
+  drawShareCanvas(totalCal, totalSugar, dateTh);
+}
+
+function drawShareCanvas(totalCal, totalSugar, dateTh) {
+  const canvas = document.getElementById('shareCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 800, 960);
+  grad.addColorStop(0, '#FFE8EE');
+  grad.addColorStop(0.5, '#FFF8F5');
+  grad.addColorStop(1, '#DCF6EE');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 800, 960);
+
+  ctx.strokeStyle = '#F3E6E4';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(20, 20, 760, 920);
+
+  ctx.fillStyle = '#4A3F44';
+  ctx.font = 'bold 36px "Mali", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('โมจิ · นับแคลและน้ำตาล 🍡', 400, 90);
+
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '22px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`สรุปวันนี้ของ ${currentUser?.nickname || 'ฉัน'} (${dateTh})`, 400, 135);
+
+  ctx.fillStyle = '#FF9F43';
+  ctx.font = 'bold 24px "Mali", sans-serif';
+  ctx.fillText(`🔥 สม่ำเสมอ ${userStreak.current} วันติด!`, 400, 175);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(60, 210, 680, 240, 24);
+  ctx.fill();
+  ctx.strokeStyle = '#F3E6E4';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '22px "Noto Sans Thai", sans-serif';
+  ctx.fillText('แคลอรีสะสม', 230, 260);
+  ctx.fillStyle = '#FF5E74';
+  ctx.font = 'bold 60px "Mali", sans-serif';
+  ctx.fillText(Math.round(totalCal), 230, 340);
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`เป้าหมาย ${currentUser?.calorie_goal || 2000} kcal`, 230, 400);
+
+  ctx.strokeStyle = '#F3E6E4';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(400, 240);
+  ctx.lineTo(400, 420);
+  ctx.stroke();
+
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '22px "Noto Sans Thai", sans-serif';
+  ctx.fillText('น้ำตาลวันนี้', 570, 260);
+  const isOverSugar = totalSugar > (currentUser?.sugar_goal || 25);
+  ctx.fillStyle = isOverSugar ? '#FF5E74' : '#5ABEA3';
+  ctx.font = 'bold 60px "Mali", sans-serif';
+  ctx.fillText(fmt(totalSugar) + 'g', 570, 340);
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`เป้าหมาย ${currentUser?.sugar_goal || 25} g`, 570, 400);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.roundRect(60, 480, 680, 380, 24);
+  ctx.fill();
+  ctx.strokeStyle = '#F3E6E4';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#4A3F44';
+  ctx.font = 'bold 26px "Mali", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('เมนูอร่อยในวันนี้ 🍱', 100, 530);
+
+  const displayMeals = currentLogs.slice(0, 5);
+  if (displayMeals.length) {
+    displayMeals.forEach((m, idx) => {
+      const y = 585 + idx * 52;
+      ctx.fillStyle = '#4A3F44';
+      ctx.font = '22px "Noto Sans Thai", sans-serif';
+      ctx.fillText(`• ${m.name}`, 100, y);
+
+      ctx.fillStyle = '#9A8C92';
+      ctx.font = '20px "Noto Sans Thai", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${Math.round(m.calorie)} kcal  (${fmt(m.sugar)}g น้ำตาล)`, 700, y);
+      ctx.textAlign = 'left';
+    });
+  } else {
+    ctx.fillStyle = '#9A8C92';
+    ctx.font = '22px "Noto Sans Thai", sans-serif';
+    ctx.fillText('ยังไม่ได้บันทึกอะไรในวันนี้', 100, 590);
+  }
+
+  ctx.fillStyle = '#9A8C92';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('— สร้างนิสัยสุขภาพดีไปด้วยกันกับโมจิ —', 400, 905);
+}
+
+function downloadShareImage() {
+  const canvas = document.getElementById('shareCanvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = `mochi_${currentUser?.nickname || 'share'}_${key()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('บันทึกรูปภาพเรียบร้อยแล้ว นำไปแชร์ได้เลย 📷');
+}
+
+// Voice Input (Web Speech Recognition)
+function toggleVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    toast('เบราว์เซอร์นี้ไม่รองรับการพิมพ์ด้วยเสียง');
+    return;
+  }
+
+  const rec = new SpeechRecognition();
+  rec.lang = 'th-TH';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  toast('🎙️ กำลังฟังเสียง... พูดชื่อเมนูหรือความหวานได้เลย');
+  $('#voiceBtn').textContent = '🔴 กำลังฟัง...';
+
+  rec.onresult = e => {
+    const text = e.results[0][0].transcript;
+    draft.txt = (draft.txt ? draft.txt + ' ' : '') + text;
+    $('#voiceBtn').textContent = '🎙️ พูดเล่าเมนู';
+    renderSheet();
+    toast(`ฟังได้ว่า: "${text}" ✨`);
+    analyzeMeal();
+  };
+
+  rec.onerror = () => {
+    $('#voiceBtn').textContent = '🎙️ พูดเล่าเมนู';
+    toast('ไม่สามารถรับเสียงได้ ลองพูดใหม่อีกครั้งนะ');
+  };
+
+  rec.onend = () => {
+    $('#voiceBtn').textContent = '🎙️ พูดเล่าเมนู';
+  };
+
+  rec.start();
+}
+
+// Add Meal Sheet & Component Breakdown
+function openSheet() {
+  const now = new Date();
+  const h = now.getHours();
+  const isLateNight = h >= 0 && h < 4;
+  const todayStr = key();
+  const yDate = new Date();
+  yDate.setDate(yDate.getDate() - 1);
+  const yesterdayStr = yDate.toISOString().slice(0, 10);
+
+  draft = {
+    name: '',
+    kcal: '',
+    sugar: '',
+    txt: '',
+    status: '',
+    sweetness: 'normal',
+    portion: 'normal',
+    date: todayStr,
+    isLateNight,
+    todayStr,
+    yesterdayStr,
+    isPrivate: false,
+    saveAsFav: false,
+    imageBase64: null,
+    clarification: null,
+    components: null
+  };
+  renderSheet();
+}
+
+function closeSheet() {
+  draft = null;
+  const el = $('#sheet');
+  el.hidden = true;
+  el.innerHTML = '';
+}
+
+function renderSheet() {
+  const el = $('#sheet');
+  if (!draft) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+  el.hidden = false;
+
+  el.innerHTML = `
+    <div class="sh">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h2 class="hd" style="font-size:18px;">เพิ่มมื้ออาหาร 🍡</h2>
+        <span style="font-size:12px; color:var(--mute);">บันทึกให้ ${esc(currentUser?.nickname)}</span>
+      </div>
+
+      <!-- Late Night / Midnight Meal Prompt (Pillar 4) -->
+      ${draft.isLateNight ? `
+        <div style="background:#EDE9FE; border-radius:14px; padding:10px 12px; margin-bottom:10px; font-size:12px; color:#5B21B6; display:flex; justify-content:space-between; align-items:center;">
+          <span>🌙 บันทึกช่วงดึก (00:00 - 04:00): นับเป็นมื้อไหนดี?</span>
+          <div style="display:flex; gap:4px;">
+            <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">เมื่อวาน</button>
+            <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">วันนี้</button>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Date Selection Toggle (Today / Yesterday / Custom) -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:12px; color:var(--mute);">
+        <span>📅 วันที่บันทึก:</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="padding:4px 10px; font-size:11px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">วันนี้</button>
+          <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="padding:4px 10px; font-size:11px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">เมื่อวาน</button>
+          <input type="date" value="${draft.date}" style="font-size:11px; padding:3px 6px; border-radius:8px; border:1px solid #E5E7EB;" onchange="draft.date=this.value; renderSheet();">
+        </div>
+      </div>
+
+      <!-- Quick Favorite Fill in Sheet -->
+      ${favorites.length ? `
+        <div style="margin-bottom:8px;">
+          <small style="color:var(--mute); font-size:11px;">เลือกจากเมนูประจำ:</small>
+          <div class="fav-scroll">
+            ${favorites.map(f => `
+              <div class="fav-pill" onclick="fillDraftFromFavorite('${f.id}')">
+                <span>⭐ ${esc(f.name)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Photo Picker -->
+      <label class="photo">
+        <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
+        ${draft.imageBase64 ? `<img src="${draft.imageBase64}" alt="รูปอาหาร">` : '📷 ถ่ายรูปหรือแตะเพื่อเลือกรูปอาหาร'}
+      </label>
+
+      <!-- Description Input & Voice Button (Phase 3) -->
+      <div style="position:relative;">
+        <textarea rows="2" placeholder="พิมพ์เล่าเมนู เช่น ข้าวผัดกะเพราหมูสับไข่ดาว หรือกดปุ่มไมโครโฟน" oninput="draft.txt=this.value">${esc(draft.txt)}</textarea>
+        <button id="voiceBtn" class="btn s sm" style="margin-bottom:8px;" onclick="toggleVoiceInput()">🎙️ พูดเล่าเมนู (Voice Input)</button>
+      </div>
+
+      <!-- Clarification Controls -->
+      <div style="margin: 6px 0;">
+        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ระดับความหวาน (สำคัญกับน้ำตาลมาก):</label>
+        <div class="pill-group" style="margin:0 0 8px;">
+          ${[
+            { id: 'none', label: 'ไม่หวาน 0%' },
+            { id: 'less', label: 'หวานน้อย 25%' },
+            { id: 'half', label: 'หวาน 50%' },
+            { id: 'normal', label: 'หวานปกติ 100%' },
+            { id: 'sweet', label: 'หวานมาก 120%' }
+          ].map(s => `
+            <div class="pill ${draft.sweetness === s.id ? 'active' : ''}" onclick="setSweetness('${s.id}')">${s.label}</div>
+          `).join('')}
+        </div>
+
+        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ปริมาณอาหาร:</label>
+        <div class="pill-group" style="margin:0 0 10px;">
+          ${[
+            { id: 'small', label: 'จาน/แก้วเล็ก' },
+            { id: 'normal', label: 'ขนาดปกติ' },
+            { id: 'large', label: 'จานใหญ่ / พิเศษ' }
+          ].map(p => `
+            <div class="pill ${draft.portion === p.id ? 'active' : ''}" onclick="setPortion('${p.id}')">${p.label}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <button class="btn s" onclick="analyzeMeal()">✨ ให้โมจิวิเคราะห์ (AI)</button>
+
+      <!-- AI Clarification Question Banner -->
+      ${draft.clarification ? `
+        <div class="clarification-box">
+          <b>❓ โมจิอยากรู้เพิ่ม:</b>
+          <div style="font-size:13px; margin-bottom:6px;">${esc(draft.clarification.question)}</div>
+          ${draft.clarification.options ? `
+            <div class="pill-group">
+              ${draft.clarification.options.map(opt => `
+                <div class="pill active" onclick="applyClarification('${esc(opt)}')">${esc(opt)}</div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      <!-- Component Breakdown in Dish (Phase 3) -->
+      ${draft.components && draft.components.length ? `
+        <div class="component-box">
+          <small style="color:var(--mint); font-weight:600; display:block; margin-bottom:4px;">🍱 แจกแจงรายการในจาน:</small>
+          ${draft.components.map(c => `
+            <div class="component-item">
+              <span>• ${esc(c.name)}</span>
+              <span>${fmt(c.kcal)} kcal (${fmt(c.sugar)}g น้ำตาล)</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <div class="st">${esc(draft.status || '💡 ตรวจสอบและแก้ไขตัวเลขได้ตามจริงก่อนบันทึกเสมอ')}</div>
+
+      <!-- Editable Results -->
+      <div class="g3">
+        <div>
+          <label>ชื่อเมนู</label>
+          <input value="${esc(draft.name)}" placeholder="ชื่ออาหาร" oninput="draft.name=this.value">
+        </div>
+        <div>
+          <label>แคลอรี (kcal)</label>
+          <input type="number" inputmode="decimal" value="${draft.kcal}" oninput="draft.kcal=this.value">
+        </div>
+        <div>
+          <label>น้ำตาล (g)</label>
+          <input type="number" inputmode="decimal" value="${draft.sugar}" oninput="draft.sugar=this.value">
+        </div>
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" ${draft.saveAsFav ? 'checked' : ''} onchange="draft.saveAsFav=this.checked">
+        <span>⭐ บันทึกเป็น "เมนูประจำ" (เพื่อกดบันทึกซ้ำในแตะเดียววันหลัง)</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" ${draft.isPrivate ? 'checked' : ''} onchange="draft.isPrivate=this.checked">
+        <span>🔒 บันทึกเป็นเมนูส่วนตัว (เพื่อนจะเห็นแค่ตัวเลขรวม ไม่เห็นชื่อเมนูนี้)</span>
+      </label>
+
+      <div class="gap" style="margin-top:14px;">
+        <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
+        <button class="btn" onclick="saveMeal()">บันทึกมื้อนี้</button>
+      </div>
+    </div>
+  `;
+}
+
+function fillDraftFromFavorite(favId) {
+  const f = favorites.find(x => x.id === favId);
+  if (!f) return;
+  draft.name = f.name;
+  draft.kcal = f.calorie;
+  draft.sugar = f.sugar;
+  draft.portion = f.portion_size;
+  draft.sweetness = f.sweetness_level;
+  draft.status = `เลือกเมนูประจำ "${f.name}" แล้ว`;
+  renderSheet();
+}
+
+function setSweetness(val) {
+  draft.sweetness = val;
+  renderSheet();
+}
+
+function setPortion(val) {
+  draft.portion = val;
+  renderSheet();
+}
+
+function applyClarification(optText) {
+  draft.txt = (draft.txt ? draft.txt + ' ' : '') + optText;
+  if (optText.includes('0%')) draft.sweetness = 'none';
+  else if (optText.includes('25%')) draft.sweetness = 'less';
+  else if (optText.includes('50%')) draft.sweetness = 'half';
+  else if (optText.includes('100%')) draft.sweetness = 'normal';
+  draft.clarification = null;
+  analyzeMeal();
+}
+
+function pickImage(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 800;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      draft.imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      draft.status = 'เลือกรูปแล้ว กด "ให้โมจิวิเคราะห์" ได้เลยน้า';
+      renderSheet();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeMeal() {
+  if (!draft.txt.trim() && !draft.imageBase64) {
+    draft.status = 'ใส่รูปภาพหรือพิมพ์ชื่ออาหารก่อนน้า';
+    renderSheet();
+    return;
+  }
+
+  draft.status = 'โมจิกำลังคำนวณและประเมินโภชนาการให้... 🍡';
+  renderSheet();
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': currentUser?.id || ''
+      },
+      body: JSON.stringify({
+        userId: currentUser?.id,
+        text: draft.txt,
+        imageBase64: draft.imageBase64,
+        sweetness: draft.sweetness,
+        portion: draft.portion
+      })
+    });
+
+    if (res.status === 429) {
+      const err = await res.json();
+      draft.status = `⚠️ ${err.message}`;
+      renderSheet();
+      return;
+    }
+
+    const result = await res.json();
+    draft.name = result.name || draft.name || 'มื้ออาหาร';
+    draft.kcal = result.kcal;
+    draft.sugar = result.sugar;
+    draft.components = result.components || null;
+    draft.status = `✨ ${result.note}`;
+
+    if (result.needs_clarification && result.clarification_question) {
+      draft.clarification = {
+        question: result.clarification_question,
+        options: result.options
+      };
+    } else {
+      draft.clarification = null;
+    }
+  } catch (err) {
+    draft.status = 'เกิดข้อผิดพลาดในการวิเคราะห์ ลองกรอกตัวเลขเองได้นะ';
+  }
+  renderSheet();
+}
+
+async function saveMeal() {
+  const name = (draft.name || '').trim();
+  const kcal = Number(draft.kcal) || 0;
+  const sugar = Number(draft.sugar) || 0;
+
+  if (!name) {
+    toast('กรุณาระบุชื่อเมนูก่อนบันทึกนะ');
+    return;
+  }
+
+  try {
+    const mealDate = draft.date || key();
+    await fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        date: mealDate,
+        name,
+        calorie: kcal,
+        sugar,
+        portion_size: draft.portion,
+        sweetness_level: draft.sweetness,
+        is_private: draft.isPrivate ? 1 : 0
+      })
+    });
+
+    if (draft.saveAsFav) {
+      await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          name,
+          calorie: kcal,
+          sugar,
+          portion_size: draft.portion,
+          sweetness_level: draft.sweetness
+        })
+      });
+      await fetchFavorites();
+    }
+
+    fireConfetti();
+    closeSheet();
+    await fetchLogs();
+    await fetchStreak();
+    render();
+
+    const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
+    const sp = totalSugar / (currentUser.sugar_goal || 25);
+    if (sp >= 0.85 && sp <= 1) {
+      sendPushNotification('โมจิเตือนเบาๆ ⚠️', 'วันนี้ใกล้เต็มโควตาน้ำตาลแล้วนะ มื้อต่อไปแนะนำเลือกไม่หวานน้า~');
+    } else if (sp > 1) {
+      sendPushNotification('โมจิส่งกำลังใจ 🚨', 'น้ำตาลวันนี้เกินเป้าแล้ว ดื่มน้ำเปล่าเพิ่มและค่อยๆ ปรับสมดุลกันนะ');
+    }
+
+    if (mealDate !== key()) {
+      toast(`บันทึกมื้ออาหารของวันที่ ${mealDate} เรียบร้อยแล้ว 🍡`);
+    } else {
+      toast(sp > 1 ? 'บันทึกแล้ว แต่น้ำตาลเกินโควตาแล้วนะ 😣' : 'บันทึกมื้ออาหารเรียบร้อยแล้ว 🍡');
+    }
+  } catch (e) {
+    toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
+async function deleteMeal(id) {
+  if (!confirm('ต้องการลบมื้อนี้ใช่ไหม?')) return;
+  try {
+    const res = await fetch(`/api/logs/${id}?userId=${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    await fetchLogs();
+    await fetchStreak();
+    render();
+
+    if (data.deletedLog) {
+      showUndoToast('ลบมื้ออาหารแล้ว', async () => {
+        try {
+          await fetch('/api/logs/undo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+            body: JSON.stringify({ log: data.deletedLog })
+          });
+          await fetchLogs();
+          await fetchStreak();
+          render();
+          toast('กู้คืนมื้ออาหารเรียบร้อยแล้ว ✨');
+        } catch (err) {
+          toast('กู้คืนไม่สำเร็จ');
+        }
+      });
+    } else {
+      toast('ลบมื้ออาหารแล้ว');
+    }
+  } catch (e) {
+    toast('ลบไม่สำเร็จ');
+  }
+}
+
+function showUndoToast(msg, onUndo) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'space-between';
+  el.style.gap = '12px';
+  el.style.padding = '10px 16px';
+  el.style.minWidth = '280px';
+  el.innerHTML = `
+    <span>${msg}</span>
+    <button style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:5px 12px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;">เลิกทำ (Undo)</button>
+  `;
+  const btn = el.querySelector('button');
+  const timeoutId = setTimeout(() => el.remove(), 6000);
+  btn.onclick = () => {
+    clearTimeout(timeoutId);
+    el.remove();
+    if (typeof onUndo === 'function') onUndo();
+  };
+  document.body.appendChild(el);
+}
+
+function shareText() {
+  const totalCal = currentLogs.reduce((a, b) => a + b.calorie, 0);
+  const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
+  const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+  return `🍡 สรุปโภชนาการวันนี้ของ ${currentUser?.nickname} (${dateStr})\n` +
+    `🔥 ความสม่ำเสมอ: ${userStreak.current} วันติด!\n` +
+    `🔥 แคลอรี: ${Math.round(totalCal)} / ${currentUser?.calorie_goal} kcal\n` +
+    `🍬 น้ำตาล: ${fmt(totalSugar)} / ${currentUser?.sugar_goal} g\n\n` +
+    (currentLogs.length ? currentLogs.map(l => `• ${l.name} — ${Math.round(l.calorie)} kcal (น้ำตาล ${fmt(l.sugar)} g)`).join('\n') : '(ยังไม่มีบันทึก)') +
+    `\n\n— จากแอปโมจินับแคลและน้ำตาล`;
+}
+
+async function copyShareText() {
+  const text = shareText();
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('คัดลอกข้อความแล้ว ส่งใน LINE กลุ่มได้เลย 💌');
+  } catch (e) {
+    const a = document.createElement('textarea');
+    a.value = text;
+    document.body.appendChild(a);
+    a.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    a.remove();
+    toast('คัดลอกข้อความแล้ว 💌');
+  }
+}
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2400);
+}
+
+// Initial Boot
+(async () => {
+  await fetchSettings();
+  await fetchUsers();
+  await Promise.all([
+    fetchLogs(),
+    fetchFavorites(),
+    fetchStreak(),
+    fetchChallenges(),
+    fetchChatHistory(),
+    fetchActivities(),
+    fetchLeaderboard()
+  ]);
+  render();
+})();
+</script>
+</body>
+</html>

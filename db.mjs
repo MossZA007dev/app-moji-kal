@@ -1,0 +1,864 @@
+import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dataDir = path.join(__dirname, 'data');
+const backupsDir = path.join(dataDir, 'backups');
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+
+const dbPath = path.join(dataDir, 'moji.db');
+const db = new DatabaseSync(dbPath);
+
+// Initialize schema
+db.exec(`
+  PRAGMA journal_mode = WAL;
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    nickname TEXT NOT NULL,
+    avatar_color TEXT NOT NULL DEFAULT '#FF9EB5',
+    avatar_face TEXT NOT NULL DEFAULT 'happy',
+    calorie_goal INTEGER NOT NULL DEFAULT 2000,
+    sugar_goal REAL NOT NULL DEFAULT 25,
+    privacy_level TEXT NOT NULL DEFAULT 'full',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    name TEXT NOT NULL,
+    calorie REAL NOT NULL DEFAULT 0,
+    sugar REAL NOT NULL DEFAULT 0,
+    portion_size TEXT DEFAULT 'normal',
+    sweetness_level TEXT DEFAULT 'normal',
+    is_private INTEGER NOT NULL DEFAULT 0,
+    image_url TEXT,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS ai_usage (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    call_count INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, date)
+  );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    calorie REAL NOT NULL DEFAULT 0,
+    sugar REAL NOT NULL DEFAULT 0,
+    portion_size TEXT DEFAULT 'normal',
+    sweetness_level TEXT DEFAULT 'normal',
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS challenges (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT NOT NULL,
+    target_days INTEGER NOT NULL DEFAULT 5,
+    icon TEXT NOT NULL DEFAULT '🎯',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS challenge_participants (
+    challenge_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    progress_days INTEGER NOT NULL DEFAULT 0,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+    joined_at INTEGER NOT NULL,
+    PRIMARY KEY (challenge_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  -- Group Activities & Social Interactions
+  CREATE TABLE IF NOT EXISTS activities (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    text TEXT NOT NULL,
+    coins INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS cheers (
+    id TEXT PRIMARY KEY,
+    from_user_id TEXT NOT NULL,
+    to_user_id TEXT NOT NULL,
+    cheer_type TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  -- Group Verified Dishes Knowledge Cache (Learned from group confirmations)
+  CREATE TABLE IF NOT EXISTS verified_dishes (
+    name_clean TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    calorie REAL NOT NULL,
+    sugar REAL NOT NULL,
+    sweetness_level TEXT,
+    portion_size TEXT,
+    confidence_score INTEGER DEFAULT 1,
+    last_verified INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_logs_user_date ON logs(user_id, date);
+  CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
+`);
+
+// Idempotent column migrations for users table
+const userCols = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+const neededCols = [
+  { name: 'google_id', type: 'TEXT' },
+  { name: 'email', type: 'TEXT' },
+  { name: 'avatar_image', type: 'TEXT' },
+  { name: 'consent_pdpa', type: 'INTEGER DEFAULT 0' },
+  { name: 'consent_at', type: 'INTEGER' },
+  { name: 'gender', type: 'TEXT DEFAULT "female"' },
+  { name: 'age', type: 'INTEGER DEFAULT 25' },
+  { name: 'height', type: 'REAL DEFAULT 160' },
+  { name: 'weight', type: 'REAL DEFAULT 52' },
+  { name: 'activity_level', type: 'TEXT DEFAULT "moderate"' },
+  { name: 'avatar_hat', type: 'TEXT DEFAULT "none"' },
+  { name: 'personality', type: 'TEXT DEFAULT "kind"' },
+  { name: 'coins', type: 'INTEGER DEFAULT 120' }
+];
+
+for (const col of neededCols) {
+  if (!userCols.includes(col.name)) {
+    db.exec(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type};`);
+  }
+}
+
+// Seed default challenges if empty
+const chalCount = db.prepare('SELECT COUNT(*) as c FROM challenges').get().c;
+if (chalCount === 0) {
+  const insertChal = db.prepare(`
+    INSERT INTO challenges (id, title, description, type, target_days, icon, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+  insertChal.run('c1', 'งดน้ำหวาน 3 วันติด', 'เลือกเครื่องดื่มหวาน 0% หรือดื่มน้ำเปล่าแทนน้ำหวานต่อเนื่อง 3 วัน', 'no_sugar_drink', 3, '🧋', Date.now());
+  insertChal.run('c2', 'น้ำตาลไม่เกินเป้า 5 วัน', 'คุมระดับน้ำตาลสะสมต่อวันให้อยู่ในเป้าหมายต่อเนื่อง 5 วัน', 'under_goal_streak', 5, '🎯', Date.now());
+  insertChal.run('c3', 'ดื่มน้ำเปล่า 7 วันสม่ำเสมอ', 'ดื่มน้ำเปล่าอย่างน้อยวันละ 1-2 แก้วเพื่อช่วยระบบเผาผลาญ', 'water_daily', 7, '💧', Date.now());
+}
+
+// Seed sample activities if empty
+const actCount = db.prepare('SELECT COUNT(*) as c FROM activities').get().c;
+if (actCount === 0) {
+  const insertAct = db.prepare(`
+    INSERT INTO activities (id, user_id, type, text, coins, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const now = Date.now();
+  insertAct.run('act_1', 'u1', 'meal', 'บันทึกมื้ออาหาร "สุกี้น้ำอกไก่" (+5 🪙)', 5, now - 1800000);
+  insertAct.run('act_2', 'u2', 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2, now - 3600000);
+  insertAct.run('act_3', 'u3', 'challenge', 'เข้าร่วมชาเลนจ์ "งดน้ำหวาน 3 วันติด" 🎯 (+15 🪙)', 15, now - 7200000);
+  insertAct.run('act_4', 'u1', 'streak', 'รักษาสถิติบันทึกต่อเนื่อง 3 วันติด! 🔥 (+10 🪙)', 10, now - 10800000);
+}
+
+export function getAllUsers() {
+  const stmt = db.prepare('SELECT id, nickname, avatar_color, avatar_face, avatar_hat, personality, COALESCE(coins, 120) as coins, calorie_goal, sugar_goal, privacy_level, consent_pdpa, created_at FROM users ORDER BY created_at ASC');
+  return stmt.all();
+}
+
+export function getUser(id) {
+  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+  return stmt.get(id);
+}
+
+export function getUserByGoogleId(googleId) {
+  const stmt = db.prepare('SELECT * FROM users WHERE google_id = ?');
+  return stmt.get(googleId);
+}
+
+export function getUserByEmail(email) {
+  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
+  return stmt.get(email);
+}
+
+export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa }) {
+  const newId = id || `u_${Date.now()}`;
+  const stmt = db.prepare(`
+    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, personality, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    newId,
+    nickname || 'โมจิใหม่',
+    avatar_color || '#FF9EB5',
+    avatar_face || 'happy',
+    Math.max(1200, Number(calorie_goal) || 2000),
+    Math.max(10, Math.min(60, Number(sugar_goal) || 25)),
+    privacy_level || 'full',
+    google_id || null,
+    email || null,
+    avatar_image || null,
+    consent_pdpa ? 1 : 0,
+    consent_pdpa ? Date.now() : null,
+    'none',
+    'kind',
+    Date.now()
+  );
+  return getUser(newId);
+}
+
+export function findOrCreateGoogleUser({ google_id, email, name, picture }) {
+  let user = getUserByGoogleId(google_id);
+  if (!user && email) {
+    user = getUserByEmail(email);
+    if (user) {
+      db.prepare('UPDATE users SET google_id = ?, avatar_image = COALESCE(avatar_image, ?) WHERE id = ?').run(google_id, picture, user.id);
+      return getUser(user.id);
+    }
+  }
+
+  if (user) return user;
+
+  const colors = ['#FF9EB5', '#6FCBB0', '#FFB05C', '#A78BFA', '#D4A373'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  return createUser({
+    nickname: name || 'Google User',
+    avatar_color: randomColor,
+    avatar_face: 'happy',
+    google_id,
+    email,
+    avatar_image: picture,
+    calorie_goal: 2000,
+    sugar_goal: 25,
+    privacy_level: 'full',
+    consent_pdpa: 1
+  });
+}
+
+export function updateUser(id, data) {
+  const current = getUser(id);
+  if (!current) return null;
+
+  const nickname = data.nickname ?? current.nickname;
+  const avatar_color = data.avatar_color ?? current.avatar_color;
+  const avatar_face = data.avatar_face ?? current.avatar_face;
+  const avatar_hat = data.avatar_hat ?? current.avatar_hat;
+  const personality = data.personality ?? current.personality;
+  const calorie_goal = Math.max(1200, Number(data.calorie_goal ?? current.calorie_goal));
+  const sugar_goal = Math.max(10, Math.min(60, Number(data.sugar_goal ?? current.sugar_goal)));
+  const privacy_level = data.privacy_level ?? current.privacy_level;
+  const gender = data.gender ?? current.gender;
+  const age = Number(data.age ?? current.age);
+  const height = Number(data.height ?? current.height);
+  const weight = Number(data.weight ?? current.weight);
+  const activity_level = data.activity_level ?? current.activity_level;
+  const consent_pdpa = data.consent_pdpa !== undefined ? (data.consent_pdpa ? 1 : 0) : current.consent_pdpa;
+
+  const stmt = db.prepare(`
+    UPDATE users
+    SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, personality = ?,
+        calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
+        gender = ?, age = ?, height = ?, weight = ?, activity_level = ?,
+        consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END
+    WHERE id = ?
+  `);
+
+  stmt.run(
+    nickname, avatar_color, avatar_face, avatar_hat, personality,
+    calorie_goal, sugar_goal, privacy_level,
+    gender, age, height, weight, activity_level,
+    consent_pdpa, consent_pdpa, Date.now(),
+    id
+  );
+  return getUser(id);
+}
+
+export function deleteUserAndData(userId) {
+  db.prepare('DELETE FROM logs WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM ai_usage WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM favorites WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM challenge_participants WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM chat_messages WHERE user_id = ?').run(userId);
+  return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+}
+
+// AI Rate Limiting
+export function getAiQuota(userId, dateStr) {
+  const date = dateStr || new Date().toISOString().slice(0, 10);
+  const stmt = db.prepare('SELECT call_count FROM ai_usage WHERE user_id = ? AND date = ?');
+  const row = stmt.get(userId, date);
+  return row ? row.call_count : 0;
+}
+
+export function checkAndIncrementAiQuota(userId, limit = 15) {
+  const date = new Date().toISOString().slice(0, 10);
+  const currentCount = getAiQuota(userId, date);
+
+  if (currentCount >= limit) {
+    return { allowed: false, current: currentCount, limit };
+  }
+
+  const id = `ai_${userId}_${date}`;
+  const stmt = db.prepare(`
+    INSERT INTO ai_usage (id, user_id, date, call_count)
+    VALUES (?, ?, ?, 1)
+    ON CONFLICT(user_id, date) DO UPDATE SET call_count = call_count + 1
+  `);
+  stmt.run(id, userId, date);
+
+  return { allowed: true, current: currentCount + 1, limit };
+}
+
+// Convenience helper for internal calls
+export function getLogs(userId, date) {
+  return getLogsSecure(userId, userId, date);
+}
+
+// Privacy-Enforced Secure Log Fetching
+export function getLogsSecure(targetUserId, requesterId, date) {
+  const targetUser = getUser(targetUserId);
+  if (!targetUser) return [];
+
+  // If requester is owner, always return all logs
+  if (requesterId === targetUserId) {
+    if (date) {
+      return db.prepare('SELECT * FROM logs WHERE user_id = ? AND date = ? ORDER BY created_at DESC').all(targetUserId, date);
+    }
+    return db.prepare('SELECT * FROM logs WHERE user_id = ? ORDER BY created_at DESC').all(targetUserId);
+  }
+
+  // Requester is a different person: strictly respect privacy setting
+  if (targetUser.privacy_level === 'summary' || targetUser.privacy_level === 'private') {
+    return []; // Completely blocked from seeing individual meal names, calories, or photos!
+  }
+
+  // If targetUser set 'full', mask any meal marked is_private = 1
+  const rawLogs = date
+    ? db.prepare('SELECT id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, created_at FROM logs WHERE user_id = ? AND date = ? ORDER BY created_at DESC').all(targetUserId, date)
+    : db.prepare('SELECT id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, created_at FROM logs WHERE user_id = ? ORDER BY created_at DESC').all(targetUserId);
+
+  return rawLogs.map(l => {
+    if (l.is_private) {
+      return {
+        id: l.id,
+        user_id: l.user_id,
+        date: l.date,
+        name: '🔒 เมนูส่วนตัว',
+        calorie: l.calorie,
+        sugar: l.sugar,
+        portion_size: l.portion_size,
+        sweetness_level: l.sweetness_level,
+        is_private: 1,
+        created_at: l.created_at
+      };
+    }
+    return l;
+  });
+}
+
+export function addLog({ userId, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url }) {
+  const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const stmt = db.prepare(`
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    id,
+    userId,
+    date || new Date().toISOString().slice(0, 10),
+    name,
+    Math.max(0, Number(calorie) || 0),
+    Math.max(0, Number(sugar) || 0),
+    portion_size || 'normal',
+    sweetness_level || 'normal',
+    is_private ? 1 : 0,
+    image_url || null,
+    Date.now()
+  );
+
+  // Learn into Group Verified Knowledge Cache if valid name and values
+  recordVerifiedDish({
+    name,
+    calorie: Math.max(0, Number(calorie) || 0),
+    sugar: Math.max(0, Number(sugar) || 0),
+    sweetness_level,
+    portion_size
+  });
+
+  // Award 5 coins and log activity (Coins & Activity Dashboard)
+  const actText = is_private ? 'บันทึกมื้ออาหาร 🔒 (+5 🪙)' : `บันทึกมื้ออาหาร "${name}" (+5 🪙)`;
+  recordActivity(userId, 'meal', actText, 5);
+
+  return db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
+}
+
+export function deleteLog(id, userId) {
+  const log = db.prepare('SELECT * FROM logs WHERE id = ? AND user_id = ?').get(id, userId);
+  if (!log) return null;
+  db.prepare('DELETE FROM logs WHERE id = ? AND user_id = ?').run(id, userId);
+  return log; // Return deleted log data for Undo functionality
+}
+
+export function restoreDeletedLog(log) {
+  if (!log || !log.id) return null;
+  const stmt = db.prepare(`
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    log.id,
+    log.user_id,
+    log.date,
+    log.name,
+    log.calorie,
+    log.sugar,
+    log.portion_size,
+    log.sweetness_level,
+    log.is_private,
+    log.image_url,
+    log.created_at
+  );
+  return log;
+}
+
+// Group Verified Knowledge Cache (Point 3)
+export function recordVerifiedDish({ name, calorie, sugar, sweetness_level, portion_size }) {
+  if (!name || name.trim().length < 2) return;
+  const clean = name.trim().toLowerCase();
+  const stmt = db.prepare(`
+    INSERT INTO verified_dishes (name_clean, display_name, calorie, sugar, sweetness_level, portion_size, confidence_score, last_verified)
+    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+    ON CONFLICT(name_clean) DO UPDATE SET
+      calorie = (calorie + excluded.calorie) / 2,
+      sugar = (sugar + excluded.sugar) / 2,
+      confidence_score = confidence_score + 1,
+      last_verified = excluded.last_verified
+  `);
+  stmt.run(clean, name.trim(), calorie, sugar, sweetness_level || 'normal', portion_size || 'normal', Date.now());
+}
+
+export function lookupVerifiedDish(query) {
+  if (!query) return null;
+  const clean = query.trim().toLowerCase();
+  const direct = db.prepare('SELECT * FROM verified_dishes WHERE name_clean = ?').get(clean);
+  if (direct) return direct;
+
+  // Substring match
+  const stmt = db.prepare('SELECT * FROM verified_dishes WHERE ? LIKE "%" || name_clean || "%" ORDER BY confidence_score DESC LIMIT 1');
+  return stmt.get(clean);
+}
+
+// Automatic Weekly Backup System (Point 2)
+export function runAutoBackup() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const backupFile = path.join(backupsDir, `backup_${todayStr}.json`);
+
+  // Only backup once per week
+  try {
+    const existing = fs.readdirSync(backupsDir);
+    const hasRecent = existing.some(f => {
+      const parts = f.match(/backup_(\d{4}-\d{2}-\d{2})\.json/);
+      if (parts) {
+        const diffDays = (new Date(todayStr) - new Date(parts[1])) / (1000 * 3600 * 24);
+        return diffDays < 7;
+      }
+      return false;
+    });
+
+    if (!hasRecent) {
+      const dump = {
+        exported_at: new Date().toISOString(),
+        users: db.prepare('SELECT id, nickname, calorie_goal, sugar_goal, privacy_level, created_at FROM users').all(),
+        logs: db.prepare('SELECT * FROM logs').all(),
+        favorites: db.prepare('SELECT * FROM favorites').all(),
+        verified_dishes: db.prepare('SELECT * FROM verified_dishes').all()
+      };
+      fs.writeFileSync(backupFile, JSON.stringify(dump, null, 2), 'utf-8');
+      console.log(`[Backup] Automated weekly backup saved to ${backupFile}`);
+    }
+  } catch (err) {
+    console.error('[Backup Error]:', err);
+  }
+}
+
+// Run backup check on initialization
+runAutoBackup();
+
+// Streak Calculation
+export function calculateUserStreak(userId) {
+  const stmt = db.prepare('SELECT DISTINCT date FROM logs WHERE user_id = ? ORDER BY date DESC');
+  const rows = stmt.all(userId);
+  if (!rows.length) return { current: 0, best: 0 };
+
+  const dates = rows.map(r => r.date);
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+
+  let streak = 0;
+  let checkDate = new Date();
+
+  if (!dates.includes(today)) {
+    if (!dates.includes(yesterday)) {
+      return { current: 0, best: dates.length };
+    }
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  while (true) {
+    const ds = checkDate.toISOString().slice(0, 10);
+    if (dates.includes(ds)) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return { current: streak, best: Math.max(streak, dates.length) };
+}
+
+// Favorites
+export function getFavorites(userId) {
+  const stmt = db.prepare('SELECT * FROM favorites WHERE user_id = ? ORDER BY created_at DESC');
+  return stmt.all(userId);
+}
+
+export function addFavorite({ userId, name, calorie, sugar, portion_size, sweetness_level }) {
+  const id = `fav_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const stmt = db.prepare(`
+    INSERT INTO favorites (id, user_id, name, calorie, sugar, portion_size, sweetness_level, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    id,
+    userId,
+    name,
+    Math.max(0, Number(calorie) || 0),
+    Math.max(0, Number(sugar) || 0),
+    portion_size || 'normal',
+    sweetness_level || 'normal',
+    Date.now()
+  );
+  return db.prepare('SELECT * FROM favorites WHERE id = ?').get(id);
+}
+
+export function deleteFavorite(id, userId) {
+  const stmt = db.prepare('DELETE FROM favorites WHERE id = ? AND user_id = ?');
+  return stmt.run(id, userId);
+}
+
+// Challenges
+export function getChallenges(userId) {
+  const allChal = db.prepare('SELECT * FROM challenges ORDER BY created_at ASC').all();
+  const userParts = db.prepare('SELECT * FROM challenge_participants WHERE user_id = ?').all(userId);
+
+  return allChal.map(c => {
+    const part = userParts.find(p => p.challenge_id === c.id);
+    return {
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      type: c.type,
+      target_days: c.target_days,
+      icon: c.icon,
+      is_joined: Boolean(part),
+      progress_days: part ? part.progress_days : 0,
+      is_completed: part ? Boolean(part.is_completed) : false
+    };
+  });
+}
+
+export function joinChallenge(challengeId, userId) {
+  const stmt = db.prepare(`
+    INSERT INTO challenge_participants (challenge_id, user_id, progress_days, is_completed, joined_at)
+    VALUES (?, ?, 1, 0, ?)
+    ON CONFLICT(challenge_id, user_id) DO UPDATE SET joined_at = joined_at
+  `);
+  stmt.run(challengeId, userId, Date.now());
+  const chal = db.prepare('SELECT title FROM challenges WHERE id = ?').get(challengeId);
+  recordActivity(userId, 'challenge', `เข้าร่วมชาเลนจ์ "${chal?.title || 'ใหม่'}" 🎯 (+15 🪙)`, 15);
+  return getChallenges(userId);
+}
+
+export function leaveChallenge(challengeId, userId) {
+  const stmt = db.prepare('DELETE FROM challenge_participants WHERE challenge_id = ? AND user_id = ?');
+  stmt.run(challengeId, userId);
+  return getChallenges(userId);
+}
+
+// Monthly Calendar Log Aggregation
+export function getMonthlyCalendar(userId, yearMonthStr) {
+  const ym = yearMonthStr || new Date().toISOString().slice(0, 7);
+  const user = getUser(userId);
+  const goalSugar = user ? user.sugar_goal : 25;
+  const goalCal = user ? user.calorie_goal : 2000;
+
+  const stmt = db.prepare(`
+    SELECT date, SUM(calorie) as total_cal, SUM(sugar) as total_sugar, COUNT(*) as meal_count
+    FROM logs
+    WHERE user_id = ? AND date LIKE ?
+    GROUP BY date
+    ORDER BY date ASC
+  `);
+  const rows = stmt.all(userId, `${ym}%`);
+
+  const daysMap = {};
+  for (const r of rows) {
+    const isOverSugar = r.total_sugar > goalSugar;
+    const isNearSugar = r.total_sugar >= goalSugar * 0.85;
+    daysMap[r.date] = {
+      date: r.date,
+      total_cal: Math.round(r.total_cal),
+      total_sugar: Math.round(r.total_sugar * 10) / 10,
+      meal_count: r.meal_count,
+      status: isOverSugar ? 'alert' : isNearSugar ? 'warn' : 'ok'
+    };
+  }
+
+  return { ym, goalSugar, goalCal, days: daysMap };
+}
+
+// Chat Messages
+export function getChatMessages(userId, limit = 30) {
+  const stmt = db.prepare('SELECT role, content, created_at FROM chat_messages WHERE user_id = ? ORDER BY created_at ASC LIMIT ?');
+  return stmt.all(userId, limit);
+}
+
+export function saveChatMessage({ userId, role, content }) {
+  const id = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const stmt = db.prepare('INSERT INTO chat_messages (id, user_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(id, userId, role, content, Date.now());
+  return { id, role, content };
+}
+
+export function getGroupFeed(date, currentUserId) {
+  const targetDate = date || new Date().toISOString().slice(0, 10);
+  const users = getAllUsers();
+
+  const userLogsStmt = db.prepare('SELECT * FROM logs WHERE date = ? ORDER BY created_at DESC');
+  const allLogsForDate = userLogsStmt.all(targetDate);
+
+  return users.map(user => {
+    const userLogs = allLogsForDate.filter(l => l.user_id === user.id);
+    const totalCal = userLogs.reduce((acc, l) => acc + l.calorie, 0);
+    const totalSugar = userLogs.reduce((acc, l) => acc + l.sugar, 0);
+    const isMe = user.id === currentUserId;
+    const streak = calculateUserStreak(user.id);
+
+    let visibleMeals = [];
+    if (isMe || user.privacy_level === 'full') {
+      visibleMeals = userLogs.map(l => ({
+        id: l.id,
+        name: (!isMe && l.is_private) ? '🔒 เมนูส่วนตัว' : l.name,
+        calorie: l.calorie,
+        sugar: l.sugar,
+        created_at: l.created_at,
+        is_private: l.is_private
+      }));
+    } else if (user.privacy_level === 'summary') {
+      visibleMeals = [];
+    } else if (user.privacy_level === 'private' && !isMe) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: user.id,
+        nickname: user.nickname,
+        avatar_color: user.avatar_color,
+        avatar_face: user.avatar_face,
+        avatar_hat: user.avatar_hat,
+        personality: user.personality,
+        avatar_image: user.avatar_image,
+        calorie_goal: user.calorie_goal,
+        sugar_goal: user.sugar_goal,
+        privacy_level: user.privacy_level,
+        is_me: isMe,
+        streak: streak.current
+      },
+      stats: {
+        calorie: Math.round(totalCal * 10) / 10,
+        sugar: Math.round(totalSugar * 10) / 10,
+        meal_count: userLogs.length,
+        calorie_percent: Math.round((totalCal / user.calorie_goal) * 100),
+        sugar_percent: Math.round((totalSugar / user.sugar_goal) * 100),
+      },
+      meals: visibleMeals
+    };
+  }).filter(Boolean);
+}
+
+export function exportUserCsv(userId) {
+  const user = getUser(userId);
+  if (!user) return '';
+  const stmt = db.prepare('SELECT date, name, calorie, sugar, portion_size, sweetness_level, created_at FROM logs WHERE user_id = ? ORDER BY date DESC, created_at DESC');
+  const rows = stmt.all(userId);
+
+  const headers = ['วันที่', 'ชื่อเมนู', 'แคลอรี (kcal)', 'น้ำตาล (g)', 'ขนาด', 'ระดับความหวาน', 'เวลาบันทึก'];
+  const csvLines = [headers.join(',')];
+
+  for (const r of rows) {
+    const time = new Date(r.created_at).toLocaleTimeString('th-TH');
+    csvLines.push([
+      `"${r.date}"`,
+      `"${(r.name || '').replace(/"/g, '""')}"`,
+      r.calorie,
+      r.sugar,
+      `"${r.portion_size}"`,
+      `"${r.sweetness_level}"`,
+      `"${time}"`
+    ].join(','));
+  }
+
+  return '\uFEFF' + csvLines.join('\n');
+}
+
+// ----------------------------------------------------
+// Social Dashboard, Coins, Leaderboard & Member Details
+// ----------------------------------------------------
+
+export function addCoins(userId, amount) {
+  db.prepare('UPDATE users SET coins = MAX(0, COALESCE(coins, 120) + ?) WHERE id = ?').run(amount, userId);
+  return getUser(userId);
+}
+
+export function recordActivity(userId, type, text, coins = 0) {
+  const id = `act_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const stmt = db.prepare(`
+    INSERT INTO activities (id, user_id, type, text, coins, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(id, userId, type, text, coins, Date.now());
+  if (coins > 0) {
+    addCoins(userId, coins);
+  }
+  return { id, userId, type, text, coins, created_at: Date.now() };
+}
+
+export function getRecentActivities(limit = 20) {
+  const stmt = db.prepare(`
+    SELECT a.id, a.user_id, a.type, a.text, a.coins, a.created_at,
+           u.nickname, u.avatar_color, u.avatar_face, u.avatar_hat, u.avatar_image, u.privacy_level
+    FROM activities a
+    JOIN users u ON a.user_id = u.id
+    ORDER BY a.created_at DESC
+    LIMIT ?
+  `);
+  return stmt.all(limit);
+}
+
+export function getLeaderboard() {
+  const users = db.prepare(`
+    SELECT id, nickname, avatar_color, avatar_face, avatar_hat, avatar_image, personality,
+           COALESCE(coins, 120) as coins, calorie_goal, sugar_goal, privacy_level, created_at
+    FROM users
+    ORDER BY coins DESC
+  `).all();
+
+  const todayDate = new Date().toISOString().slice(0, 10);
+  return users.map((u, idx) => {
+    const streak = calculateUserStreak(u.id);
+    const mealsToday = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ?').get(u.id, todayDate)?.c || 0;
+    return {
+      rank: idx + 1,
+      ...u,
+      streak: streak.current,
+      mealsToday
+    };
+  });
+}
+
+export function getMemberDetail(targetUserId, requesterId) {
+  const user = getUser(targetUserId);
+  if (!user) return null;
+
+  const streak = calculateUserStreak(targetUserId);
+  const todayDate = new Date().toISOString().slice(0, 10);
+  const logs = getLogsSecure(targetUserId, requesterId, todayDate);
+  const totalMeals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ?').get(targetUserId)?.c || 0;
+  const cheersReceived = db.prepare('SELECT COUNT(*) as c FROM cheers WHERE to_user_id = ?').get(targetUserId)?.c || 0;
+
+  const badges = [
+    { id: 'b_join', title: 'สมาชิกแก๊งโมจิ 🍡', desc: 'ร่วมเดินทางสร้างนิสัยสุขภาพดี', unlocked: true },
+    { id: 'b_coins', title: 'เศรษฐีคอยน์ 🪙', desc: 'สะสมโมจิคอยน์ครบ 150 เหรียญ', unlocked: (user.coins || 0) >= 150 },
+    { id: 'b_streak3', title: 'ไฟแรง 3 วันติด 🔥', desc: 'บันทึกต่อเนื่องไม่ขาดตอน 3 วัน', unlocked: streak.current >= 3 },
+    { id: 'b_streak7', title: 'แชมป์ความสม่ำเสมอ 🏆', desc: 'บันทึกต่อเนื่อง 7 วันขึ้นไป', unlocked: streak.current >= 7 },
+    { id: 'b_meals5', title: 'นักชิมตัวจริง 🍱', desc: 'บันทึกมื้ออาหารสะสม 5 มื้อขึ้นไป', unlocked: totalMeals >= 5 },
+    { id: 'b_cheered', title: 'ขวัญใจเพื่อนๆ 💖', desc: 'ได้รับกำลังใจจากเพื่อนสะสม', unlocked: cheersReceived >= 1 }
+  ];
+
+  return {
+    user: {
+      id: user.id,
+      nickname: user.nickname,
+      avatar_color: user.avatar_color,
+      avatar_face: user.avatar_face,
+      avatar_hat: user.avatar_hat,
+      avatar_image: user.avatar_image,
+      personality: user.personality,
+      coins: user.coins || 120,
+      calorie_goal: user.calorie_goal,
+      sugar_goal: user.sugar_goal,
+      privacy_level: user.privacy_level,
+      created_at: user.created_at,
+      is_me: targetUserId === requesterId
+    },
+    stats: {
+      streak: streak.current,
+      bestStreak: streak.best,
+      totalMeals,
+      cheersReceived
+    },
+    badges,
+    todayMeals: logs
+  };
+}
+
+export function sendCheer(fromUserId, toUserId, cheerType = 'heart') {
+  const fromUser = getUser(fromUserId);
+  const toUser = getUser(toUserId);
+  if (!fromUser || !toUser) return null;
+
+  const cheerLabels = {
+    heart: '💖 ส่งหัวใจ',
+    hi5: '✋ แปะมือไฮไฟฟ์',
+    mochi: '🍡 ส่งขนมโมจิ',
+    fire: '🔥 ส่งพลังไฟสู้ๆ',
+    clap: '👏 ปรบมือรัวๆ'
+  };
+  const label = cheerLabels[cheerType] || '💖 ส่งกำลังใจ';
+
+  const id = `cheer_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  db.prepare('INSERT INTO cheers (id, from_user_id, to_user_id, cheer_type, created_at) VALUES (?, ?, ?, ?, ?)').run(
+    id, fromUserId, toUserId, cheerType, Date.now()
+  );
+
+  recordActivity(fromUserId, 'cheer', `ส่งกำลังใจ "${label}" ให้ ${toUser.nickname} (+2 🪙)`, 2);
+  addCoins(toUserId, 3); // recipient gets +3 coins!
+
+  return {
+    success: true,
+    fromNickname: fromUser.nickname,
+    toNickname: toUser.nickname,
+    cheerType,
+    label
+  };
+}

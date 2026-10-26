@@ -1,0 +1,21 @@
+# Environment and Secrets
+.env
+.env.local
+data/settings.json
+
+# Local Data and Uploads
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/images/
+data/backups/
+
+# Logs and System Files
+*.log
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+dist/
+.gemini/
