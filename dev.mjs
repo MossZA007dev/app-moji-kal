@@ -369,6 +369,16 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, user: updated });
       }
 
+      // 9.2 Clear all demo data (Protected: only Dev)
+      if (pathname === '/api/dev/clear-demo' && req.method === 'POST') {
+        const authUserId = req.headers['x-user-id'] || '';
+        if (!db.isDevUser(authUserId)) {
+          return sendJson(res, 403, { error: 'สิทธิ์ไม่เพียงพอ: เฉพาะ Developer เท่านั้น' });
+        }
+        const result = db.clearAllDemoData();
+        return sendJson(res, 200, result);
+      }
+
       // 10. Group Feed
       if (pathname === '/api/feed' && req.method === 'GET') {
         const date = parsedUrl.searchParams.get('date') || new Date().toISOString().slice(0, 10);

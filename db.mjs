@@ -228,11 +228,11 @@ try {
   const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
   if (userCount === 0) {
     const insertUser = db.prepare(`
-      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, goal_type, goal_score, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, goal_type, goal_score, role, is_dev, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const now = Date.now();
-    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 1800, 25, 'full', 'crown', 'cheerful', 353, 'weight_loss', 450, now);
+    insertUser.run('u1', 'มอส', '#FF9EB5', 'happy', 2000, 25, 'full', 'none', 'kind', 120, 'weight_loss', 150, 'dev', 1, now);
   }
   // Clean up legacy demo users so the app is 100% clean for real production use
   db.prepare("DELETE FROM users WHERE id IN ('u2', 'u3', 'u_1793104988179')").run();
@@ -260,19 +260,29 @@ try {
   console.warn('Initial challenges seed warning:', e.message);
 }
 
-// Seed sample activities if empty
-try {
-  const actCount = db.prepare('SELECT COUNT(*) as c FROM activities').get().c;
-  if (actCount === 0) {
-    const insertAct = db.prepare(`
-      INSERT INTO activities (id, user_id, type, text, coins, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-    const now = Date.now();
-    insertAct.run('act_1', 'u1', 'meal', 'เริ่มต้นเข้าสู่แก๊งโมจิ! 🍡 (+5 🪙)', 5, now - 1800000);
-  }
-} catch (e) {
-  console.warn('Initial activities seed warning:', e.message);
+export function clearAllDemoData() {
+  db.prepare('DELETE FROM logs').run();
+  db.prepare('DELETE FROM weight_logs').run();
+  db.prepare('DELETE FROM chat_messages').run();
+  db.prepare('DELETE FROM activities').run();
+  db.prepare('DELETE FROM cheers').run();
+  db.prepare('DELETE FROM daily_goals').run();
+  db.prepare('DELETE FROM favorites').run();
+  db.prepare('DELETE FROM challenge_participants').run();
+  db.prepare('DELETE FROM ai_usage').run();
+
+  // Reset primary user stats to clean initial production state while preserving personal health profile
+  db.prepare(`
+    UPDATE users 
+    SET coins = 120, 
+        goal_score = 150, 
+        avatar_hat = 'none', 
+        avatar_accessory = 'none', 
+        unlocked_items = '[]'
+    WHERE id = 'u1'
+  `).run();
+
+  return { success: true, message: 'ล้างข้อมูลทดสอบทั้งหมดเรียบร้อยแล้ว' };
 }
 
 export function getAllUsers() {

@@ -8761,9 +8761,41 @@ function openDevInfoModal() {
         2. <b>เซิร์ฟเวอร์ด้านหลัง:</b> ตรวจสอบสิทธิ์ <code>x-user-id</code> ทุกครั้ง หากไม่ใช่ Dev คำขอลบจะถูกปฏิเสธทันที (403 Forbidden)
       </div>
 
+      ${isDev ? `
+        <div style="margin-bottom:14px; text-align:center;">
+          <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2; font-weight:700;" onclick="clearAllDemoDataFromDev()">
+            🧹 ล้างข้อมูลทดสอบทั้งหมด (Reset Demo Data)
+          </button>
+          <span style="font-size:10.5px; color:var(--mute); margin-top:4px; display:block;">ล้างประวัติอาหาร กำลังใจ น้ำหนัก แชททดสอบ และฟีดเดิม เพื่อเริ่มต้นใช้งานจริง</span>
+        </div>
+      ` : ''}
+
       <button class="btn" style="width:100%;" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
     </div>
   `;
+}
+
+async function clearAllDemoDataFromDev() {
+  if (!confirm('ต้องการล้างข้อมูลทดสอบทั้งหมด (มื้ออาหาร, น้ำหนัก, ประวัติแชท, ความเคลื่อนไหว และกำลังใจ) เพื่อเริ่มต้นใช้งานจริงใช่หรือไม่?\n\n💡 บัญชีและเป้าหมายส่วนตัวของคุณจะยังคงอยู่ครบถ้วน')) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/dev/clear-demo', {
+      method: 'POST',
+      headers: { 'x-user-id': currentUser?.id || '' }
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      toast('🎉 ล้างข้อมูลทดสอบทั้งหมดเรียบร้อยแล้ว พร้อมเริ่มใช้งานจริง!');
+      closeSheet();
+      await Promise.all([fetchUsers(), fetchLogs(), fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchStreak(), fetchWeightLogs(), fetchChatHistory()]);
+      render();
+    } else {
+      toast(data.error || 'ล้างข้อมูลไม่สำเร็จ');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการล้างข้อมูล');
+  }
 }
 
 // Trigger Manual Instant Backup (Pillar 2)
