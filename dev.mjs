@@ -425,6 +425,28 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, result);
       }
 
+      // 10.0.2 Gaming Quests (Daily, Weekly, Main Tasks)
+      if (pathname === '/api/quests' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId') || '';
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const quests = db.getUserQuests(userId);
+        return sendJson(res, 200, { success: true, quests });
+      }
+
+      if (pathname === '/api/quests/claim' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        const { questId } = body;
+        if (!userId || !questId) {
+          return sendJson(res, 400, { error: 'userId and questId required' });
+        }
+        const result = db.claimQuest(userId, questId);
+        if (!result.success) {
+          return sendJson(res, 400, result);
+        }
+        return sendJson(res, 200, result);
+      }
+
       // 10.1 Activities Stream (Dashboard)
       if (pathname === '/api/activities' && req.method === 'GET') {
         const activities = db.getRecentActivities(30);

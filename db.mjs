@@ -123,6 +123,17 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_post_reactions_post ON post_reactions(post_id);
 
+  -- Gamified Quest Claims (Daily, Weekly, Main Tasks)
+  CREATE TABLE IF NOT EXISTS quest_claims (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    quest_id TEXT NOT NULL,
+    period_key TEXT NOT NULL,
+    claimed_at INTEGER NOT NULL,
+    UNIQUE(user_id, quest_id, period_key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_quest_claims_user ON quest_claims(user_id);
+
   -- Group Verified Dishes Knowledge Cache (Learned from group confirmations)
   CREATE TABLE IF NOT EXISTS verified_dishes (
     name_clean TEXT PRIMARY KEY,
@@ -954,6 +965,332 @@ export function leaveChallenge(challengeId, userId) {
   const stmt = db.prepare('DELETE FROM challenge_participants WHERE challenge_id = ? AND user_id = ?');
   stmt.run(challengeId, userId);
   return getChallenges(userId);
+}
+
+// -------------------------------------------------------------
+// Gaming Quest Engine: Daily, Weekly, Main Tasks
+// -------------------------------------------------------------
+export function getUserQuests(userId) {
+  const user = getUser(userId);
+  if (!user) return { daily: [], weekly: [], main: [] };
+
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  // ISO Week calculation (Monday as start of week)
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const weekKey = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+
+  // Start date of current week (Monday)
+  const monday = new Date(now);
+  const currentDay = monday.getDay();
+  const diff = monday.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+  monday.setDate(diff);
+  const weekStartStr = monday.toISOString().slice(0, 10);
+
+  // Today's Real-time Stats
+  const todayMeals = db.prepare("SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ? AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')").get(userId, todayStr)?.c || 0;
+  const todayWater = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date = ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(userId, todayStr)?.s || 0;
+  const todaySugarRow = db.prepare('SELECT SUM(sugar) as s FROM logs WHERE user_id = ? AND date = ?').get(userId, todayStr);
+  const todaySugar = todaySugarRow?.s || 0;
+  const todaySugarOk = todayMeals > 0 && todaySugar <= (user.sugar_goal || 25);
+  const todayPhotos = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ? AND image_url IS NOT NULL').get(userId, todayStr)?.c || 0;
+  
+  const todayStartTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todaySocial = db.prepare('SELECT COUNT(*) as c FROM post_reactions WHERE user_id = ? AND created_at >= ?').get(userId, todayStartTs)?.c || 0;
+
+  // Weekly Stats
+  const streakInfo = calculateUserStreak(userId);
+  const weeklyMeals = db.prepare("SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date >= ? AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')").get(userId, weekStartStr)?.c || 0;
+  const weeklyWater = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date >= ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(userId, weekStartStr)?.s || 0;
+  const weeklyGoals = db.prepare('SELECT COUNT(*) as c FROM daily_goals WHERE user_id = ? AND date >= ? AND achieved = 1').get(userId, weekStartStr)?.c || 0;
+
+  // Main / All-Time Stats
+  const totalMeals = db.prepare("SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')").get(userId)?.c || 0;
+  const totalWeightLogs = db.prepare('SELECT COUNT(*) as c FROM weight_logs WHERE user_id = ?').get(userId)?.c || 0;
+  
+  // Leaderboard rank
+  const leaderboard = getLeaderboard('goal');
+  const myRank = (leaderboard.findIndex(u => u.id === userId) + 1) || 999;
+  const myGoalScore = Number(user.goal_score) || 150;
+
+  // Fetch claimed quests for this user
+  const claims = db.prepare('SELECT quest_id, period_key FROM quest_claims WHERE user_id = ?').all(userId);
+  const isClaimed = (questId, periodKey) => claims.some(c => c.quest_id === questId && c.period_key === periodKey);
+
+  // 1. DAILY TASKS (ภารกิจรายวัน - ทำง่าย ได้เหรียญพอดีๆ รีเซ็ตทุกวัน)
+  const dailyTasks = [
+    {
+      id: 'daily_meals_2',
+      category: 'daily',
+      periodKey: todayStr,
+      icon: '🍱',
+      title: 'นักกินมีระเบียบ (2 มื้อ)',
+      desc: 'บันทึกอาหารอย่างน้อย 2 มื้อในวันนี้',
+      progress: Math.min(2, todayMeals),
+      target: 2,
+      unit: 'มื้อ',
+      rewardCoins: 5,
+      rewardScore: 15,
+      isCompleted: todayMeals >= 2,
+      isClaimed: isClaimed('daily_meals_2', todayStr),
+      actionType: 'meal'
+    },
+    {
+      id: 'daily_water_1000',
+      category: 'daily',
+      periodKey: todayStr,
+      icon: '💧',
+      title: 'จิบน้ำสดชื่น (1,000 ml)',
+      desc: 'ดื่มน้ำให้ได้ 1,000 ml วันนี้ เพื่อระบบเผาผลาญ',
+      progress: Math.min(1000, todayWater),
+      target: 1000,
+      unit: 'ml',
+      rewardCoins: 5,
+      rewardScore: 15,
+      isCompleted: todayWater >= 1000,
+      isClaimed: isClaimed('daily_water_1000', todayStr),
+      actionType: 'water'
+    },
+    {
+      id: 'daily_sugar_control',
+      category: 'daily',
+      periodKey: todayStr,
+      icon: '🍬',
+      title: 'คุมหวานชนะใจตน',
+      desc: `น้ำตาลวันนี้ไม่เกินเป้าหมาย (≤ ${user.sugar_goal || 25}g)`,
+      progress: todaySugarOk ? 1 : 0,
+      target: 1,
+      unit: 'ครั้ง',
+      rewardCoins: 10,
+      rewardScore: 25,
+      isCompleted: todaySugarOk,
+      isClaimed: isClaimed('daily_sugar_control', todayStr),
+      actionType: 'meal'
+    },
+    {
+      id: 'daily_photo_post',
+      category: 'daily',
+      periodKey: todayStr,
+      icon: '📸',
+      title: 'ช่างภาพอาหารตัวยง',
+      desc: 'บันทึกอาหารพร้อมถ่ายรูปจานอาหาร 1 มื้อ',
+      progress: Math.min(1, todayPhotos),
+      target: 1,
+      unit: 'มื้อ',
+      rewardCoins: 5,
+      rewardScore: 15,
+      isCompleted: todayPhotos >= 1,
+      isClaimed: isClaimed('daily_photo_post', todayStr),
+      actionType: 'photo'
+    },
+    {
+      id: 'daily_social_cheer',
+      category: 'daily',
+      periodKey: todayStr,
+      icon: '💖',
+      title: 'มิตรภาพแก๊งโมจิ',
+      desc: 'กดถูกใจ ❤️ หรือส่งเสียงเชียร์ให้เพื่อนในฟีด',
+      progress: Math.min(1, todaySocial),
+      target: 1,
+      unit: 'ครั้ง',
+      rewardCoins: 5,
+      rewardScore: 10,
+      isCompleted: todaySocial >= 1,
+      isClaimed: isClaimed('daily_social_cheer', todayStr),
+      actionType: 'feed'
+    }
+  ];
+
+  // 2. WEEKLY TASKS (ภารกิจประจำสัปดาห์ - สะสมต่อเนื่อง ได้เหรียญเยอะขึ้น)
+  const weeklyTasks = [
+    {
+      id: 'weekly_streak_3',
+      category: 'weekly',
+      periodKey: weekKey,
+      icon: '🔥',
+      title: 'สตรีคไฟแรง 3 วันติด',
+      desc: 'บันทึกอาหารต่อเนื่องอย่างน้อย 3 วัน',
+      progress: Math.min(3, streakInfo.current),
+      target: 3,
+      unit: 'วัน',
+      rewardCoins: 35,
+      rewardScore: 80,
+      isCompleted: streakInfo.current >= 3,
+      isClaimed: isClaimed('weekly_streak_3', weekKey),
+      actionType: 'streak'
+    },
+    {
+      id: 'weekly_meals_8',
+      category: 'weekly',
+      periodKey: weekKey,
+      icon: '🍱',
+      title: 'สัปดาห์แห่งวินัย (8 มื้อ)',
+      desc: 'บันทึกอาหารสะสมในสัปดาห์นี้ครบ 8 มื้อ',
+      progress: Math.min(8, weeklyMeals),
+      target: 8,
+      unit: 'มื้อ',
+      rewardCoins: 40,
+      rewardScore: 100,
+      isCompleted: weeklyMeals >= 8,
+      isClaimed: isClaimed('weekly_meals_8', weekKey),
+      actionType: 'meal'
+    },
+    {
+      id: 'weekly_water_5000',
+      category: 'weekly',
+      periodKey: weekKey,
+      icon: '💧',
+      title: 'ราชาแห่งการดื่มน้ำ (5,000 ml)',
+      desc: 'ดื่มน้ำสะสมในสัปดาห์นี้ให้ได้ 5,000 ml',
+      progress: Math.min(5000, weeklyWater),
+      target: 5000,
+      unit: 'ml',
+      rewardCoins: 35,
+      rewardScore: 90,
+      isCompleted: weeklyWater >= 5000,
+      isClaimed: isClaimed('weekly_water_5000', weekKey),
+      actionType: 'water'
+    },
+    {
+      id: 'weekly_goal_3',
+      category: 'weekly',
+      periodKey: weekKey,
+      icon: '🎯',
+      title: 'พิชิตเป้าหมายแก๊ง 3 วัน',
+      desc: 'ทำตามเป้าหมายสุขภาพสำเร็จ 3 วันในสัปดาห์นี้',
+      progress: Math.min(3, weeklyGoals),
+      target: 3,
+      unit: 'วัน',
+      rewardCoins: 50,
+      rewardScore: 120,
+      isCompleted: weeklyGoals >= 3,
+      isClaimed: isClaimed('weekly_goal_3', weekKey),
+      actionType: 'goal'
+    }
+  ];
+
+  // 3. MAIN TASKS (ภารกิจหลักระดับตำนาน - ได้เหรียญเยอะสะใจ)
+  const mainTasks = [
+    {
+      id: 'main_streak_7',
+      category: 'main',
+      periodKey: 'main',
+      icon: '🏆',
+      title: 'แชมป์ความสม่ำเสมอ 7 วันติด',
+      desc: 'พิชิตสตรีคยาวนาน 7 วันไม่ขาดตอน (ระดับมือโปร)',
+      progress: Math.min(7, streakInfo.best),
+      target: 7,
+      unit: 'วัน',
+      rewardCoins: 100,
+      rewardScore: 250,
+      isCompleted: streakInfo.best >= 7,
+      isClaimed: isClaimed('main_streak_7', 'main'),
+      actionType: 'streak'
+    },
+    {
+      id: 'main_meals_25',
+      category: 'main',
+      periodKey: 'main',
+      icon: '🍱',
+      title: 'นักชิมระดับตำนาน (25 มื้อ)',
+      desc: 'สะสมการบันทึกอาหารรวมทั้งหมด 25 มื้อ',
+      progress: Math.min(25, totalMeals),
+      target: 25,
+      unit: 'มื้อ',
+      rewardCoins: 120,
+      rewardScore: 300,
+      isCompleted: totalMeals >= 25,
+      isClaimed: isClaimed('main_meals_25', 'main'),
+      actionType: 'meal'
+    },
+    {
+      id: 'main_weight_update',
+      category: 'main',
+      periodKey: 'main',
+      icon: '⚖️',
+      title: 'ผู้ติดตามสรีระอย่างใกล้ชิด',
+      desc: 'บันทึกชั่งน้ำหนักอัปเดตสถิติสม่ำเสมออย่างน้อย 2 ครั้ง',
+      progress: Math.min(2, totalWeightLogs),
+      target: 2,
+      unit: 'ครั้ง',
+      rewardCoins: 80,
+      rewardScore: 200,
+      isCompleted: totalWeightLogs >= 2,
+      isClaimed: isClaimed('main_weight_update', 'main'),
+      actionType: 'weight'
+    },
+    {
+      id: 'main_top3_gang',
+      category: 'main',
+      periodKey: 'main',
+      icon: '🥇',
+      title: 'ก้าวสู่อันดับ Top 3 ของแก๊ง',
+      desc: 'ขึ้นแท่นลีดเดอร์บอร์ดอันดับ 1-3 ของแก๊งโมจิ',
+      progress: myRank <= 3 ? 1 : 0,
+      target: 1,
+      unit: 'อันดับ',
+      rewardCoins: 150,
+      rewardScore: 400,
+      isCompleted: myRank <= 3,
+      isClaimed: isClaimed('main_top3_gang', 'main'),
+      actionType: 'rank'
+    },
+    {
+      id: 'main_goal_score_500',
+      category: 'main',
+      periodKey: 'main',
+      icon: '👑',
+      title: 'ปรมาจารย์แห่งวินัย (500 pt)',
+      desc: 'สะสมคะแนนวินัยเป้าหมายครบ 500 คะแนน',
+      progress: Math.min(500, myGoalScore),
+      target: 500,
+      unit: 'pt',
+      rewardCoins: 200,
+      rewardScore: 500,
+      isCompleted: myGoalScore >= 500,
+      isClaimed: isClaimed('main_goal_score_500', 'main'),
+      actionType: 'goal'
+    }
+  ];
+
+  return { daily: dailyTasks, weekly: weeklyTasks, main: mainTasks };
+}
+
+export function claimQuest(userId, questId) {
+  const quests = getUserQuests(userId);
+  const all = [...quests.daily, ...quests.weekly, ...quests.main];
+  const target = all.find(q => q.id === questId);
+
+  if (!target) return { success: false, error: 'ไม่พบภารกิจนี้' };
+  if (!target.isCompleted) return { success: false, error: 'ภารกิจนี้ยังไม่สำเร็จ' };
+  if (target.isClaimed) return { success: false, error: 'คุณรับรางวัลภารกิจนี้ไปแล้ว' };
+
+  const claimId = `claim_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  db.prepare(`
+    INSERT INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(claimId, userId, target.id, target.periodKey, Date.now());
+
+  // Award coins and goal score
+  addCoins(userId, target.rewardCoins);
+  db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ? WHERE id = ?')
+    .run(target.rewardScore, userId);
+
+  // Broadcast celebration to Gang Social Feed
+  recordActivity(userId, 'goal', `🎉 พิชิตภารกิจ [${target.title}] สำเร็จ! (+${target.rewardScore} pt, +${target.rewardCoins} 🪙) 🏆`, 0);
+
+  return {
+    success: true,
+    quest: target,
+    rewardCoins: target.rewardCoins,
+    rewardScore: target.rewardScore,
+    user: getUser(userId)
+  };
 }
 
 // Monthly Calendar Log Aggregation

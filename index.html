@@ -2406,6 +2406,174 @@ textarea { resize: none; margin-bottom: 8px; }
   font-size: 13px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
+
+/* Gamified Quest Board (Battle Pass RPG Style) */
+.quest-board-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.035);
+}
+.quest-header-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.quest-category-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+.quest-cat-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.quest-cat-btn.active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.quest-badge-dot {
+  background: #E11D48;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  line-height: 1.1;
+}
+
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quest-item-box {
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.quest-item-box.claimable {
+  border-color: #F59E0B;
+  background: linear-gradient(135deg, rgba(254, 240, 138, 0.15), rgba(251, 191, 36, 0.08));
+}
+.quest-item-box.claimed {
+  opacity: 0.65;
+}
+.quest-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.quest-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.quest-icon-bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.quest-title-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quest-desc-text {
+  font-size: 11px;
+  color: var(--mute);
+  line-height: 1.3;
+}
+.quest-reward-pill {
+  font-size: 11px;
+  font-weight: 800;
+  color: #B45309;
+  background: #FEF3C7;
+  padding: 2px 7px;
+  border-radius: 8px;
+  white-space: nowrap;
+  border: 1px solid #FDE68A;
+}
+
+.quest-item-bot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.quest-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.quest-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--pink), var(--mint));
+  transition: width 0.3s ease;
+}
+.quest-bar-fill.gold {
+  background: linear-gradient(90deg, #F59E0B, #EAB308);
+}
+.quest-claim-btn {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+  white-space: nowrap;
+}
+.quest-claim-btn.pulse {
+  animation: goldPulse 1.5s infinite;
+}
+@keyframes goldPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+  70% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
 .friend-header {
   display: flex;
   justify-content: space-between;
@@ -3904,6 +4072,8 @@ let leaderboardSort = 'goal'; // 'goal' | 'coins'
 let socialPosts = [];
 let gangStories = [];
 let socialFeedFilter = 'all'; // 'all' | 'meal' | 'water' | 'goal'
+let userQuests = { daily: [], weekly: [], main: [] };
+let activeQuestTab = 'daily'; // 'daily' | 'weekly' | 'main'
 let draft = null;
 let appSettings = {};
 let isListeningVoice = false;
@@ -4144,12 +4314,28 @@ async function fetchLogs() {
   }
 }
 
+async function fetchQuests() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/quests?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.quests) {
+        userQuests = data.quests;
+      }
+    }
+  } catch (err) {
+    console.error('Fetch quests error:', err);
+  }
+}
+
 async function fetchFeed() {
   if (!currentUser) return;
   try {
-    const [feedRes, socRes] = await Promise.all([
+    const [feedRes, socRes, questRes] = await Promise.all([
       fetch(`/api/feed?date=${key()}&userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
-      fetch(`/api/feed/social?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } })
+      fetch(`/api/feed/social?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
+      fetch(`/api/quests?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } })
     ]);
     const data = await feedRes.json();
     feedData = data.feed || [];
@@ -4158,8 +4344,51 @@ async function fetchFeed() {
       socialPosts = socData.posts || [];
       gangStories = socData.stories || [];
     }
+    if (questRes.ok) {
+      const qData = await questRes.json();
+      if (qData.success && qData.quests) {
+        userQuests = qData.quests;
+      }
+    }
   } catch (err) {
     console.error('Fetch feed error:', err);
+  }
+}
+
+function setQuestTab(tabName) {
+  activeQuestTab = tabName;
+  renderFeed();
+}
+
+async function claimQuestReward(questId) {
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  try {
+    const res = await fetch('/api/quests/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, questId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof fireConfetti === 'function') fireConfetti();
+      const coinsEarned = data.rewardCoins ?? data.claimed?.coins ?? 0;
+      const scoreEarned = data.rewardScore ?? data.claimed?.goal_score ?? 0;
+      toast(`🎉 สำเร็จภารกิจ! ได้รับ +${coinsEarned} 🪙 และ +${scoreEarned} คะแนน!`);
+      if (data.user) {
+        currentUser = data.user;
+      } else {
+        currentUser.coins = (currentUser.coins || 0) + coinsEarned;
+        currentUser.goal_score = (currentUser.goal_score || 0) + scoreEarned;
+      }
+      await fetchFeed();
+      await fetchLeaderboard();
+      renderFeed();
+    } else {
+      toast(data.error || 'ยังทำภารกิจไม่สำเร็จ');
+    }
+  } catch (err) {
+    console.error('claimQuestReward error:', err);
+    toast('เกิดข้อผิดพลาดในการรับรางวัล');
   }
 }
 
@@ -6077,31 +6306,110 @@ function renderFeed() {
         </button>
       </div>
 
-      <!-- Group Challenges Accordion / Banner -->
-      <div class="challenge-banner" style="margin-bottom:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">🎯 ภารกิจชาเลนจ์สุขภาพของแก๊ง</b>
-          <span style="font-size:11px; color:var(--mute);">+15 🪙 คอยน์</span>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          ${challenges.slice(0, 2).map(c => `
-            <div class="challenge-item" style="padding:8px 10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:18px;">${c.icon}</span>
-                <div>
-                  <b style="font-size:12.5px; font-family:'Mali',sans-serif;">${esc(c.title)}</b>
-                  <div style="font-size:10.5px; color:var(--mute);">${esc(c.description)}</div>
-                </div>
+      <!-- Gamified Health Quest Board (Daily, Weekly, Main) -->
+      ${(() => {
+        const dailyList = userQuests?.daily || [];
+        const weeklyList = userQuests?.weekly || [];
+        const mainList = userQuests?.main || [];
+
+        const isQuestClaimable = (q) => (q.isCompleted ?? q.is_completed) && !(q.isClaimed ?? q.is_claimed);
+        const isQuestClaimed = (q) => !!(q.isClaimed ?? q.is_claimed);
+
+        const dailyClaimable = dailyList.filter(isQuestClaimable).length;
+        const weeklyClaimable = weeklyList.filter(isQuestClaimable).length;
+        const mainClaimable = mainList.filter(isQuestClaimable).length;
+
+        const currentQuestList = activeQuestTab === 'weekly' ? weeklyList : (activeQuestTab === 'main' ? mainList : dailyList);
+
+        return `
+          <div class="quest-board-card">
+            <div class="quest-header-title">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:18px;">🎯</span>
+                <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">ภารกิจสุขภาพของแก๊ง</b>
+                <span style="font-size:10.5px; color:var(--mute); background:var(--bg); padding:2px 7px; border-radius:8px;">RPG Quests</span>
               </div>
-              ${c.is_joined ? `
-                <span class="badge ok" style="font-size:10px;">ร่วมแล้ว (${c.progress_days}/${c.target_days} วัน)</span>
-              ` : `
-                <button class="btn s sm" style="font-size:11px; padding:3px 8px;" onclick="joinChallenge('${c.id}')">+ ร่วม</button>
-              `}
+              <span style="font-size:11px; color:#B45309; font-weight:700;">🪙 สะสมคอยน์ & คะแนน</span>
             </div>
-          `).join('')}
-        </div>
-      </div>
+
+            <!-- Category Tabs -->
+            <div class="quest-category-tabs">
+              <button class="quest-cat-btn ${activeQuestTab === 'daily' ? 'active' : ''}" onclick="setQuestTab('daily')">
+                <span>⚡ รายวัน</span>
+                ${dailyClaimable > 0 ? `<span class="quest-badge-dot">${dailyClaimable}</span>` : ''}
+              </button>
+              <button class="quest-cat-btn ${activeQuestTab === 'weekly' ? 'active' : ''}" onclick="setQuestTab('weekly')">
+                <span>🗓️ รายสัปดาห์</span>
+                ${weeklyClaimable > 0 ? `<span class="quest-badge-dot">${weeklyClaimable}</span>` : ''}
+              </button>
+              <button class="quest-cat-btn ${activeQuestTab === 'main' ? 'active' : ''}" onclick="setQuestTab('main')">
+                <span>👑 ภารกิจหลัก</span>
+                ${mainClaimable > 0 ? `<span class="quest-badge-dot">${mainClaimable}</span>` : ''}
+              </button>
+            </div>
+
+            <!-- Quest Items List -->
+            <div class="quest-list">
+              ${!currentQuestList.length ? `
+                <div style="text-align:center; padding:14px; font-size:12px; color:var(--mute);">
+                  กำลังโหลดข้อมูลภารกิจ... ⏳
+                </div>
+              ` : currentQuestList.map(q => {
+                const target = Math.max(1, q.target || 1);
+                const progress = Math.min(target, Math.max(0, q.progress || 0));
+                const pct = Math.min(100, Math.round((progress / target) * 100));
+                const claimable = isQuestClaimable(q);
+                const claimed = isQuestClaimed(q);
+                const boxClass = claimed ? 'quest-item-box claimed' : (claimable ? 'quest-item-box claimable' : 'quest-item-box');
+                const coins = q.rewardCoins ?? q.reward_coins ?? 0;
+                const score = q.rewardScore ?? q.reward_goal_score ?? 0;
+                const title = q.title || '';
+                const descText = q.desc || q.description || '';
+
+                return `
+                  <div class="${boxClass}">
+                    <div class="quest-item-top">
+                      <div class="quest-item-left">
+                        <div class="quest-icon-bubble">${q.icon || '🎯'}</div>
+                        <div style="min-width:0; flex:1;">
+                          <div class="quest-title-text">${esc(title)}</div>
+                          <div class="quest-desc-text">${esc(descText)}</div>
+                        </div>
+                      </div>
+                      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                        <span class="quest-reward-pill">🪙 +${coins}</span>
+                        <span style="font-size:10px; color:var(--mint); font-weight:700;">+${score} pt</span>
+                      </div>
+                    </div>
+
+                    <div class="quest-item-bot">
+                      <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--mute); margin-bottom:3px; font-weight:600;">
+                          <span>ความคืบหน้า</span>
+                          <span>${progress} / ${target} ${esc(q.unit || '')} (${pct}%)</span>
+                        </div>
+                        <div class="quest-bar-track">
+                          <div class="quest-bar-fill ${claimable || claimed ? 'gold' : ''}" style="width:${pct}%;"></div>
+                        </div>
+                      </div>
+
+                      <div style="flex-shrink:0;">
+                        ${claimed ? `
+                          <span class="badge ok" style="font-size:11px; padding:4px 8px;">✓ รับแล้ว</span>
+                        ` : claimable ? `
+                          <button class="quest-claim-btn pulse" onclick="claimQuestReward('${q.id}')">🎁 รับรางวัล</button>
+                        ` : `
+                          <span style="font-size:11px; color:var(--mute); font-weight:600; padding:4px 6px;">กำลังทำ</span>
+                        `}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      })()}
 
       <!-- Feed Posts Stream -->
       ${(() => {
