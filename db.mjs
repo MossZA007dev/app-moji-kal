@@ -1467,7 +1467,8 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
   const mealRows = db.prepare(`
     SELECT l.id, l.user_id, l.date, l.name, l.calorie, l.sugar, l.carbs, l.protein, l.fat, l.sodium,
            l.portion_size, l.sweetness_level, l.is_private, l.image_url, l.water_ml, l.created_at,
-           u.nickname, u.avatar_color, u.avatar_face, u.avatar_hat, u.avatar_image, u.privacy_level
+           u.nickname, u.avatar_color, u.avatar_face, u.avatar_hat, u.avatar_image, u.privacy_level,
+           u.calorie_goal, u.sugar_goal, u.goal_type, u.goal_score
     FROM logs l
     JOIN users u ON l.user_id = u.id
     WHERE (l.is_private = 0 OR l.user_id = ?)
@@ -1475,6 +1476,19 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     ORDER BY l.created_at DESC
     LIMIT ?
   `).all(currentUserId, currentUserId, limit);
+
+  // Pre-calculate user daily calorie and sugar totals for the dates
+  const userDateTotals = {};
+  for (const m of mealRows) {
+    const k = `${m.user_id}_${m.date}`;
+    if (!userDateTotals[k]) {
+      const sumRow = db.prepare('SELECT SUM(calorie) as cal, SUM(sugar) as sug FROM logs WHERE user_id = ? AND date = ?').get(m.user_id, m.date);
+      userDateTotals[k] = {
+        total_cal: Math.round(sumRow?.cal || 0),
+        total_sugar: Math.round((sumRow?.sug || 0) * 10) / 10
+      };
+    }
+  }
 
   // 2. Fetch recent activities (water, goal, challenge, shop, streak)
   const actRows = db.prepare(`
@@ -1489,28 +1503,37 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
   `).all(currentUserId, limit);
 
   // Map into unified post format
-  const mealPosts = mealRows.map(m => ({
-    id: m.id,
-    type: 'meal',
-    user_id: m.user_id,
-    nickname: m.nickname,
-    avatar_image: m.avatar_image,
-    avatar_color: m.avatar_color,
-    avatar_face: m.avatar_face,
-    avatar_hat: m.avatar_hat,
-    dish_name: m.name,
-    calorie: m.calorie,
-    sugar: m.sugar,
-    carbs: m.carbs,
-    protein: m.protein,
-    fat: m.fat,
-    sodium: m.sodium,
-    image_url: m.image_url,
-    portion_size: m.portion_size,
-    sweetness_level: m.sweetness_level,
-    created_at: m.created_at,
-    is_me: m.user_id === currentUserId
-  }));
+  const mealPosts = mealRows.map(m => {
+    const dayTotal = userDateTotals[`${m.user_id}_${m.date}`] || { total_cal: m.calorie, total_sugar: m.sugar };
+    return {
+      id: m.id,
+      type: 'meal',
+      user_id: m.user_id,
+      nickname: m.nickname,
+      avatar_image: m.avatar_image,
+      avatar_color: m.avatar_color,
+      avatar_face: m.avatar_face,
+      avatar_hat: m.avatar_hat,
+      dish_name: m.name,
+      calorie: m.calorie,
+      sugar: m.sugar,
+      carbs: m.carbs,
+      protein: m.protein,
+      fat: m.fat,
+      sodium: m.sodium,
+      image_url: m.image_url,
+      portion_size: m.portion_size,
+      sweetness_level: m.sweetness_level,
+      date: m.date,
+      created_at: m.created_at,
+      calorie_goal: m.calorie_goal || 1850,
+      sugar_goal: m.sugar_goal || 25,
+      goal_type: m.goal_type || 'weight_loss',
+      day_total_cal: dayTotal.total_cal,
+      day_total_sugar: dayTotal.total_sugar,
+      is_me: m.user_id === currentUserId
+    };
+  });
 
   const actPosts = actRows.map(a => ({
     id: a.id,

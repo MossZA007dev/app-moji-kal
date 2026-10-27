@@ -5704,6 +5704,57 @@ function formatTimeAgo(ts) {
   return `${Math.floor(h / 24)} วันที่แล้ว`;
 }
 
+function resolveFoodPhoto(dishName = '', uploadedPhoto = null) {
+  if (uploadedPhoto && String(uploadedPhoto).trim()) return uploadedPhoto;
+  const name = String(dishName || '').toLowerCase();
+  if (name.includes('กะเพรา') || name.includes('กระเพรา') || name.includes('basil')) {
+    return 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ข้าวมันไก่') || name.includes('ไก่ย่าง') || name.includes('ไก่ทอด') || name.includes('ไก่') || name.includes('chicken')) {
+    return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ส้มตำ') || name.includes('ตำไทย') || name.includes('ยำ') || name.includes('somtum') || name.includes('papaya')) {
+    return 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ก๋วยเตี๋ยว') || name.includes('บะหมี่') || name.includes('ราเมง') || name.includes('noodle') || name.includes('มาม่า') || name.includes('เฝอ')) {
+    return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ข้าวผัด') || name.includes('fried rice')) {
+    return 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('สลัด') || name.includes('salad') || name.includes('ผัก') || name.includes('อกไก่')) {
+    return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ชานม') || name.includes('boba') || name.includes('ไข่มุก')) {
+    return 'https://images.unsplash.com/photo-1558857563-b37cf5c4ecfb?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ชา') || name.includes('กาแฟ') || name.includes('ลาเต้') || name.includes('อเมริกาโน่') || name.includes('coffee') || name.includes('tea')) {
+    return 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('สเต๊ก') || name.includes('steak') || name.includes('เนื้อ') || name.includes('หมู') || name.includes('beef')) {
+    return 'https://images.unsplash.com/photo-1544025162-d76694265947?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ซูชิ') || name.includes('sushi') || name.includes('แซลมอน') || name.includes('salmon') || name.includes('ปลาดิบ')) {
+    return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('พิซซ่า') || name.includes('pizza')) {
+    return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('เบอร์เกอร์') || name.includes('burger')) {
+    return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ต้มยำ') || name.includes('แกง') || name.includes('curry') || name.includes('tomyum') || name.includes('ซุป')) {
+    return 'https://images.unsplash.com/photo-1548946526-f69e2424cf45?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('เค้ก') || name.includes('ไอติม') || name.includes('ไอศกรีม') || name.includes('ขนม') || name.includes('cake') || name.includes('dessert') || name.includes('เบเกอรี่')) {
+    return 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=700&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('ผลไม้') || name.includes('fruit') || name.includes('กล้วย') || name.includes('แอปเปิ้ล') || name.includes('ส้ม')) {
+    return 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=700&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=700&auto=format&fit=crop&q=80';
+}
+
 // 3D Isometric SVG Podium Generator for Leaderboard Spec
 function get3DPodiumSVG(top1, top2, top3) {
   const t1Id = top1 ? top1.id : '';
@@ -6104,27 +6155,55 @@ function renderFeed() {
 
               <!-- Post Visual Hero -->
               ${isMeal ? `
-                ${p.image_url ? `
-                  <div class="ig-post-media-wrap" onclick="openArPhotoModal('${p.id}')" style="cursor:pointer;" title="แตะเพื่อดูรูปอาหารและหมุด AR">
-                    <img src="${p.image_url}" class="ig-post-media-img" alt="${esc(p.dish_name)}">
-                    <div class="ig-post-floating-tag">
-                      🔥 ${fmt(p.calorie)} kcal · 🍬 น้ำตาล ${fmt(p.sugar)}g ⚡ แตะดู AR
+                <div class="ig-post-media-wrap" onclick="openArPhotoModal('${p.id}')" style="cursor:pointer;" title="แตะเพื่อดูรูปอาหารและหมุด AR">
+                  <img src="${resolveFoodPhoto(p.dish_name, p.image_url)}" class="ig-post-media-img" alt="${esc(p.dish_name)}">
+                  <div class="ig-post-floating-tag">
+                    🔥 ${fmt(p.calorie)} kcal · 🍬 น้ำตาล ${fmt(p.sugar)}g
+                    ${p.image_url ? '· ⚡ รูปจริง' : '· 🍽️ เมนู'}
+                  </div>
+                </div>
+                <div class="ig-post-dish-box">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                    <div>
+                      <div class="ig-post-dish-title">${esc(p.dish_name)}</div>
+                      <span style="font-size:11.5px; color:var(--mute);">
+                        🍽️ ขนาด: <b>${esc(p.portion_size || 'ปกติ')}</b>
+                        ${p.sweetness_level && p.sweetness_level !== 'normal' ? ` · 🍯 หวาน: <b>${esc(p.sweetness_level)}</b>` : ''}
+                      </span>
+                    </div>
+                    <div style="text-align:right;">
+                      <span style="font-size:18px; font-weight:800; color:var(--pink); font-family:'Mali',sans-serif;">
+                        ${fmt(p.calorie)} <small style="font-size:11px; font-weight:600; color:var(--mute);">kcal</small>
+                      </span>
                     </div>
                   </div>
-                ` : ''}
-                <div class="ig-post-dish-box" style="${!p.image_url ? 'border-top:1px solid var(--line);' : ''}">
-                  <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div class="ig-post-dish-title">${esc(p.dish_name)}</div>
-                    ${!p.image_url ? `<span style="font-size:16px; font-weight:800; color:var(--pink);">${fmt(p.calorie)} <small style="font-size:11px; font-weight:600; color:var(--mute);">kcal</small></span>` : ''}
-                  </div>
+
+                  <!-- 6 Essential Nutrient Badges -->
                   <div class="ig-post-nutri-chips">
-                    <span class="ig-nutri-chip">⚡ ${fmt(p.calorie)} kcal</span>
-                    <span class="ig-nutri-chip">🍬 น้ำตาล ${fmt(p.sugar)}g</span>
-                    ${p.protein ? `<span class="ig-nutri-chip">💪 โปรตีน ${fmt(p.protein)}g</span>` : ''}
-                    ${p.carbs ? `<span class="ig-nutri-chip">🍚 คาร์บ ${fmt(p.carbs)}g</span>` : ''}
-                    ${p.fat ? `<span class="ig-nutri-chip">🥑 ไขมัน ${fmt(p.fat)}g</span>` : ''}
-                    ${p.sweetness_level && p.sweetness_level !== 'normal' ? `<span class="ig-nutri-chip">หวาน: ${esc(p.sweetness_level)}</span>` : ''}
+                    <span class="ig-nutri-chip" style="background:#FFE4E6; color:#BE123C; border-color:#FDA4AF;">🔥 แคลอรี: <b>${fmt(p.calorie)}</b> kcal</span>
+                    <span class="ig-nutri-chip" style="background:#ECFDF5; color:#047857; border-color:#A7F3D0;">🍬 น้ำตาล: <b>${fmt(p.sugar)}</b>g</span>
+                    <span class="ig-nutri-chip" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;">💪 โปรตีน: <b>${fmt(p.protein || 0)}</b>g</span>
+                    <span class="ig-nutri-chip" style="background:#FFFBEB; color:#B45309; border-color:#FDE68A;">🍚 คาร์บ: <b>${fmt(p.carbs || 0)}</b>g</span>
+                    <span class="ig-nutri-chip" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE;">🥑 ไขมัน: <b>${fmt(p.fat || 0)}</b>g</span>
+                    ${p.sodium ? `<span class="ig-nutri-chip" style="background:#F1F5F9; color:#475569; border-color:#CBD5E1;">🧂 โซเดียม: <b>${fmt(p.sodium)}</b>mg</span>` : ''}
                   </div>
+
+                  <!-- Friend's Daily Progress Box ("ค่าต่างๆ ของเพื่อนคนนั้นที่กิน") -->
+                  ${p.day_total_cal ? `
+                    <div style="margin-top:10px; padding:10px 12px; background:var(--card); border:1.5px solid var(--line); border-radius:14px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; margin-bottom:5px;">
+                        <span style="color:var(--mute); font-weight:600;">📊 สรุปวันนี้ของ <b>${esc(p.nickname)}</b>:</span>
+                        <b style="color:var(--ink);">${fmt(p.day_total_cal)} / ${fmt(p.calorie_goal || 1850)} kcal (${Math.round((p.day_total_cal / (p.calorie_goal || 1850)) * 100)}%)</b>
+                      </div>
+                      <div style="width:100%; height:7px; background:var(--line); border-radius:6px; overflow:hidden;">
+                        <div style="height:100%; border-radius:6px; width:${Math.min(100, Math.round((p.day_total_cal / (p.calorie_goal || 1850)) * 100))}%; background:${p.day_total_cal > (p.calorie_goal || 1850) ? 'var(--red)' : 'linear-gradient(90deg, var(--pink), var(--mint))'};"></div>
+                      </div>
+                      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--mute); margin-top:4px;">
+                        <span>🍬 น้ำตาลสะสมวันนี้: <b>${fmt(p.day_total_sugar || p.sugar)}g</b> / ${p.sugar_goal || 25}g</span>
+                        <span>${p.day_total_cal > (p.calorie_goal || 1850) ? '🚨 เกินเป้าหมาย' : `เหลืออีก ${fmt(Math.max(0, (p.calorie_goal || 1850) - p.day_total_cal))} kcal`}</span>
+                      </div>
+                    </div>
+                  ` : ''}
                 </div>
               ` : isWater ? `
                 <div class="ig-post-water-box">
@@ -10837,6 +10916,15 @@ function renderSheet() {
 
       <!-- Hidden Direct Camera / Gallery Fallback -->
       <input id="directCameraInput" type="file" accept="image/*" capture="environment" hidden onchange="pickImage(this.files[0])">
+
+      <!-- Attach Photo Shortcut Bar -->
+      ${!draft.imageBase64 ? `
+        <div style="margin: 6px 0 10px;">
+          <button type="button" class="btn s sm" style="width:100%; font-size:11.5px; padding:6px 12px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="openCameraModal()">
+            <span>📸</span> <span>ถ่ายรูป / แนบรูปอาหารจานนี้เพื่อโชว์ในฟีดแก๊ง</span>
+          </button>
+        </div>
+      ` : ''}
 
       <!-- Quick 1-Tap Chips Row -->
       <div class="fast-chips-scroll">
