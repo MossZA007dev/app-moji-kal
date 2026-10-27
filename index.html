@@ -5650,6 +5650,52 @@ function renderBottleSVG(type = 'bottle_500', fillPct = 50, w = 64, h = 90) {
   `;
 }
 
+// Physiological Daily Water Recommendation Engine (นน, สส, เพศ, อายุ)
+function calculateUserSuggestedWater(user = currentUser) {
+  const weight = Math.max(30, Math.min(220, Number(user?.weight) || 60));
+  const height = Math.max(100, Math.min(230, Number(user?.height) || 165));
+  const age = Math.max(10, Math.min(100, Number(user?.age) || 25));
+  const gender = user?.gender || 'female';
+  const act = user?.activity_level || 'sedentary';
+  const goal = user?.goal_type || 'weight_loss';
+
+  // Base multiplier by weight (35 ml/kg baseline)
+  let base = weight * 35;
+
+  // Age factor
+  let ageBonus = 0;
+  if (age < 30) ageBonus = 150;
+  else if (age > 55) ageBonus = -150;
+
+  // Gender factor (Male has higher muscle water content)
+  let genderBonus = gender === 'male' ? 250 : 0;
+
+  // Height / Body Frame factor
+  let heightBonus = 0;
+  if (height >= 175) heightBonus = 200;
+  else if (height >= 168) heightBonus = 100;
+  else if (height <= 153) heightBonus = -100;
+
+  // Goal & Activity
+  let actBonus = 0;
+  if (act === 'very_active' || act === 'active') actBonus = 350;
+  else if (act === 'moderate') actBonus = 150;
+  if (goal === 'weight_loss' || goal === 'muscle_gain') actBonus += 150;
+
+  let total = base + ageBonus + genderBonus + heightBonus + actBonus;
+  total = Math.round(total / 100) * 100;
+  total = Math.max(1500, Math.min(4000, total));
+
+  return {
+    suggestedMl: total,
+    weight,
+    height,
+    age,
+    gender,
+    genderText: gender === 'male' ? 'ชาย' : 'หญิง'
+  };
+}
+
 let waterSetupState = {
   selectedPreset: 'bottle_1000',
   capacity: 1000,
@@ -5659,8 +5705,13 @@ let waterSetupState = {
 };
 
 function openWaterBottleModal(options = {}) {
+  const suggestedInfo = calculateUserSuggestedWater(currentUser);
   const currentCap = Number(currentUser?.water_bottle_ml) || 1000;
-  const currentTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  let currentTarget = Number(currentUser?.water_daily_target_ml);
+  // Auto-default to suggested target if first time or target not customized
+  if (!currentTarget || (!currentUser?.water_bottle_setup && currentTarget === 2000)) {
+    currentTarget = suggestedInfo.suggestedMl;
+  }
   const currentName = currentUser?.water_bottle_name || 'ขวดบอกเวลา (1,000 ml)';
   const currentIcon = currentUser?.water_bottle_icon || (currentCap === 1000 ? 'bottle_1000' : currentCap === 500 ? 'bottle_500' : currentCap === 750 ? 'bottle_750' : currentCap === 250 ? 'cup_250' : currentCap === 2000 ? 'jug_2000' : 'custom');
 
@@ -5681,12 +5732,16 @@ function renderWaterBottleModalContent() {
   const el = $('#sheet');
   if (!el) return;
 
-  const target = Number(waterSetupState.dailyTarget) || 2000;
+  const suggestedInfo = calculateUserSuggestedWater(currentUser);
+  const target = Number(waterSetupState.dailyTarget) || suggestedInfo.suggestedMl;
   const cap = Number(waterSetupState.capacity) || 500;
   const rounds = Math.max(1, Math.ceil(target / cap));
   const isFirstTime = !currentUser?.water_bottle_setup;
 
   const preset = WATER_BOTTLE_PRESETS.find(p => p.id === waterSetupState.selectedPreset) || WATER_BOTTLE_PRESETS[0];
+
+  const baseOptions = [1500, 2000, 2500, 3000];
+  const targetOptions = Array.from(new Set([...baseOptions, suggestedInfo.suggestedMl])).sort((a, b) => a - b);
 
   el.innerHTML = `
     <div class="sh" style="max-height:88vh; display:flex; flex-direction:column;">
@@ -5774,26 +5829,75 @@ function renderWaterBottleModalContent() {
           </div>
         ` : ''}
 
+        <!-- AI Personalized Water Recommendation Box (นน, สส, เพศ, อายุ) -->
+        <div style="background:linear-gradient(135deg, #F0F9FF, #E0F2FE); border:1.5px solid #7DD3FC; border-radius:16px; padding:12px 14px; margin-top:14px; box-shadow:0 2px 10px rgba(2,132,199,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <span style="font-size:22px;">💡</span>
+              <div>
+                <b style="font-size:13px; color:#0369A1; font-family:'Mali',sans-serif; display:block;">
+                  เป้าหมายที่ AI แนะนำสำหรับคุณ ${esc(currentUser?.nickname || 'เพื่อน')}:
+                </b>
+                <span style="font-size:11px; color:#0284C7; display:block; margin-top:2px; line-height:1.35;">
+                  คำนวณจากสรีระ: <b>นน. ${suggestedInfo.weight} kg</b> · <b>สส. ${suggestedInfo.height} cm</b> · <b>เพศ${suggestedInfo.genderText}</b> · <b>อายุ ${suggestedInfo.age} ปี</b>
+                </span>
+              </div>
+            </div>
+            <button type="button" class="btn sm" style="font-size:11px; padding:5px 10px; background:${target === suggestedInfo.suggestedMl ? '#10B981' : '#0284C7'}; color:#fff; border-radius:10px; font-weight:700; white-space:nowrap; border:none; box-shadow:0 2px 6px rgba(2,132,199,0.25); cursor:pointer;" onclick="setWaterTargetMl(${suggestedInfo.suggestedMl})">
+              ${target === suggestedInfo.suggestedMl ? '✓ ใช้อยู่' : 'ใช้ค่านี้ ✨'}
+            </button>
+          </div>
+
+          <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #BAE6FD; display:flex; justify-content:space-between; align-items:baseline;">
+            <div style="font-size:14px; font-weight:800; color:#0369A1; font-family:'Mali',sans-serif;">
+              💧 ปริมาณที่เหมาะสม: <span style="font-size:16px; color:#0284C7;">${fmt(suggestedInfo.suggestedMl)} ml</span> / วัน
+            </div>
+            <span style="font-size:11px; color:#0284C7; font-weight:600;">
+              (ประมาณ ${Math.max(1, Math.ceil(suggestedInfo.suggestedMl / cap))} ${waterSetupState.bottleName.includes('แก้ว') ? 'แก้ว' : 'ขวด'})
+            </span>
+          </div>
+        </div>
+
         <!-- Daily Water Target Selector -->
-        <div style="margin-top:16px;">
-          <label style="font-size:12.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">
-            🎯 เป้าหมายการดื่มน้ำต่อวัน:
-          </label>
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">
-            ${[1500, 2000, 2500, 3000].map(val => {
+        <div style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="font-size:12.5px; font-weight:700; color:var(--ink); margin:0;">
+              🎯 เลือกเป้าหมายการดื่มน้ำต่อวัน:
+            </label>
+            <span style="font-size:13.5px; font-weight:800; color:#0284C7; font-family:'Mali',sans-serif;">
+              ${fmt(target)} ml
+            </span>
+          </div>
+
+          <!-- Dynamic Preset Buttons (Includes AI recommended ml) -->
+          <div style="display:grid; grid-template-columns:repeat(${targetOptions.length}, 1fr); gap:6px;">
+            ${targetOptions.map(val => {
               const isTargetActive = target === val;
+              const isSuggested = val === suggestedInfo.suggestedMl;
               return `
                 <button type="button" 
                         class="btn ${isTargetActive ? '' : 'g'} sm" 
-                        style="font-size:11.5px; padding:7px 2px; text-align:center; ${isTargetActive ? 'background:linear-gradient(135deg, #38BDF8, #2563EB); color:#fff; font-weight:700; border:none;' : ''}" 
+                        style="position:relative; font-size:11.5px; padding:7px 2px; text-align:center; ${isTargetActive ? 'background:linear-gradient(135deg, #38BDF8, #2563EB); color:#fff; font-weight:700; border:none; box-shadow:0 3px 8px rgba(37,99,235,0.25);' : isSuggested ? 'border:1.5px solid #38BDF8; color:#0369A1; font-weight:700; background:#F0F9FF;' : ''}" 
                         onclick="setWaterTargetMl(${val})">
+                  ${isSuggested ? `<span style="position:absolute; top:-7px; left:50%; transform:translateX(-50%); background:#0284C7; color:#fff; font-size:8.5px; padding:1px 5px; border-radius:6px; font-weight:800; white-space:nowrap;">⭐ AI แนะนำ</span>` : ''}
                   ${fmt(val)} ml
                 </button>
               `;
             }).join('')}
           </div>
-          <small style="font-size:11px; color:var(--mute); display:block; margin-top:5px;">
-            * คนทั่วไปแนะนำ 2,000 ml (8 แก้ว) หรือปรับตามน้ำหนักและกิจกรรมประจำวัน
+
+          <!-- Fine-Tuning Step Controls -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:6px 12px;">
+            <span style="font-size:11.5px; color:var(--mute); font-weight:600;">ปรับแต่งละเอียด:</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" class="btn g sm" style="padding:3px 10px; font-size:12px; font-weight:700;" onclick="adjustWaterTargetMl(-100)">-100 ml</button>
+              <b style="font-size:13px; font-family:'Mali',sans-serif; color:var(--ink); min-width:60px; text-align:center;">${fmt(target)} ml</b>
+              <button type="button" class="btn g sm" style="padding:3px 10px; font-size:12px; font-weight:700;" onclick="adjustWaterTargetMl(100)">+100 ml</button>
+            </div>
+          </div>
+
+          <small style="font-size:11px; color:var(--mute); display:block; margin-top:6px; line-height:1.4;">
+            * คำนวณจากสูตรสรีรวิทยาทางการแพทย์ (น้ำหนัก ${suggestedInfo.weight} kg × 35 ml + สัดส่วนตามเพศ${suggestedInfo.genderText}, ส่วนสูง ${suggestedInfo.height} cm, อายุ ${suggestedInfo.age} ปี และเป้าหมายสุขภาพ)
           </small>
         </div>
       </div>
@@ -5825,6 +5929,12 @@ function selectWaterPreset(presetId) {
 function setWaterTargetMl(targetMl) {
   waterSetupState.dailyTarget = Number(targetMl) || 2000;
   renderWaterBottleModalContent();
+}
+
+function adjustWaterTargetMl(delta) {
+  const current = Number(waterSetupState.dailyTarget) || 2000;
+  const next = Math.max(500, Math.min(5000, current + delta));
+  setWaterTargetMl(next);
 }
 
 function onCustomCapacityChange(val) {
@@ -8679,9 +8789,9 @@ function calculateAiHealthPlan(state) {
   const mult = actMultipliers[act] || 1.375;
   const tdee = Math.round(bmr * mult);
 
-  // Recommended Daily Water Intake (ml) = Weight * 35 ml
-  let waterTarget = Math.round((weight * 35) / 100) * 100;
-  waterTarget = Math.max(1500, Math.min(3500, waterTarget));
+  // Recommended Daily Water Intake (ml) based on Weight, Height, Gender, Age, and Activity
+  const waterCalc = calculateUserSuggestedWater({ weight, height, age, gender, activity_level: act, goal_type: goal });
+  const waterTarget = waterCalc.suggestedMl;
 
   let targetWeight = weight;
   let calGoal = 1800;
