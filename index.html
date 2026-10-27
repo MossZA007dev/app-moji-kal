@@ -11870,6 +11870,20 @@ async function renderSettings() {
         </div>
       </div>
 
+      <div class="settings-row" onclick="openSetPinModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FEF3C7; color:#D97706;">🔒</div>
+          <div>
+            <span class="settings-label-title">รหัส PIN ประจำตัว 4 หลัก (Passcode)</span>
+            <span class="settings-label-sub">${currentUser?.pin ? 'ตั้งรหัส PIN แล้ว (แตะเพื่อเปลี่ยน)' : '⚠️ ยังไม่ได้ตั้งรหัส PIN (แนะนำให้ตั้งเพื่อความปลอดภัย)'}</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ${currentUser?.pin ? 'ok' : 'warn'}">${currentUser?.pin ? 'ปลอดภัย' : 'ตั้งรหัส'}</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
       <!-- AI Quota Row with Progress Bar -->
       <div class="settings-row" style="cursor:default;">
         <div class="settings-row-left" style="flex:1;">
@@ -11987,6 +12001,7 @@ let onboardingState = {
   step: 1, // 1: Info & Mascot, 2: Body Stats (Gender, Age, Height, Weight), 3: Goal Selection, 4: AI Analysis & Calibration
   isNewUser: true,
   nickname: '',
+  pin: '',
   avatar_color: '#FF9EB5',
   avatar_face: 'happy',
   avatar_image: null,
@@ -12327,6 +12342,8 @@ function nextOnboardingStep(targetStep) {
       return;
     }
     if (inputNick) onboardingState.nickname = inputNick;
+    const inputPin = $('#onboardPin')?.value.trim();
+    if (inputPin) onboardingState.pin = inputPin;
   } else if (onboardingState.step === 2) {
     const age = Number($('#onboardAge')?.value);
     const height = Number($('#onboardHeight')?.value);
@@ -12413,6 +12430,14 @@ function renderOnboardingStep() {
         <div style="margin-bottom:12px;">
           <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">ชื่อเล่นของคุณ</label>
           <input id="onboardNick" placeholder="เช่น มอส, น้องพลอย, บอม" value="${esc(onboardingState.nickname)}" maxlength="20" style="background:var(--card); font-size:14px;">
+        </div>
+
+        <div style="margin-bottom:14px; background:#FFF5F7; border:1px solid #FFE4E8; border-radius:14px; padding:10px 12px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">
+            🔒 รหัส PIN ส่วนตัว 4 หลัก <span style="font-size:11px; font-weight:normal; color:var(--mute);">(ป้องกันคนอื่นแอบเข้าบัญชี)</span>
+          </label>
+          <input type="password" id="onboardPin" placeholder="เช่น 1234" maxlength="6" value="${esc(onboardingState.pin || '')}" style="background:var(--card); font-size:16px; text-align:center; letter-spacing:6px; font-weight:800; max-width:180px; margin:4px 0 2px;">
+          <span style="font-size:10.5px; color:var(--mute); display:block;">ใช้ยืนยันตัวตนเมื่อคุณไปเปิดเล่นบนคอมหรือมือถือเครื่องอื่น</span>
         </div>
 
         <div style="margin-bottom:16px;">
@@ -12682,6 +12707,7 @@ async function submitOnboarding() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nickname: nick,
+          pin: onboardingState.pin || null,
           avatar_color: onboardingState.avatar_color,
           avatar_face: onboardingState.avatar_face || 'happy',
           avatar_image: onboardingState.avatar_image || null,
@@ -13281,16 +13307,153 @@ async function selectExistingProfile(userId) {
     return;
   }
 
-  currentUser = target;
-  localStorage.setItem('mochi_user_id', currentUser.id);
-  localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
-  localStorage.setItem('mochi_onboarded', 'true');
-  closeSheet();
-  updateUserHeader();
-  await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
-  render();
-  fireConfetti();
-  toast(`🎉 ยินดีต้อนรับ ${currentUser.nickname}! เข้าสู่ระบบบนเครื่องนี้เรียบร้อยแล้ว ✨`);
+  // Open User PIN modal to protect account from other friends
+  openUserPinModal(target);
+}
+
+function openUserPinModal(targetUser) {
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  const hasPin = Boolean(targetUser.pin);
+
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <div style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:var(--bg); border:2.5px solid var(--pink); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.06);">
+          ${targetUser.avatar_image ? `<img src="${esc(targetUser.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(targetUser.avatar_face || 'happy', targetUser.avatar_color || '#FF9EB5', 54, targetUser.avatar_hat)}
+        </div>
+        <h2 class="hd" style="font-size:18px; margin-bottom:4px;">ยืนยันตัวตน: ${esc(targetUser.nickname)}</h2>
+        <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+          ${hasPin ? 'กรุณาใส่รหัส PIN 4 หลักของคุณ เพื่อเข้าใช้งานบัญชีนี้' : 'บัญชีนี้ยังไม่ได้ตั้งรหัส PIN กรุณาตั้งรหัส 4 หลักเพื่อป้องกันคนอื่นแอบเข้า'}
+        </span>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px; text-align:center;">
+          ${hasPin ? 'รหัส PIN 4 หลัก' : 'ตั้งรหัส PIN 4 หลักใหม่'}
+        </label>
+        <input type="password" id="targetUserPinInput" placeholder="••••" maxlength="6" style="font-size:22px; text-align:center; letter-spacing:8px; font-weight:800; max-width:200px; margin:0 auto; display:block;">
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn" style="flex:1;" onclick="submitUserPinLogin('${targetUser.id}', ${hasPin})">
+          ${hasPin ? 'ยืนยันเข้าสู่ระบบ ➜' : 'บันทึก PIN & เข้าสู่ระบบ ➜'}
+        </button>
+        <button class="btn g" style="flex:1;" onclick="openSelectExistingProfileModal()">ย้อนกลับ</button>
+      </div>
+    </div>
+  `;
+  setTimeout(() => $('#targetUserPinInput')?.focus(), 150);
+}
+
+async function submitUserPinLogin(userId, hasPin) {
+  const pin = $('#targetUserPinInput')?.value.trim();
+  if (!pin || pin.length < 4) {
+    return toast('กรุณาใส่รหัส PIN อย่างน้อย 4 หลัก');
+  }
+
+  try {
+    if (!hasPin) {
+      const setRes = await fetch('/api/auth/set-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, pin })
+      });
+      const setData = await setRes.json();
+      if (!setData.success) return toast(setData.error || 'ตั้งรหัส PIN ไม่สำเร็จ');
+    }
+
+    const res = await fetch('/api/auth/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, pin })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      localStorage.setItem('mochi_onboarded', 'true');
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
+      render();
+      fireConfetti();
+      toast(`🎉 ยืนยันตัวตนสำเร็จ! ยินดีต้อนรับ ${currentUser.nickname} ✨`);
+    } else {
+      toast(data.error || 'รหัส PIN ไม่ถูกต้อง ไม่สามารถเข้าสู่ระบบได้ 🔒');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการตรวจสอบรหัส PIN');
+  }
+}
+
+function openSetPinModal() {
+  if (!currentUser) return;
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  const hasPin = Boolean(currentUser.pin);
+
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🔒</span>
+        <h2 class="hd" style="font-size:18px; margin-bottom:4px;">รหัส PIN ประจำตัว 4 หลัก</h2>
+        <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+          ตั้งรหัส PIN เพื่อความเป็นส่วนตัว ไม่ให้เพื่อนคนอื่นแอบสลับเข้าบัญชีของคุณ
+        </span>
+      </div>
+
+      ${hasPin ? `
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">รหัส PIN เดิม</label>
+          <input type="password" id="oldPinInput" placeholder="รหัส PIN ปัจจุบัน" maxlength="6" style="font-size:16px; text-align:center; letter-spacing:4px; font-weight:700;">
+        </div>
+      ` : ''}
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">รหัส PIN ใหม่ (4-6 หลัก)</label>
+        <input type="password" id="newPinInput" placeholder="เช่น 1234" maxlength="6" style="font-size:18px; text-align:center; letter-spacing:6px; font-weight:700;">
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn" style="flex:1;" onclick="saveMyNewPin(${hasPin})">บันทึกรหัส PIN 💾</button>
+        <button class="btn g" style="flex:1;" onclick="closeSheet()">ยกเลิก</button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveMyNewPin(hasPin) {
+  const newPin = $('#newPinInput')?.value.trim();
+  if (!newPin || newPin.length < 4) return toast('กรุณาระบุรหัส PIN 4 หลักขึ้นไป');
+  const oldPin = hasPin ? $('#oldPinInput')?.value.trim() : undefined;
+  if (hasPin && !oldPin) return toast('กรุณาใส่รหัส PIN เดิม');
+
+  try {
+    const res = await fetch('/api/auth/set-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, pin: newPin, oldPin })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      closeSheet();
+      renderSettings();
+      fireConfetti();
+      toast('🔒 บันทึกรหัส PIN ประจำตัวเรียบร้อยแล้ว บัญชีของคุณปลอดภัย 100%!');
+    } else {
+      toast(data.error || 'บันทึก PIN ไม่สำเร็จ');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการบันทึก PIN');
+  }
 }
 
 async function addNewMemberFromModal() {

@@ -167,6 +167,53 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, user: devUser, message: 'ยืนยันตัวตนสำเร็จ เข้าสู่ระบบในฐานะผู้ดูแล 🛡️' });
       }
 
+      // 1.2 User PIN Verification
+      if (pathname === '/api/auth/verify-pin' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { userId, pin } = body;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+
+        const targetUser = db.getUser(userId);
+        if (!targetUser) return sendJson(res, 404, { error: 'ไม่พบสมาชิก' });
+
+        const isDev = targetUser.role === 'dev' || targetUser.is_dev === 1 || targetUser.nickname === 'มอส';
+        if (isDev) {
+          const correctPin = String(process.env.DEV_PIN || '7788').trim();
+          if (String(pin).trim() !== correctPin) {
+            return sendJson(res, 401, { success: false, error: 'รหัส PIN ผู้ดูแลไม่ถูกต้อง สิทธิ์เข้าถึงถูกปฏิเสธ 🛡️' });
+          }
+          return sendJson(res, 200, { success: true, user: targetUser });
+        }
+
+        // For regular user: if user has PIN set, verify it
+        if (targetUser.pin) {
+          if (String(pin).trim() !== String(targetUser.pin).trim()) {
+            return sendJson(res, 401, { success: false, error: 'รหัส PIN ไม่ถูกต้อง ไม่สามารถเข้าสู่ระบบได้ 🔒' });
+          }
+        }
+
+        return sendJson(res, 200, { success: true, user: targetUser, hasPin: Boolean(targetUser.pin) });
+      }
+
+      // 1.3 User Set/Change PIN
+      if (pathname === '/api/auth/set-pin' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { userId, pin, oldPin } = body;
+        if (!userId || !pin) return sendJson(res, 400, { error: 'userId and pin are required' });
+
+        const targetUser = db.getUser(userId);
+        if (!targetUser) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้' });
+
+        if (targetUser.pin && oldPin !== undefined) {
+          if (String(oldPin).trim() !== String(targetUser.pin).trim()) {
+            return sendJson(res, 401, { success: false, error: 'รหัส PIN เดิมไม่ถูกต้อง' });
+          }
+        }
+
+        const updated = db.updateUser(userId, { pin: String(pin).trim() });
+        return sendJson(res, 200, { success: true, user: updated });
+      }
+
       // 2. PDPA Consent
       if (pathname === '/api/auth/consent' && req.method === 'POST') {
         const body = await parseJsonBody(req);

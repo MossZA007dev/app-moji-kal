@@ -206,7 +206,8 @@ const neededCols = [
   { name: 'water_bottle_setup', type: 'INTEGER DEFAULT 0' },
   { name: 'unlocked_items', type: 'TEXT DEFAULT "[]"' },
   { name: 'role', type: 'TEXT DEFAULT "user"' },
-  { name: 'is_dev', type: 'INTEGER DEFAULT 0' }
+  { name: 'is_dev', type: 'INTEGER DEFAULT 0' },
+  { name: 'pin', type: 'TEXT' }
 ];
 
 for (const col of neededCols) {
@@ -346,7 +347,7 @@ export function getUserByEmail(email) {
 export function createUser({ 
   id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, 
   google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, 
-  avatar_hat, avatar_accessory, role, is_dev,
+  avatar_hat, avatar_accessory, role, is_dev, pin,
   gender, age, height, weight, target_weight, activity_level,
   carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
   water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup
@@ -354,6 +355,7 @@ export function createUser({
   const newId = id || `u_${Date.now()}`;
   const isDevUserVal = (role === 'dev' || is_dev === 1 || nickname === 'มอส' || (nickname && nickname.toLowerCase().includes('dev')) || (email && email.toLowerCase().includes('moss'))) ? 1 : 0;
   const roleVal = isDevUserVal ? 'dev' : (role || 'user');
+  const pinVal = pin ? String(pin).trim() : null;
 
   const numWeight = weight !== undefined ? (Number(weight) || 60) : 60;
   const numHeight = height !== undefined ? (Number(height) || 165) : 165;
@@ -364,13 +366,13 @@ export function createUser({
     INSERT INTO users (
       id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level,
       google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality,
-      goal_type, goal_score, role, is_dev,
+      goal_type, goal_score, role, is_dev, pin,
       gender, age, height, weight, target_weight, activity_level,
       carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
       water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
       created_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -393,6 +395,7 @@ export function createUser({
     goal_score !== undefined ? Number(goal_score) : 150,
     roleVal,
     isDevUserVal,
+    pinVal,
     genderVal,
     numAge,
     numHeight,
@@ -499,6 +502,7 @@ export function updateUser(id, data) {
   const role = data.role !== undefined ? data.role : (current.role ?? 'user');
   const is_dev = data.is_dev !== undefined ? (data.is_dev ? 1 : 0) : (current.is_dev ?? (role === 'dev' ? 1 : 0));
   const avatar_image = data.avatar_image !== undefined ? (data.avatar_image || null) : current.avatar_image;
+  const pin = data.pin !== undefined ? (data.pin ? String(data.pin).trim() : null) : (current.pin ?? null);
 
   const stmt = db.prepare(`
     UPDATE users
@@ -509,7 +513,7 @@ export function updateUser(id, data) {
         goal_type = ?, goal_score = ?, coins = ?, unlocked_items = ?,
         carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?,
         water_bottle_ml = ?, water_bottle_name = ?, water_bottle_icon = ?, water_daily_target_ml = ?, water_bottle_setup = ?,
-        role = ?, is_dev = ?
+        role = ?, is_dev = ?, pin = ?
     WHERE id = ?
   `);
 
@@ -521,7 +525,7 @@ export function updateUser(id, data) {
     goal_type, goal_score, coins, unlocked_items,
     carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
     water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
-    role, is_dev,
+    role, is_dev, pin,
     id
   );
   return getUser(id);
