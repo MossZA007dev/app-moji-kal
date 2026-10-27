@@ -357,13 +357,41 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, result);
       }
 
-      // 10.5 Water Logging & Coins
+      // 10.5 Water Logging & Quick Tracker
       if (pathname === '/api/water' && req.method === 'POST') {
         const body = await parseJsonBody(req);
         const userId = req.headers['x-user-id'] || body.userId;
         if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const date = body.date || new Date().toISOString().slice(0, 10);
+        const log = db.addLog({
+          userId,
+          date,
+          name: 'น้ำเปล่าบริสุทธิ์ 1 แก้ว (250 ml)',
+          calorie: 0,
+          sugar: 0,
+          carbs: 0,
+          protein: 0,
+          fat: 0,
+          sodium: 0,
+          portion_size: 'normal',
+          sweetness_level: 'none',
+          is_private: 0
+        });
         const act = db.recordActivity(userId, 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2);
-        return sendJson(res, 200, { success: true, activity: act, coinsEarned: 2 });
+        return sendJson(res, 200, { success: true, log, activity: act, coinsEarned: 2 });
+      }
+
+      if (pathname === '/api/water/undo' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const date = body.date || new Date().toISOString().slice(0, 10);
+        const waterLogs = db.getLogs(userId, date).filter(l => l.name && l.name.includes('น้ำเปล่า'));
+        if (waterLogs.length > 0) {
+          db.deleteLog(waterLogs[0].id, userId);
+          return sendJson(res, 200, { success: true, removedId: waterLogs[0].id });
+        }
+        return sendJson(res, 200, { success: false, message: 'ไม่มีประวัติดื่มน้ำวันนี้' });
       }
 
       // 11. Meal Logs

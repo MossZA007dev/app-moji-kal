@@ -156,7 +156,12 @@ const neededCols = [
   { name: 'personality', type: 'TEXT DEFAULT "kind"' },
   { name: 'coins', type: 'INTEGER DEFAULT 120' },
   { name: 'goal_type', type: 'TEXT DEFAULT "weight_loss"' },
-  { name: 'goal_score', type: 'INTEGER DEFAULT 150' }
+  { name: 'goal_score', type: 'INTEGER DEFAULT 150' },
+  { name: 'carbs_goal', type: 'REAL' },
+  { name: 'protein_goal', type: 'REAL' },
+  { name: 'fat_goal', type: 'REAL' },
+  { name: 'sodium_goal', type: 'REAL DEFAULT 2000' },
+  { name: 'water_goal', type: 'INTEGER DEFAULT 8' }
 ];
 
 for (const col of neededCols) {
@@ -336,6 +341,11 @@ export function updateUser(id, data) {
   const consent_pdpa = data.consent_pdpa !== undefined ? (data.consent_pdpa ? 1 : 0) : current.consent_pdpa;
   const goal_type = data.goal_type ?? current.goal_type ?? 'weight_loss';
   const goal_score = data.goal_score !== undefined ? Number(data.goal_score) : (current.goal_score ?? 150);
+  const carbs_goal = data.carbs_goal !== undefined ? (data.carbs_goal !== null && data.carbs_goal !== '' ? Number(data.carbs_goal) : null) : current.carbs_goal;
+  const protein_goal = data.protein_goal !== undefined ? (data.protein_goal !== null && data.protein_goal !== '' ? Number(data.protein_goal) : null) : current.protein_goal;
+  const fat_goal = data.fat_goal !== undefined ? (data.fat_goal !== null && data.fat_goal !== '' ? Number(data.fat_goal) : null) : current.fat_goal;
+  const sodium_goal = data.sodium_goal !== undefined ? (data.sodium_goal !== null && data.sodium_goal !== '' ? Number(data.sodium_goal) : 2000) : (current.sodium_goal ?? 2000);
+  const water_goal = data.water_goal !== undefined ? (data.water_goal !== null && data.water_goal !== '' ? Number(data.water_goal) : 8) : (current.water_goal ?? 8);
 
   const stmt = db.prepare(`
     UPDATE users
@@ -343,7 +353,8 @@ export function updateUser(id, data) {
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
         gender = ?, age = ?, height = ?, weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
-        goal_type = ?, goal_score = ?
+        goal_type = ?, goal_score = ?,
+        carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?
     WHERE id = ?
   `);
 
@@ -353,6 +364,7 @@ export function updateUser(id, data) {
     gender, age, height, weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),
     goal_type, goal_score,
+    carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
     id
   );
   return getUser(id);

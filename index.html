@@ -939,6 +939,100 @@ nav button i { font-style: normal; font-size: 18px; }
 .m-pill.prot { color: #7C3AED; border-color: rgba(139, 92, 246, 0.25); background: #F5F3FF; }
 .m-pill.fat { color: #059669; border-color: rgba(16, 185, 129, 0.25); background: #ECFDF5; }
 
+/* Quick Water Tracker Widget */
+.water-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+.water-cups-row {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 4px;
+}
+.water-cup-icon {
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.water-cup-icon:hover {
+  transform: scale(1.25);
+}
+.water-cup-icon.filled {
+  animation: popIn 0.3s ease;
+}
+
+/* Weekly Macro Trends Chart */
+.stats-metric-pills {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+}
+.stats-metric-pills::-webkit-scrollbar {
+  display: none;
+}
+.stats-metric-pill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--mute);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stats-metric-pill.active {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(255, 117, 140, 0.3);
+}
+
+/* Floating PWA Install Banner */
+.pwa-floating-banner {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 117, 140, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 18px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 999;
+  animation: slideUp 0.35s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .ar-macro-icon {
   font-size: 16px;
   line-height: 1;
@@ -2826,11 +2920,20 @@ let leaderboardSort = 'goal'; // 'goal' | 'coins'
 let draft = null;
 let appSettings = {};
 let isListeningVoice = false;
+let statsMetric = 'sugar'; // 'sugar' | 'carbs' | 'protein' | 'sodium' | 'water'
+let deferredInstallPrompt = null;
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW register failed:', e));
 }
+
+// Capture BeforeInstallPrompt for Android / Desktop PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  setTimeout(renderPwaBanner, 1200);
+});
 
 // Mascot SVG Generator with Hat Accessories
 function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none') {
@@ -3190,18 +3293,18 @@ function renderToday() {
   const calGoal = Number(currentUser?.calorie_goal) || 1800;
   const sugarGoal = Number(currentUser?.sugar_goal) || 25;
 
-  const sodiumLimit = 2000; // mg (WHO guideline)
-  let carbsGoal = 200; // g
-  if (goalType === 'sugar_cut') carbsGoal = 150;
-  else if (goalType === 'weight_loss') carbsGoal = 180;
-  else if (goalType === 'muscle_gain') carbsGoal = 250;
+  const carbsGoal = Number(currentUser?.carbs_goal) || (goalType === 'sugar_cut' ? 150 : goalType === 'muscle_gain' ? 250 : 180);
+  const proteinGoal = Number(currentUser?.protein_goal) || Math.max(55, Math.round(weight * (goalType === 'muscle_gain' ? 1.6 : 1.3)));
+  const fatGoal = Number(currentUser?.fat_goal) || Math.round((calGoal * 0.25) / 9);
+  const sodiumLimit = Number(currentUser?.sodium_goal) || 2000;
+  const waterGoal = Number(currentUser?.water_goal) || 8;
 
-  let proteinGoal = Math.round(weight * 1.2);
-  if (goalType === 'muscle_gain') proteinGoal = Math.round(weight * 1.6);
-  else if (goalType === 'weight_loss') proteinGoal = Math.round(weight * 1.3);
-  if (proteinGoal < 50) proteinGoal = 55;
-
-  const fatGoal = Math.round((calGoal * 0.25) / 9);
+  // Water tracking calculations
+  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterCount = waterLogs.length;
+  const waterMl = waterCount * 250;
+  const waterGoalMl = waterGoal * 250;
+  const waterPct = Math.min(100, Math.round((waterCount / waterGoal) * 100));
 
   const carbsPct = Math.min(100, Math.round((totalCarbs / carbsGoal) * 100));
   const proteinPct = Math.min(100, Math.round((totalProtein / proteinGoal) * 100));
@@ -3287,6 +3390,47 @@ function renderToday() {
           <span><b>โซเดียมเกินเกณฑ์ (> 2,000 mg):</b> แนะนำดื่มน้ำเปล่าเพิ่มอีก 1-2 แก้ว เพื่อช่วยให้ไตขับโซเดียมและลดอาการบวมน้ำน้า 💧</span>
         </div>
       ` : ''}
+    </div>
+
+    <!-- Quick Water Tracker Card (ฟีเจอร์นับแก้วน้ำด่วน 💧) -->
+    <div class="water-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:18px;">💧</span>
+          <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">ดื่มน้ำวันนี้ (${waterCount}/${waterGoal} แก้ว · ${waterMl} ml)</b>
+        </div>
+        <span class="badge ${waterCount >= waterGoal ? 'ok' : 'warn'}" style="font-size:10px;">
+          ${waterCount >= waterGoal ? '🎉 ครบเป้าแล้ว' : `${waterPct}%`}
+        </span>
+      </div>
+
+      <!-- Water Cups Interactive Indicator -->
+      <div class="water-cups-row">
+        ${Array.from({ length: Math.max(8, waterGoal) }).map((_, i) => `
+          <div class="water-cup-icon ${i < waterCount ? 'filled' : ''}" onclick="${i === waterCount - 1 ? 'undoWaterLog()' : 'triggerWaterLog()'}" title="${i < waterCount ? 'แตะแก้วล่าสุดเพื่อยกเลิก' : 'แตะเพื่อดื่มน้ำ 1 แก้ว'}">
+            <span>${i < waterCount ? '💧' : '🤍'}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="font-size:11px; color:var(--mute);">
+          ${isSodiumAlert || isSodiumWarn 
+            ? '🧂 ดื่มน้ำเพิ่มอีกนิดเพื่อช่วยไตขับโซเดียมและลดบวมน้ำนะ' 
+            : waterCount >= waterGoal 
+            ? '✨ ยอดเยี่ยมมาก ดื่มน้ำครบช่วยให้ผิวชุ่มชื้นและสดชื่น!' 
+            : 'เป้าหมาย 8 แก้ว (2,000 ml) ช่วยเผาผลาญและสดชื่น'}
+        </span>
+        <div style="display:flex; gap:6px;">
+          ${waterCount > 0 ? `
+            <button class="btn g sm" style="font-size:11px; padding:3px 8px; color:var(--mute);" onclick="undoWaterLog()" title="ยกเลิกแก้วล่าสุด">- ลบแก้ว</button>
+          ` : ''}
+          <button class="btn s sm" style="font-size:11.5px; padding:4px 12px; display:flex; align-items:center; gap:4px;" onclick="triggerWaterLog()">
+            <span>+ ดื่ม 1 แก้ว</span>
+            <small style="color:var(--pink); font-weight:700;">(+2 🪙)</small>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Gentle Health Reminder (Pillar 5) -->
@@ -3380,26 +3524,33 @@ async function quickLogFavorite(favId) {
 }
 
 async function triggerWaterLog() {
-  await fetch('/api/logs', {
+  await fetch('/api/water', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      userId: currentUser.id,
-      date: key(),
-      name: 'น้ำเปล่าบริสุทธิ์ 1 แก้ว',
-      calorie: 0,
-      sugar: 0,
-      portion_size: 'normal',
-      sweetness_level: 'none',
-      is_private: 0
-    })
+    headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+    body: JSON.stringify({ userId: currentUser.id, date: key() })
   });
   fireConfetti();
   await fetchLogs();
   await fetchStreak();
   render();
   sendPushNotification('โมจิชื่นใจจัง 💧', 'ดื่มน้ำเปล่าดีต่อสุขภาพและช่วยลดความอยากหวานได้ดีมากเลย!');
-  toast('บันทึกการดื่มน้ำแล้ว เก่งมาก 💧');
+  toast('บันทึกการดื่มน้ำแล้ว เก่งมาก 💧 (+2 🪙)');
+}
+
+async function undoWaterLog() {
+  const res = await fetch('/api/water/undo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+    body: JSON.stringify({ userId: currentUser.id, date: key() })
+  });
+  const data = await res.json();
+  if (data.success) {
+    await fetchLogs();
+    render();
+    toast('ยกเลิกบันทึกแก้วน้ำล่าสุดแล้ว 💧');
+  } else {
+    toast(data.message || 'ไม่มีรายการดื่มน้ำ');
+  }
 }
 
 // 2. CHAT WITH MOCHI VIEW (Phase 3)
@@ -4376,24 +4527,49 @@ async function renderStats() {
     d.setDate(d.getDate() - i);
     const dateStr = key(d);
     const dayLogs = allLogs.filter(l => l.date === dateStr);
-    const sugar = dayLogs.reduce((a, b) => a + b.sugar, 0);
-    const cal = dayLogs.reduce((a, b) => a + b.calorie, 0);
-    D.push({ d, dateStr, sugar, cal, count: dayLogs.length });
+    const sugar = dayLogs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+    const cal = dayLogs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
+    const carbs = Math.round(dayLogs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
+    const protein = Math.round(dayLogs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
+    const fat = Math.round(dayLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
+    const sodium = Math.round(dayLogs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
+    const water = dayLogs.filter(l => l.name && l.name.includes('น้ำเปล่า')).length;
+    D.push({ d, dateStr, sugar, cal, carbs, protein, fat, sodium, water, count: dayLogs.length });
   }
 
-  const G = currentUser.sugar_goal;
-  const mx = Math.max(G * 1.3, ...D.map(x => x.sugar), 10);
+  // Active Metric Config for 7-Day Chart
+  const activeMetric = window.statsMetric || 'sugar';
+  const METRIC_CONFIG = {
+    sugar: { label: 'น้ำตาล', icon: '🍬', unit: 'g', color: 'var(--mint)', alertColor: 'var(--red)', goal: currentUser?.sugar_goal || 25, isLimit: true },
+    carbs: { label: 'แป้งและคาร์บ', icon: '🍞', unit: 'g', color: '#FB923C', alertColor: '#EF4444', goal: Number(currentUser?.carbs_goal) || 180, isLimit: true },
+    protein: { label: 'โปรตีน', icon: '🥩', unit: 'g', color: '#A78BFA', alertColor: '#A78BFA', goal: Number(currentUser?.protein_goal) || 70, isLimit: false },
+    sodium: { label: 'โซเดียม', icon: '🧂', unit: 'mg', color: '#3B82F6', alertColor: '#EF4444', goal: Number(currentUser?.sodium_goal) || 2000, isLimit: true },
+    water: { label: 'น้ำดื่ม', icon: '💧', unit: 'แก้ว', color: '#06B6D4', alertColor: '#06B6D4', goal: Number(currentUser?.water_goal) || 8, isLimit: false }
+  };
+  const activeCfg = METRIC_CONFIG[activeMetric] || METRIC_CONFIG.sugar;
+
+  const G = activeCfg.goal;
+  const mx = Math.max(G * 1.3, ...D.map(x => x[activeMetric]), 10);
   const W = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
   const bars = D.map((x, i) => {
-    const h = (x.sugar / mx) * 100;
+    const val = x[activeMetric] || 0;
+    const h = (val / mx) * 100;
     const xx = 14 + i * 44;
+    const isExceeded = activeCfg.isLimit && val > G;
+    const barFill = isExceeded ? activeCfg.alertColor : activeCfg.color;
     return `
-      <rect x="${xx}" y="${116 - h}" width="26" height="${h}" rx="8" fill="${x.sugar > G ? 'var(--red)' : 'var(--mint)'}"/>
+      <rect x="${xx}" y="${116 - h}" width="26" height="${h}" rx="8" fill="${barFill}"/>
       <text x="${xx + 13}" y="134" text-anchor="middle" font-size="11" fill="var(--mute)">${W[x.d.getDay()]}</text>
     `;
   }).join('');
   const gy = 116 - (G / mx) * 100;
+
+  // Weekly Nutrition Insights Summary
+  const avgSodium = Math.round(D.reduce((a, b) => a + b.sodium, 0) / 7);
+  const avgProtein = Math.round((D.reduce((a, b) => a + b.protein, 0) / 7) * 10) / 10;
+  const avgWater = Math.round((D.reduce((a, b) => a + b.water, 0) / 7) * 10) / 10;
+  const sugarDaysOk = D.filter(x => x.sugar <= (currentUser?.sugar_goal || 25)).length;
 
   const now = new Date();
   const year = now.getFullYear();
@@ -4447,6 +4623,58 @@ async function renderStats() {
       </div>
     </div>
 
+    <!-- 7-Day Nutrition Balance Summary (Feature 4) -->
+    <div class="card" style="padding:14px;">
+      <h2 class="hd" style="font-size:15px; margin-bottom:10px;">🥗 สรุปโภชนาการรอบ 7 วันล่าสุด</h2>
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+        <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px; padding:8px 4px; text-align:center;">
+          <b style="font-size:13px; color:#15803D; display:block;">${sugarDaysOk}/7 วัน</b>
+          <small style="font-size:10px; color:var(--mute);">คุมหวานสำเร็จ</small>
+        </div>
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:8px 4px; text-align:center;">
+          <b style="font-size:13px; color:#1D4ED8; display:block;">${avgSodium} mg</b>
+          <small style="font-size:10px; color:var(--mute);">โซเดียมเฉลี่ย</small>
+        </div>
+        <div style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:12px; padding:8px 4px; text-align:center;">
+          <b style="font-size:13px; color:#6D28D9; display:block;">${avgProtein} g</b>
+          <small style="font-size:10px; color:var(--mute);">โปรตีนเฉลี่ย</small>
+        </div>
+        <div style="background:#ECFEFF; border:1px solid #A5F3FC; border-radius:12px; padding:8px 4px; text-align:center;">
+          <b style="font-size:13px; color:#0E7490; display:block;">${avgWater} แก้ว</b>
+          <small style="font-size:10px; color:var(--mute);">น้ำดื่มเฉลี่ย</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 Days Interactive Macro Trends Chart (Feature 4) -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h2 class="hd" style="font-size:16px;">กราฟแนวโน้มรอบ 7 วัน 📈</h2>
+        <span style="font-size:11.5px; color:var(--mute);">แตะเลือกสารอาหาร</span>
+      </div>
+
+      <!-- Metric Pills Selector -->
+      <div class="stats-metric-pills">
+        ${Object.entries(METRIC_CONFIG).map(([k, cfg]) => `
+          <div class="stats-metric-pill ${activeMetric === k ? 'active' : ''}" onclick="switchStatsMetric('${k}')">
+            <span>${cfg.icon}</span>
+            <span>${cfg.label}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-top:2px;">
+        <b style="color:var(--ink);">${activeCfg.icon} ${activeCfg.label} ต่อวัน (${activeCfg.unit})</b>
+        <span style="color:var(--mute);">เป้าหมาย: ${activeCfg.goal} ${activeCfg.unit}</span>
+      </div>
+
+      <svg viewBox="0 0 320 140" style="width:100%; margin-top:8px;">
+        <line x1="0" x2="320" y1="${gy}" y2="${gy}" stroke="${activeCfg.color}" stroke-dasharray="4 4"/>
+        <text x="318" y="${gy - 4}" text-anchor="end" font-size="10" fill="${activeCfg.color}">เป้า ${G} ${activeCfg.unit}</text>
+        ${bars}
+      </svg>
+    </div>
+
     <!-- Monthly Calendar -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -4454,22 +4682,12 @@ async function renderStats() {
         <span style="font-size:12px; color:var(--mute);">${monthNameTh}</span>
       </div>
       <div style="font-size:11.5px; color:var(--mute); margin-top:2px;">
-        🟢 ในเป้า (≤${G}g) · 🟡 ใกล้เต็ม · 🔴 เกินเป้า
+        🟢 ในเป้า (≤${currentUser.sugar_goal}g) · 🟡 ใกล้เต็ม · 🔴 เกินเป้า
       </div>
       <div class="calendar-grid">
         ${['อา','จ','อ','พ','พฤ','ศ','ส'].map(w => `<div class="calendar-head">${w}</div>`).join('')}
         ${calCells}
       </div>
-    </div>
-
-    <!-- 7 Days Trend -->
-    <div class="card">
-      <h2 class="hd" style="font-size:16px;">น้ำตาลต่อวัน (g)</h2>
-      <svg viewBox="0 0 320 140" style="width:100%; margin-top:8px;">
-        <line x1="0" x2="320" y1="${gy}" y2="${gy}" stroke="var(--pink)" stroke-dasharray="4 4"/>
-        <text x="318" y="${gy - 4}" text-anchor="end" font-size="10" fill="var(--pink)">เป้า ${G} g</text>
-        ${bars}
-      </svg>
     </div>
 
     <div class="card">
@@ -4479,6 +4697,11 @@ async function renderStats() {
       </a>
     </div>
   `;
+}
+
+function switchStatsMetric(metric) {
+  window.statsMetric = metric;
+  renderStats();
 }
 
 async function showDayDetail(dateStr) {
@@ -5341,6 +5564,41 @@ function openEditProfileModal() {
         </div>
       </div>
 
+      <!-- Custom Macro & Micronutrient Goals (Feature 2) -->
+      <div style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="font-size:12.5px; color:var(--ink);">🥗 กำหนดเป้าหมายสารอาหารเอง (Custom Targets):</b>
+          <button type="button" class="btn g sm" style="font-size:10.5px; padding:2px 8px;" onclick="resetCustomMacrosAuto()">🔄 คืนค่าแนะนำอัตโนมัติ</button>
+        </div>
+        <small style="display:block; color:var(--mute); font-size:10.5px; margin-bottom:10px;">
+          (เว้นว่างไว้เพื่อให้ระบบคำนวณตามน้ำหนักและสูตรอัตโนมัติ)
+        </small>
+        <div class="g2" style="margin-bottom:8px;">
+          <div>
+            <label style="font-size:11px;">🍞 คาร์บ (g/วัน)</label>
+            <input type="number" id="editModalCarbs" value="${currentUser?.carbs_goal || ''}" placeholder="อัตโนมัติ (~180g)">
+          </div>
+          <div>
+            <label style="font-size:11px;">🥩 โปรตีน (g/วัน)</label>
+            <input type="number" id="editModalProtein" value="${currentUser?.protein_goal || ''}" placeholder="อัตโนมัติ (~70g)">
+          </div>
+        </div>
+        <div class="g3">
+          <div>
+            <label style="font-size:11px;">🥑 ไขมัน (g)</label>
+            <input type="number" id="editModalFat" value="${currentUser?.fat_goal || ''}" placeholder="อัตโนมัติ (~55g)">
+          </div>
+          <div>
+            <label style="font-size:11px;">🧂 โซเดียม (mg)</label>
+            <input type="number" id="editModalSodium" value="${currentUser?.sodium_goal || 2000}" placeholder="2000">
+          </div>
+          <div>
+            <label style="font-size:11px;">💧 น้ำ (แก้ว)</label>
+            <input type="number" id="editModalWater" value="${currentUser?.water_goal || 8}" placeholder="8">
+          </div>
+        </div>
+      </div>
+
       <div style="margin-top:16px;">
         <button class="btn" onclick="saveProfileFromModal()">บันทึกการเปลี่ยนแปลง</button>
         <button class="btn g" style="margin-top:6px;" onclick="closeSheet()">ยกเลิก</button>
@@ -5349,11 +5607,31 @@ function openEditProfileModal() {
   `;
 }
 
+function resetCustomMacrosAuto() {
+  const c = $('#editModalCarbs');
+  const p = $('#editModalProtein');
+  const f = $('#editModalFat');
+  const s = $('#editModalSodium');
+  const w = $('#editModalWater');
+  if (c) c.value = '';
+  if (p) p.value = '';
+  if (f) f.value = '';
+  if (s) s.value = '2000';
+  if (w) w.value = '8';
+  toast('คืนค่าเป้าหมายเป็นระบบคำนวณอัตโนมัติแล้ว 🔄');
+}
+
 async function saveProfileFromModal() {
   const nickname = $('#editModalNickname')?.value.trim() || currentUser.nickname;
   let cal = Math.max(1200, Number($('#editModalCal')?.value) || currentUser.calorie_goal);
   let sugar = Math.max(10, Math.min(60, Number($('#editModalSugar')?.value) || currentUser.sugar_goal));
   const goalType = selectedProfileGoalType || currentUser.goal_type || 'weight_loss';
+
+  const carbsVal = $('#editModalCarbs')?.value.trim();
+  const proteinVal = $('#editModalProtein')?.value.trim();
+  const fatVal = $('#editModalFat')?.value.trim();
+  const sodiumVal = Number($('#editModalSodium')?.value) || 2000;
+  const waterVal = Number($('#editModalWater')?.value) || 8;
 
   try {
     const res = await fetch(`/api/users/${currentUser.id}`, {
@@ -5363,7 +5641,12 @@ async function saveProfileFromModal() {
         nickname,
         goal_type: goalType,
         calorie_goal: cal,
-        sugar_goal: sugar
+        sugar_goal: sugar,
+        carbs_goal: carbsVal ? Number(carbsVal) : null,
+        protein_goal: proteinVal ? Number(proteinVal) : null,
+        fat_goal: fatVal ? Number(fatVal) : null,
+        sodium_goal: sodiumVal,
+        water_goal: waterVal
       })
     });
     const data = await res.json();
@@ -7484,6 +7767,58 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// PWA Floating Banner Management (Feature 3)
+function renderPwaBanner() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isStandalone) return;
+  if (sessionStorage.getItem('pwa_banner_dismissed')) return;
+
+  const existing = document.getElementById('pwaFloatingBanner');
+  if (existing) existing.remove();
+
+  const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+
+  const banner = document.createElement('div');
+  banner.id = 'pwaFloatingBanner';
+  banner.className = 'pwa-floating-banner';
+  banner.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:24px;">📲</span>
+      <div>
+        <b style="font-size:12.5px; color:var(--ink); display:block; font-family:'Mali',sans-serif;">ติดตั้งโมจิบนมือถือ</b>
+        <span style="font-size:10.5px; color:var(--mute);">เปิดเต็มจอ รวดเร็วใน 1 วิ</span>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button class="btn sm" style="padding:4px 10px; font-size:11.5px;" onclick="${isIos ? 'openPwaGuideModal()' : 'installPwaApp()'}">
+        ${isIos ? 'วิธีติดตั้ง' : 'ติดตั้งทันที'}
+      </button>
+      <button onclick="dismissPwaBanner()" style="background:none; border:none; color:var(--mute); font-size:16px; cursor:pointer; padding:2px 6px;">✕</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+function dismissPwaBanner() {
+  sessionStorage.setItem('pwa_banner_dismissed', '1');
+  const banner = document.getElementById('pwaFloatingBanner');
+  if (banner) banner.remove();
+}
+
+async function installPwaApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      dismissPwaBanner();
+      toast('กำลังติดตั้งโมจิลงบนหน้าจอโฮม... ✨');
+    }
+    deferredInstallPrompt = null;
+  } else {
+    openPwaGuideModal();
+  }
+}
+
 // Initial Boot
 (async () => {
   await fetchSettings();
@@ -7498,6 +7833,9 @@ document.addEventListener('visibilitychange', () => {
     fetchLeaderboard()
   ]);
   render();
+
+  // Trigger PWA banner after initial load if not standalone
+  setTimeout(renderPwaBanner, 1500);
 
   // If first-time visitor with no saved user or onboarding not yet completed
   const savedId = localStorage.getItem('mochi_user_id');
