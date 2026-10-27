@@ -4,8 +4,8 @@
   "description": "โมจิ · นับแคลและน้ำตาล",
   "type": "module",
   "scripts": {
-    "dev": "node dev.mjs",
-    "start": "node dev.mjs"
+    "dev": "node --experimental-sqlite dev.mjs",
+    "start": "node --experimental-sqlite dev.mjs"
   },
   "engines": {
     "node": ">=22.5.0"
