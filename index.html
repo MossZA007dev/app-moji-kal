@@ -4506,9 +4506,11 @@ textarea { resize: none; margin-bottom: 8px; }
 }
 .onboard-color-pick {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin: 10px 0 16px;
+  margin: 10px auto 14px;
+  max-width: 340px;
 }
 .onboard-color-circle {
   width: 36px;
@@ -4921,18 +4923,103 @@ function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', a
     one_ring: '<g transform="translate(86,64)"><circle cx="10" cy="10" r="10" fill="none" stroke="#F59E0B" stroke-width="4"/><circle cx="10" cy="10" r="8" fill="none" stroke="#FEF08A" stroke-width="1.5"/><text x="6" y="13" font-size="7" fill="#EF4444" font-family="serif">🔥</text></g>'
   };
 
-  const f = E[face] || E.happy;
-  const m = M[face] || M.happy;
+  const isDarkSkin = color === 'skin_red_black' || color === 'red_black' || color === '#334155' || color === '#000000' || color === '#1E293B';
+  let f = E[face] || E.happy;
+  let m = M[face] || M.happy;
+  if (isDarkSkin) {
+    f = f.replaceAll('#4A3F44', '#FFFFFF');
+    m = m.replaceAll('#4A3F44', '#FFFFFF');
+  }
   const h = HATS[hat] || HATS.none;
   const a = ACCESSORIES[acc] || '';
   const isBackAccessory = acc === 'wings';
+  const cheekColor = isDarkSkin ? '#EF4444' : '#FF8AA6';
+
+  let fillTarget = color;
+  let defs = '';
+  if (color === 'skin_rainbow' || color === 'rainbow') {
+    fillTarget = 'url(#skin_grad_rainbow)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_rainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FF5252"/>
+          <stop offset="20%" stop-color="#FF7A00"/>
+          <stop offset="40%" stop-color="#FFD600"/>
+          <stop offset="60%" stop-color="#00E676"/>
+          <stop offset="80%" stop-color="#00B0FF"/>
+          <stop offset="100%" stop-color="#D500F9"/>
+        </linearGradient>
+      </defs>
+    `;
+  } else if (color === 'skin_red_black' || color === 'red_black') {
+    fillTarget = 'url(#skin_grad_red_black)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_red_black" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#090A0F"/>
+          <stop offset="35%" stop-color="#18181B"/>
+          <stop offset="70%" stop-color="#7F1D1D"/>
+          <stop offset="100%" stop-color="#EF4444"/>
+        </linearGradient>
+      </defs>
+    `;
+  } else if (color === 'skin_sunset' || color === 'sunset') {
+    fillTarget = 'url(#skin_grad_sunset)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_sunset" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FF512F"/>
+          <stop offset="50%" stop-color="#F09819"/>
+          <stop offset="100%" stop-color="#DD2476"/>
+        </linearGradient>
+      </defs>
+    `;
+  } else if (color === 'skin_aurora' || color === 'aurora') {
+    fillTarget = 'url(#skin_grad_aurora)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_aurora" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0F172A"/>
+          <stop offset="35%" stop-color="#4338CA"/>
+          <stop offset="70%" stop-color="#06B6D4"/>
+          <stop offset="100%" stop-color="#10B981"/>
+        </linearGradient>
+      </defs>
+    `;
+  } else if (color === 'skin_gold' || color === 'gold') {
+    fillTarget = 'url(#skin_grad_gold)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#92400E"/>
+          <stop offset="30%" stop-color="#F59E0B"/>
+          <stop offset="65%" stop-color="#FEF08A"/>
+          <stop offset="85%" stop-color="#FBBF24"/>
+          <stop offset="100%" stop-color="#B45309"/>
+        </linearGradient>
+      </defs>
+    `;
+  } else if (color === 'skin_diamond' || color === 'diamond') {
+    fillTarget = 'url(#skin_grad_diamond)';
+    defs = `
+      <defs>
+        <linearGradient id="skin_grad_diamond" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E0F2FE"/>
+          <stop offset="30%" stop-color="#7DD3FC"/>
+          <stop offset="65%" stop-color="#DDD6FE"/>
+          <stop offset="100%" stop-color="#FBCFE8"/>
+        </linearGradient>
+      </defs>
+    `;
+  }
 
   return `<svg viewBox="0 0 120 112" width="${size}" height="${size * 0.93}">
+    ${defs}
     ${isBackAccessory ? a : ''}
-    <path d="M60 14C88 14 106 34 106 62c0 24-18 40-46 40S14 86 14 62C14 34 32 14 60 14z" fill="${color}"/>
+    <path d="M60 14C88 14 106 34 106 62c0 24-18 40-46 40S14 86 14 62C14 34 32 14 60 14z" fill="${fillTarget}"/>
     ${h}
-    <ellipse cx="31" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
-    <ellipse cx="89" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
+    <ellipse cx="31" cy="70" rx="8" ry="5" fill="${cheekColor}" opacity=".5"/>
+    <ellipse cx="89" cy="70" rx="8" ry="5" fill="${cheekColor}" opacity=".5"/>
     ${f}${m}
     ${!isBackAccessory ? a : ''}
   </svg>`;
@@ -9944,11 +10031,20 @@ const ONBOARDING_GOAL_CONFIG = {
 };
 
 const ONBOARD_COLORS = [
-  { hex: '#FF9EB5', name: 'ซากุระ' },
-  { hex: '#6FCBB0', name: 'มัทฉะ' },
-  { hex: '#FFB05C', name: 'ยุซุ' },
-  { hex: '#A78BFA', name: 'เผือก' },
-  { hex: '#D4A373', name: 'ชานม' }
+  { hex: '#FF9EB5', name: 'ซากุระพีช' },
+  { hex: '#6FCBB0', name: 'มัทฉะมินต์' },
+  { hex: '#FFB05C', name: 'ส้มยุซุ' },
+  { hex: '#A78BFA', name: 'เผือกทาโร่' },
+  { hex: '#D4A373', name: 'ชานมไทย' },
+  { hex: '#38BDF8', name: 'สกายบลู' },
+  { hex: '#FCD34D', name: 'เลมอนเนย' },
+  { hex: '#F43F5E', name: 'สตรอว์เบอร์รี' },
+  { hex: '#34D399', name: 'เมลอนหวาน' },
+  { hex: '#F4DEE4', name: 'นมสดวนิลา' },
+  { hex: '#475569', name: 'ดาร์กช็อก' },
+  { hex: '#818CF8', name: 'บลูเบอร์รี' },
+  { hex: '#FDA4AF', name: 'พีชพาสเทล' },
+  { hex: '#F59E0B', name: 'น้ำผึ้งคาราเมล' }
 ];
 
 // Scientific Calculation & Personalized AI Health Diagnosis
@@ -10100,11 +10196,13 @@ function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
   renderOnboardingStep();
 }
 
-function setOnboardColor(color) {
+function setOnboardColor(color, name) {
   onboardingState.avatar_color = color;
   document.querySelectorAll('.onboard-color-circle').forEach(c => {
-    c.classList.toggle('active', c.dataset.color === color);
+    c.classList.toggle('active', (c.dataset.color || '').toLowerCase() === color.toLowerCase());
   });
+  const nameEl = $('#onboardColorName');
+  if (nameEl && name) nameEl.textContent = name;
   const preview = $('#onboardMascotPreview');
   if (preview && !onboardingState.avatar_image) {
     preview.innerHTML = mascotSVG(onboardingState.avatar_face, color, 84);
@@ -10286,11 +10384,19 @@ function renderOnboardingStep() {
         </div>
 
         <div style="margin-bottom:16px;">
-          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">เลือกสีโมจิประจำตัว</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; font-weight:700; color:var(--ink); margin:0;">เลือกสีโมจิประจำตัว (14 เฉดสี)</label>
+            <span style="font-size:11.5px; color:var(--pink); font-weight:700;" id="onboardColorName">
+              ${(ONBOARD_COLORS.find(c => c.hex.toLowerCase() === (onboardingState.avatar_color || '#FF9EB5').toLowerCase()) || {}).name || 'ซากุระพีช'}
+            </span>
+          </div>
           <div class="onboard-color-pick">
             ${ONBOARD_COLORS.map(c => `
-              <div class="onboard-color-circle ${onboardingState.avatar_color === c.hex ? 'active' : ''}" data-color="${c.hex}" style="background:${c.hex};" onclick="setOnboardColor('${c.hex}')" title="${c.name}"></div>
+              <div class="onboard-color-circle ${(onboardingState.avatar_color || '').toLowerCase() === c.hex.toLowerCase() ? 'active' : ''}" data-color="${c.hex}" style="background:${c.hex};" onclick="setOnboardColor('${c.hex}', '${c.name}')" title="${c.name}"></div>
             `).join('')}
+          </div>
+          <div style="text-align:center; font-size:11px; color:var(--mute); margin-top:6px;">
+            ✨ มีสีพิเศษ Limited (Rainbow, แดงดำ, Sunset) รอให้ปลดล็อคในร้านค้า!
           </div>
         </div>
 
@@ -11231,18 +11337,77 @@ const WARDROBE_CONFIG = {
     title: 'สีตัวโมจิ',
     icon: '🎨',
     items: [
-      { id: '#FF9EB5', title: 'ชมพูพีช', hex: '#FF9EB5', free: true },
+      // 14 โทนสีมาตรฐาน (Starter Colors)
+      { id: '#FF9EB5', title: 'ซากุระพีช', hex: '#FF9EB5', free: true },
       { id: '#6FCBB0', title: 'มัทฉะมินต์', hex: '#6FCBB0', free: true },
-      { id: '#FFB05C', title: 'ส้มพุดดิ้ง', hex: '#FFB05C', free: true },
+      { id: '#FFB05C', title: 'ส้มยุซุ', hex: '#FFB05C', free: true },
+      { id: '#A78BFA', title: 'เผือกทาโร่', hex: '#A78BFA', free: true },
       { id: '#D4A373', title: 'ชานมไทย', hex: '#D4A373', free: true },
-      { id: '#F4DEE4', title: 'นมสดวนิลา', hex: '#F4DEE4', price: 40 },
-      { id: '#A78BFA', title: 'ม่วงทาโร่', hex: '#A78BFA', price: 60 },
-      { id: '#38BDF8', title: 'บลูเบอร์รี่', hex: '#38BDF8', price: 80 },
-      { id: '#FCD34D', title: 'เนยน้ำผึ้ง', hex: '#FCD34D', price: 80 },
-      { id: '#34D399', title: 'เมลอนหวาน', hex: '#34D399', price: 100 },
-      { id: '#F43F5E', title: 'สตรอว์เบอร์รี่', hex: '#F43F5E', price: 100 },
-      { id: '#E2E8F0', title: 'โมจิหิมะ', hex: '#E2E8F0', mission: { type: 'streak', target: 3, label: 'Streak 3 วันติด ❄️' } },
-      { id: '#334155', title: 'ช็อกโกแลต', hex: '#334155', price: 150 }
+      { id: '#38BDF8', title: 'สกายบลู', hex: '#38BDF8', free: true },
+      { id: '#FCD34D', title: 'เลมอนเนย', hex: '#FCD34D', free: true },
+      { id: '#F43F5E', title: 'สตรอว์เบอร์รี', hex: '#F43F5E', free: true },
+      { id: '#34D399', title: 'เมลอนหวาน', hex: '#34D399', free: true },
+      { id: '#F4DEE4', title: 'นมสดวนิลา', hex: '#F4DEE4', free: true },
+      { id: '#475569', title: 'ดาร์กช็อก', hex: '#475569', free: true },
+      { id: '#818CF8', title: 'บลูเบอร์รี', hex: '#818CF8', free: true },
+      { id: '#FDA4AF', title: 'พีชพาสเทล', hex: '#FDA4AF', free: true },
+      { id: '#F59E0B', title: 'น้ำผึ้งคาราเมล', hex: '#F59E0B', free: true },
+
+      // ✨ LIMITED EDITION GRADIENT SKINS (ไอเทมพิเศษในร้านค้า)
+      {
+        id: 'skin_rainbow',
+        hex: 'skin_rainbow',
+        gradient: 'linear-gradient(135deg, #FF5252, #FF7A00, #FFD600, #00E676, #00B0FF, #D500F9)',
+        title: '🌈 เรนโบว์สเปกตรัม',
+        desc: 'สีรุ้งนีออน 7 สีประกายสว่าง สเปกตรัม Limited',
+        series: '✨ LIMITED EDITION',
+        price: 180
+      },
+      {
+        id: 'skin_red_black',
+        hex: 'skin_red_black',
+        gradient: 'linear-gradient(135deg, #090A0F 0%, #18181B 35%, #7F1D1D 70%, #EF4444 100%)',
+        title: '🖤❤️ ไซเบอร์ แดง-ดำ',
+        desc: 'ดุดัน สไตล์แวมไพร์สตรีท & ไซเบอร์พังก์',
+        series: '🔥 POPULAR LIMITED',
+        price: 160
+      },
+      {
+        id: 'skin_sunset',
+        hex: 'skin_sunset',
+        gradient: 'linear-gradient(135deg, #FF512F 0%, #F09819 50%, #DD2476 100%)',
+        title: '🌅 ซันเซ็ตนีออน',
+        desc: 'กราเดียนต์แสงอาทิตย์อัสดง ส้ม-ชมพู-ม่วง',
+        series: '✨ GRADIENT SPECIAL',
+        price: 140
+      },
+      {
+        id: 'skin_aurora',
+        hex: 'skin_aurora',
+        gradient: 'linear-gradient(135deg, #0F172A 0%, #4338CA 35%, #06B6D4 70%, #10B981 100%)',
+        title: '🌌 ออโรร่ากาแล็กซี่',
+        desc: 'แสงเหนือออโรร่าประกายดาวดาราศาสตร์',
+        series: '✨ LIMITED EDITION',
+        price: 170
+      },
+      {
+        id: 'skin_gold',
+        hex: 'skin_gold',
+        gradient: 'linear-gradient(135deg, #92400E 0%, #F59E0B 35%, #FEF08A 70%, #D97706 100%)',
+        title: '👑 จักรพรรดิ์ทองคำ',
+        desc: 'ทองคำแท้เปล่งประกายสำหรับผู้มีวินัยสูงสุด',
+        series: '🏆 MASTER LIMITED',
+        mission: { type: 'goal_score', target: 400, label: 'คะแนนวินัยครบ 400 pt 🎯' }
+      },
+      {
+        id: 'skin_diamond',
+        hex: 'skin_diamond',
+        gradient: 'linear-gradient(135deg, #E0F2FE 0%, #7DD3FC 35%, #DDD6FE 70%, #FBCFE8 100%)',
+        title: '💎 คริสตัลไดมอนด์',
+        desc: 'ผลึกคริสตัลระยิบระยับโฮโลแกรม',
+        series: '✨ SPECIAL EDITION',
+        price: 150
+      }
     ]
   },
   personality: {
@@ -11489,13 +11654,13 @@ function renderFashionStageTagsHtml() {
   const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === fashionPreview.hat);
   const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === fashionPreview.accessory);
   const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === fashionPreview.face);
-  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase());
+  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase());
 
   return `
     <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
     <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
     <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
-    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? colItem.hex : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
+    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
   `;
 }
 
@@ -11515,20 +11680,20 @@ function renderFashionItemsCardsHtml(cat) {
     if (realCat === 'hat') isEquipped = (currentUser.avatar_hat || 'none') === itemId;
     else if (realCat === 'accessory') isEquipped = (currentUser.avatar_accessory || 'none') === itemId;
     else if (realCat === 'face') isEquipped = (currentUser.avatar_face || 'happy') === itemId;
-    else if (realCat === 'color') isEquipped = (currentUser.avatar_color || '#FF9EB5').toLowerCase() === (item.hex || '').toLowerCase();
+    else if (realCat === 'color') isEquipped = (currentUser.avatar_color || '#FF9EB5').toLowerCase() === (item.hex || item.id || '').toLowerCase();
     else if (realCat === 'personality') isEquipped = (currentUser.personality || 'kind') === itemId;
 
     let isPreviewing = false;
     if (realCat === 'hat') isPreviewing = fashionPreview.hat === itemId;
     else if (realCat === 'accessory') isPreviewing = fashionPreview.accessory === itemId;
     else if (realCat === 'face') isPreviewing = fashionPreview.face === itemId;
-    else if (realCat === 'color') isPreviewing = (fashionPreview.color || '').toLowerCase() === (item.hex || '').toLowerCase();
+    else if (realCat === 'color') isPreviewing = (fashionPreview.color || '').toLowerCase() === (item.hex || item.id || '').toLowerCase();
     else if (realCat === 'personality') isPreviewing = fashionPreview.personality === itemId;
 
     // Item preview visual (icon or color swatch)
     let visualHtml = '';
     if (realCat === 'color') {
-      visualHtml = `<div style="width:34px; height:34px; border-radius:50%; background:${item.hex}; margin:2px auto 6px; box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2.5px solid white;"></div>`;
+      visualHtml = `<div style="width:36px; height:36px; border-radius:50%; background:${item.gradient || item.hex}; margin:2px auto 6px; box-shadow:0 2px 8px rgba(0,0,0,0.15); border:2.5px solid white;"></div>`;
     } else {
       visualHtml = `<div class="fashion-card-icon">${item.icon}</div>`;
     }
@@ -11712,14 +11877,15 @@ function renderWardrobeItemsHtml(tab) {
   if (tab === 'color') {
     return `<div class="wardrobe-grid">
       ${conf.items.map(item => {
-        const isSel = (currentUser?.avatar_color || '#FF9EB5').toLowerCase() === item.hex.toLowerCase();
-        const unlocked = isItemUnlocked('color', item.hex);
+        const itemVal = item.hex || item.id;
+        const isSel = (currentUser?.avatar_color || '#FF9EB5').toLowerCase() === itemVal.toLowerCase();
+        const unlocked = isItemUnlocked('color', itemVal);
         return `
           <div class="wardrobe-item-card ${isSel ? 'active' : ''} ${!unlocked ? 'locked' : ''}" 
-               onclick="${unlocked ? `selectWardrobeItem('color', '${item.hex}')` : `promptGoShop('color', '${esc(item.title)}')`}">
+               onclick="${unlocked ? `selectWardrobeItem('color', '${itemVal}')` : `promptGoShop('color', '${esc(item.title)}')`}">
             ${isSel ? '<span class="wardrobe-badge-equipped">✓</span>' : ''}
             ${!unlocked ? '<span style="position:absolute; top:4px; right:4px; font-size:11px; background:rgba(0,0,0,0.45); border-radius:50%; padding:2px 3px;">🔒</span>' : ''}
-            <div class="wardrobe-color-swatch" style="background:${item.hex};"></div>
+            <div class="wardrobe-color-swatch" style="background:${item.gradient || item.hex};"></div>
             <div class="wardrobe-item-title">${esc(item.title)}</div>
           </div>
         `;
@@ -11772,13 +11938,13 @@ function renderWardrobeTagsHtml() {
   const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === (currentUser?.avatar_hat || 'none'));
   const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === (currentUser?.avatar_accessory || 'none'));
   const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === (currentUser?.avatar_face || 'happy'));
-  const colItem = WARDROBE_CONFIG.color.items.find(i => i.hex.toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase());
+  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase());
 
   return `
     <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
     <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
     <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
-    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? colItem.hex : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
+    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
   `;
 }
 
