@@ -169,7 +169,10 @@ for (const col of neededCols) {
 const logCols = db.prepare("PRAGMA table_info(logs)").all().map(c => c.name);
 const neededLogCols = [
   { name: 'image_url', type: 'TEXT' },
-  { name: 'components_json', type: 'TEXT' }
+  { name: 'components_json', type: 'TEXT' },
+  { name: 'carbs', type: 'REAL' },
+  { name: 'protein', type: 'REAL' },
+  { name: 'fat', type: 'REAL' }
 ];
 
 for (const col of neededLogCols) {
@@ -437,7 +440,7 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ userId, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
+export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const compStr = typeof components_json === 'string'
@@ -447,8 +450,8 @@ export function addLog({ userId, date, name, calorie, sugar, portion_size, sweet
     : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
 
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     id,
@@ -457,6 +460,9 @@ export function addLog({ userId, date, name, calorie, sugar, portion_size, sweet
     name,
     Math.max(0, Number(calorie) || 0),
     Math.max(0, Number(sugar) || 0),
+    carbs !== undefined && carbs !== null ? Number(carbs) : null,
+    protein !== undefined && protein !== null ? Number(protein) : null,
+    fat !== undefined && fat !== null ? Number(fat) : null,
     portion_size || 'normal',
     sweetness_level || 'normal',
     is_private ? 1 : 0,
@@ -503,8 +509,8 @@ export function deleteLog(id, userId) {
 export function restoreDeletedLog(log) {
   if (!log || !log.id) return null;
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     log.id,
@@ -513,6 +519,9 @@ export function restoreDeletedLog(log) {
     log.name,
     log.calorie,
     log.sugar,
+    log.carbs || null,
+    log.protein || null,
+    log.fat || null,
     log.portion_size,
     log.sweetness_level,
     log.is_private,

@@ -31,20 +31,30 @@ export function getFoodEmoji(name = '') {
   return '🍽️';
 }
 
-export function enrichComponents(components, defaultName = 'มื้ออาหาร', defaultKcal = 0, defaultSugar = 0) {
+export function enrichComponents(components, defaultName = 'มื้ออาหาร', defaultKcal = 0, defaultSugar = 0, defaultCarbs = null, defaultProtein = null, defaultFat = null) {
   const pinSlots = [
-    { x: 34, y: 56 },
-    { x: 66, y: 44 },
-    { x: 48, y: 28 },
-    { x: 28, y: 72 },
-    { x: 72, y: 68 }
+    { x: 30, y: 44 },
+    { x: 68, y: 36 },
+    { x: 42, y: 68 },
+    { x: 74, y: 60 },
+    { x: 50, y: 26 },
+    { x: 25, y: 70 }
   ];
+
+  const cal = Math.max(0, Math.round(Number(defaultKcal) || 0));
+  const sug = Math.max(0, Math.round((Number(defaultSugar) || 0) * 10) / 10);
+  const defCarb = defaultCarbs !== null && defaultCarbs !== undefined ? Math.round(Number(defaultCarbs) * 10) / 10 : Math.round((cal * 0.45 / 4) * 10) / 10;
+  const defProt = defaultProtein !== null && defaultProtein !== undefined ? Math.round(Number(defaultProtein) * 10) / 10 : Math.round((cal * 0.2 / 4) * 10) / 10;
+  const defFat = defaultFat !== null && defaultFat !== undefined ? Math.round(Number(defaultFat) * 10) / 10 : Math.round((cal * 0.35 / 9) * 10) / 10;
 
   if (!Array.isArray(components) || components.length === 0) {
     return [{
       name: defaultName || 'มื้อหลัก',
-      kcal: Math.round(Number(defaultKcal) || 0),
-      sugar: Math.round((Number(defaultSugar) || 0) * 10) / 10,
+      kcal: cal,
+      carbs: defCarb,
+      sugar: sug,
+      protein: defProt,
+      fat: defFat,
       icon: getFoodEmoji(defaultName),
       x: 50,
       y: 50
@@ -56,10 +66,19 @@ export function enrichComponents(components, defaultName = 'มื้ออา�
     const name = String(c.name || `ส่วนประกอบ ${i + 1}`);
     const x = typeof c.x === 'number' && c.x >= 10 && c.x <= 90 ? Math.round(c.x) : slot.x;
     const y = typeof c.y === 'number' && c.y >= 10 && c.y <= 90 ? Math.round(c.y) : slot.y;
+    const k = Math.max(0, Math.round(Number(c.kcal) || 0));
+    const s = Math.max(0, Math.round((Number(c.sugar) || 0) * 10) / 10);
+    const cb = c.carbs !== undefined && c.carbs !== null ? Math.round(Number(c.carbs) * 10) / 10 : Math.round((k * 0.45 / 4) * 10) / 10;
+    const pr = c.protein !== undefined && c.protein !== null ? Math.round(Number(c.protein) * 10) / 10 : Math.round((k * 0.2 / 4) * 10) / 10;
+    const ft = c.fat !== undefined && c.fat !== null ? Math.round(Number(c.fat) * 10) / 10 : Math.round((k * 0.35 / 9) * 10) / 10;
+
     return {
       name,
-      kcal: Math.round(Number(c.kcal) || 0),
-      sugar: Math.round((Number(c.sugar) || 0) * 10) / 10,
+      kcal: k,
+      carbs: cb,
+      sugar: s,
+      protein: pr,
+      fat: ft,
       icon: c.icon || getFoodEmoji(name),
       x,
       y
@@ -204,16 +223,23 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
 
   const needsClarification = matched.isDrink && sweetness === 'normal' && !lower.includes('หวาน');
 
+  const fbCarbs = Math.round((cal * 0.45 / 4) * 10) / 10;
+  const fbProtein = Math.round((cal * 0.2 / 4) * 10) / 10;
+  const fbFat = Math.round((cal * 0.35 / 9) * 10) / 10;
+
   return {
     name: matched.name,
     kcal: Math.round(cal),
+    carbs: fbCarbs,
     sugar: Math.round(sugar * 10) / 10,
+    protein: fbProtein,
+    fat: fbFat,
     confidence: 'high',
     needs_clarification: needsClarification,
     clarification_question: needsClarification ? `สั่ง "${matched.name}" ระดับความหวานเท่าไหร่? (ค่านี้คิดจากหวานปกติ 100%)` : null,
     options: matched.isDrink ? ['ไม่หวาน 0% (~0g)', 'หวานน้อย 25% (~8g)', 'หวานปกติ 100% (~' + Math.round(sugar) + 'g)'] : null,
     note: `คำนวณจากสูตรอาหารไทยมาตรฐาน (${matched.name}) อิง ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}`,
-    components: enrichComponents(matched.components, matched.name, cal, sugar),
+    components: enrichComponents(matched.components, matched.name, cal, sugar, fbCarbs, fbProtein, fbFat),
     is_fallback: true
   };
 }
@@ -247,8 +273,8 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
   const toppingsList = Array.isArray(toppings) ? toppings.join(', ') : '';
 
   const prompt = `
-คุณคือผู้ช่วยโภชนาการที่เชี่ยวชาญอาหารและเครื่องดื่มไทยโดยเฉพาะ
-ประเมินอาหารหรือเครื่องดื่มจากรูปภาพ (ถ้ามี) และคำอธิบายของผู้ใช้
+คุณคือผู้ช่วยโภชนาการและนักวิเคราะห์ภาพอาหารระบบ AI ชั้นสูง (AR Food Vision Scanner)
+วิเคราะห์อาหารหรือเครื่องดื่มจากรูปภาพที่แนบมา และคำอธิบายของผู้ใช้
 - คำอธิบาย: "${text || '(ไม่มี)'}"
 - ระดับความหวานที่เลือกไว้: "${sweetness}"
 - ร้าน/แบรนด์เครื่องดื่มที่เลือก: "${brandInfo}"
@@ -268,30 +294,35 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
    - "normal" (100%): ให้น้ำตาลตามสูตรจริงของร้าน
    - "sweet" (120%): ให้น้ำตาลประมาณ 125-130%
 
-ข้อกำหนดสำคัญ:
+ข้อกำหนดสำคัญในการตอบ:
 1. ตอบเป็น JSON object ตัวเดียวเท่านั้น ห้ามมี markdown หรือ backticks
 2. ต้องประเมิน:
    - "is_food": boolean (ต้องเป็น true เฉพาะเมื่อรูปภาพหรือคำอธิบายเป็นอาหาร เครื่องดื่ม ขนม ของกิน หรือวัตถุดิบจริงเท่านั้น! หากเป็นรูปเอกสาร ข้อความ คน สัตว์ สิ่งของ รถยนต์ หรือวิวทิวทัศน์ ให้ตอบ false ทันที)
    - "name": ชื่อเมนูสั้นๆ ภาษาไทย (หากไม่ใช่ของกิน ให้ใส่ "ไม่ใช่รูปอาหาร")
-   - "kcal": แคลอรีรวมทั้งหมด (ถ้าไม่ใช่ของกินให้ใส่ 0)
-   - "sugar": น้ำตาลรวมทั้งหมดเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "kcal": แคลอรีรวมทั้งจาน (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "carbs": ปริมาณแป้งและคาร์โบไฮเดรตรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "sugar": ปริมาณน้ำตาลรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "protein": ปริมาณโปรตีนรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "fat": ปริมาณไขมันรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "confidence": "high" | "medium" | "low"
    - "needs_clarification": true ถ้าเป็นเครื่องดื่มหรือของหวานที่ข้อมูลความหวานหรือไซส์ไม่ชัดเจน
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
    - "options": อาเรย์ของตัวเลือกแนะนำ หรือ null
-   - "components": อาเรย์แจกแจงส่วนประกอบของอาหารหรือเครื่องดื่มในรูป/เมนู เช่น:
+   - "components": อาเรย์แจกแจงแยกชิ้นส่วนของอาหารแต่ละอย่างในจาน เพื่อนำไปปักหมุด AR Pin บนรูปภาพ เช่น ขนมปังโทสต์อะโวคาโด, ไข่ต้ม, เห็ดผัด, มะเขือเทศ:
+     ตัวอย่าง:
      [
-       {"name":"ไข่ดาว","kcal":120,"sugar":0.5,"icon":"🍳","x":48,"y":28},
-       {"name":"หมูสับผัดกะเพรา","kcal":310,"sugar":2.5,"icon":"🥩","x":68,"y":46},
-       {"name":"ข้าวสวย","kcal":200,"sugar":0,"icon":"🍚","x":34,"y":58}
+       {"name":"โทสต์อะโวคาโด","icon":"🥑","kcal":240,"carbs":22,"sugar":1.5,"protein":4.5,"fat":15,"x":25,"y":45},
+       {"name":"เห็ดผัดซอส","icon":"🍄","kcal":170,"carbs":24,"sugar":2.0,"protein":6.0,"fat":5.5,"x":65,"y":35},
+       {"name":"ไข่ต้มผ่าซีก","icon":"🥚","kcal":216,"carbs":1.2,"sugar":0.5,"protein":18.0,"fat":14.0,"x":40,"y":68},
+       {"name":"มะเขือเทศราชินี","icon":"🍅","kcal":20,"carbs":4.0,"sugar":2.6,"protein":0.9,"fat":0.2,"x":78,"y":52}
      ]
-     *** ข้อกำหนดสำคัญสำหรับ AR Object Detection & Calorie Pin ***:
-     1. ถ้ามีรูปภาพ ให้ตรวจจับตำแหน่งของแต่ละวัตถุดิบ/อาหารบนรูป และระบุพิกัดเป็นเปอร์เซ็นต์ (15 ถึง 85):
+     *** ข้อกำหนดสำหรับ AR Object Detection & Calorie Pin ***:
+     1. ถ้ามีรูปภาพ ให้ตรวจจับตำแหน่งของแต่ละวัตถุดิบ/อาหารบนรูป และระบุพิกัดตรงกลางของอาหารชิ้นนั้นเป็นเปอร์เซ็นต์ (15 ถึง 85):
         - "x": พิกัดแนวนอน (15 ถึง 85)
         - "y": พิกัดแนวตั้ง (15 ถึง 85)
-     2. ใส่ "icon" เป็น emoji อาหารที่ตรงที่สุด เช่น 🍳, 🥩, 🍚, 🥑, 🍄, 🍗, 🥬, 🍜, 🧋, 🥣, 🍞
-     3. แจกแจงแคลอรี "kcal" ของแต่ละส่วนประกอบ โดยผลรวมเท่ากับหรือใกล้เคียงกับแคลอรีรวม "kcal" ของจาน
-   - "note": คำอธิบายสั้นๆ 1-2 ประโยค เทียบปริมาณน้ำตาลเป็นช้อนชา (1 ช้อนชา = 4 กรัม) หรือคำแนะนำสุขภาพที่เป็นมิตร
+     2. ใส่ "icon" เป็น emoji อาหารที่ตรงที่สุด เช่น 🥑, 🍄, 🥚, 🍅, 🍳, 🥩, 🍚, 🍗, 🥬, 🍜, 🧋, 🥣, 🍞
+     3. แจกแจง "kcal" (แคลอรี), "carbs" (แป้ง g), "sugar" (น้ำตาล g), "protein" (โปรตีน g), "fat" (ไขมัน g) ของแต่ละชิ้นส่วนในจานให้สมเหตุสมผล โดยผลรวมใกล้เคียงกับค่ารวมทั้งจาน
+   - "note": คำอธิบายสั้นๆ 1-2 ประโยค สรุปโภชนาการ สัดส่วนแป้งและน้ำตาล หรือคำแนะนำสุขภาพที่เป็นมิตร
 `;
 
   try {
@@ -307,23 +338,39 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
       });
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          response_mime_type: 'application/json',
-          temperature: 0.2,
-          maxOutputTokens: 2500
-        }
-      })
-    });
+    const candidateModels = [GEMINI_MODEL, 'gemini-3.5-flash-lite'];
+    let response = null;
+    let lastStatus = 0;
 
-    if (!response.ok) {
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(12000),
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              response_mime_type: 'application/json',
+              temperature: 0.2,
+              maxOutputTokens: 2500
+            }
+          })
+        });
+        if (res.ok) {
+          response = res;
+          break;
+        }
+        lastStatus = res.status;
+      } catch (err) {
+        // Try next model on error or timeout
+      }
+    }
+
+    if (!response || !response.ok) {
       const fb = fallbackAnalyze(text, sweetness, portion);
-      fb.note = `⚠️ ระบบ AI ขณะนี้ไม่พร้อมใช้งานชั่วคราว (${response.status}) — ดึงค่ามาตรฐานมาให้แทน สามารถกดแก้ไขตัวเลขได้ตามต้องการ`;
+      fb.note = `⚠️ ระบบ AI ขณะนี้ไม่พร้อมใช้งานชั่วคราว (${lastStatus || 503}) — ดึงค่ามาตรฐานมาให้แทน สามารถกดแก้ไขตัวเลขได้ตามต้องการ`;
       return fb;
     }
 
@@ -356,18 +403,30 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
 
     const parsedKcal = Math.round(Number(parsed.kcal) || 0);
     const parsedSugar = Math.round((Number(parsed.sugar) || 0) * 10) / 10;
+    const parsedCarbs = parsed.carbs !== undefined && parsed.carbs !== null ? Math.round(Number(parsed.carbs) * 10) / 10 : null;
+    const parsedProtein = parsed.protein !== undefined && parsed.protein !== null ? Math.round(Number(parsed.protein) * 10) / 10 : null;
+    const parsedFat = parsed.fat !== undefined && parsed.fat !== null ? Math.round(Number(parsed.fat) * 10) / 10 : null;
     const parsedName = String(parsed.name || text || 'มื้ออาหาร');
+
+    const components = enrichComponents(parsed.components, parsedName, parsedKcal, parsedSugar, parsedCarbs, parsedProtein, parsedFat);
+
+    const finalCarbs = parsedCarbs !== null ? parsedCarbs : Math.round(components.reduce((a, b) => a + (b.carbs || 0), 0) * 10) / 10;
+    const finalProtein = parsedProtein !== null ? parsedProtein : Math.round(components.reduce((a, b) => a + (b.protein || 0), 0) * 10) / 10;
+    const finalFat = parsedFat !== null ? parsedFat : Math.round(components.reduce((a, b) => a + (b.fat || 0), 0) * 10) / 10;
 
     return {
       name: parsedName,
       kcal: parsedKcal,
+      carbs: finalCarbs,
       sugar: parsedSugar,
+      protein: finalProtein,
+      fat: finalFat,
       is_food: true,
       confidence: parsed.confidence || 'medium',
       needs_clarification: Boolean(parsed.needs_clarification),
       clarification_question: parsed.clarification_question || null,
       options: Array.isArray(parsed.options) ? parsed.options : null,
-      components: enrichComponents(parsed.components, parsedName, parsedKcal, parsedSugar),
+      components,
       note: parsed.note || 'วิเคราะห์ด้วย Google Gemini',
       is_fallback: false
     };

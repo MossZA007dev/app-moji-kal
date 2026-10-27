@@ -758,6 +758,194 @@ nav button i { font-style: normal; font-size: 18px; }
   margin-top: 3px;
   transition: all 0.2s ease;
 }
+
+/* AR Calorie Tag Card - Matches reference design */
+.ar-pin-card {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1E293B;
+  padding: 6px 12px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ar-food-pin:hover .ar-pin-card, .ar-food-pin.active .ar-pin-card {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #34D399;
+  box-shadow: 0 0 0 3.5px rgba(52, 211, 153, 0.5), 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+.ar-pin-icon-box {
+  font-size: 20px;
+  line-height: 1;
+}
+.ar-pin-info-stack {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.15;
+}
+.ar-pin-cal-val {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: -0.3px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #0F172A;
+}
+.ar-food-pin:hover .ar-pin-cal-val, .ar-food-pin.active .ar-pin-cal-val {
+  color: #FFFFFF;
+}
+.ar-pin-cal-label {
+  font-size: 9.5px;
+  color: #64748B;
+  font-weight: 600;
+}
+.ar-food-pin:hover .ar-pin-cal-label, .ar-food-pin.active .ar-pin-cal-label {
+  color: #A7F3D0;
+}
+
+/* AR Macro Summary Grid */
+.ar-macro-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 10px 0 12px;
+}
+@media (max-width: 380px) {
+  .ar-macro-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.ar-macro-pill {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.ar-macro-pill.cal { border-color: rgba(255, 117, 140, 0.4); background: #FFF5F7; }
+.ar-macro-pill.carbs { border-color: rgba(255, 176, 92, 0.4); background: #FFFBF5; }
+.ar-macro-pill.sugar { border-color: rgba(110, 203, 176, 0.4); background: #F4FAF8; }
+.ar-macro-pill.protein { border-color: rgba(167, 139, 250, 0.4); background: #F8F6FE; }
+.ar-macro-pill.fat { border-color: rgba(245, 158, 11, 0.4); background: #FEFBF3; }
+
+.ar-macro-icon {
+  font-size: 16px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.ar-macro-title {
+  font-size: 10px;
+  color: var(--mute);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ar-macro-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-top: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.ar-macro-val small {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+/* AR Breakdown Components List */
+.ar-components-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.ar-components-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.ar-components-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ar-comp-item {
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.ar-comp-item:active {
+  transform: scale(0.98);
+}
+.ar-comp-item.active {
+  border-color: var(--pink);
+  background: #FFF5F7;
+  box-shadow: 0 2px 10px rgba(255, 117, 140, 0.15);
+}
+.ar-comp-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ar-comp-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.ar-comp-info {
+  flex: 1;
+  text-align: left;
+}
+.ar-comp-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  display: block;
+}
+.ar-comp-sub-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--mute);
+}
+.sub-macro {
+  background: rgba(0,0,0,0.04);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.ar-comp-cal-badge {
+  text-align: right;
+  flex-shrink: 0;
+}
+.ar-comp-cal-badge b {
+  font-size: 15px;
+  color: var(--pink-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.ar-comp-cal-badge small {
+  font-size: 10px;
+  color: var(--mute);
+}
 .ar-food-pin.active .ar-pin-anchor {
   background: #6EE7B7;
   box-shadow: 0 0 0 3px #FFFFFF, 0 0 12px #34D399;
@@ -5864,7 +6052,10 @@ function openSheet() {
   draft = {
     name: '',
     kcal: '',
+    carbs: '',
     sugar: '',
+    protein: '',
+    fat: '',
     txt: '',
     status: '',
     brand: 'standard',
@@ -5966,28 +6157,129 @@ function renderSheet() {
         `).join('')}
       </div>
 
-      <!-- Photo Preview (If image attached) -->
+      <!-- AR Food Scanner Viewport & Nutritional Breakdown (When Photo Attached) -->
       ${draft.imageBase64 ? `
-        <div class="simple-photo-preview-card">
-          <div class="simple-photo-wrap">
-            <img src="${draft.imageBase64}" alt="รูปอาหาร" class="simple-photo-img">
-            ${draft.isScanning ? `<div class="ar-laser-beam"></div>` : ''}
-          </div>
-          <div class="simple-photo-info">
-            <span style="font-size:12px; font-weight:700; color:var(--ink);">
-              ${draft.isScanning ? '🔍 กำลังวิเคราะห์รูปภาพ...' : '📸 รูปถ่ายอาหารพร้อมบันทึก'}
-            </span>
-            ${draft.components && draft.components.length ? `
-              <span style="font-size:11px; color:var(--mint); font-weight:600; margin-top:2px;">
-                ✨ ตรวจพบ ${draft.components.length} รายการในจาน
-              </span>
-            ` : ''}
-            <div style="display:flex; gap:6px; margin-top:6px;">
-              <button class="btn s sm" style="font-size:11px; padding:3px 8px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
-              <button class="btn g sm" style="font-size:11px; padding:3px 8px; color:#DC2626;" onclick="clearDraftPhoto()">🗑️ ลบรูป</button>
+        <div class="ar-scanner-stage" style="border-radius:24px; min-height:280px; max-height:48vh; overflow:hidden; position:relative; box-shadow:0 10px 28px rgba(0,0,0,0.2); margin-bottom:10px;">
+          <img src="${draft.imageBase64}" alt="รูปอาหาร" class="ar-scanner-img" style="width:100%; height:100%; object-fit:cover; display:block;">
+          <div class="ar-scanner-vignette"></div>
+
+          <!-- Top Badge: 📸 Scan Your Food (Like reference image) -->
+          <div class="ar-scanner-badge-wrap" style="position:absolute; top:12px; left:0; right:0; display:flex; justify-content:center; z-index:10; pointer-events:none;">
+            <div class="ar-scanner-top-badge" style="background:rgba(255,255,255,0.95); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:#166534; font-weight:800; padding:6px 18px; border-radius:999px; font-size:13px; border:1px solid rgba(255,255,255,0.85); box-shadow:0 4px 14px rgba(0,0,0,0.18); display:flex; align-items:center; gap:6px;">
+              <span>📸</span>
+              <span style="font-family:'Mali',sans-serif; letter-spacing:0.3px;">Scan Your Food</span>
             </div>
           </div>
+
+          <!-- Laser Scan Beam Effect while scanning -->
+          ${draft.isScanning ? `<div class="ar-laser-beam"></div>` : ''}
+
+          <!-- 4 Corner Viewfinder Brackets -->
+          <div class="ar-corner-frame">
+            <div class="ar-bracket tl"></div>
+            <div class="ar-bracket tr"></div>
+            <div class="ar-bracket bl"></div>
+            <div class="ar-bracket br"></div>
+          </div>
+
+          <!-- Floating Interactive AR Calorie Tags (ปักหมุดบนวัตถุดิบเหมือนในภาพ) -->
+          ${draft.showArPins && draft.components && draft.components.length ? `
+            <div class="ar-pins-layer">
+              ${draft.components.map((c, idx) => `
+                <div class="ar-food-pin ${draft.activePinIdx === idx ? 'active' : ''}"
+                     style="left: ${c.x || 50}%; top: ${c.y || 50}%;"
+                     onclick="selectArPin(${idx})">
+                  <div class="ar-pin-card">
+                    <span class="ar-pin-icon-box">${c.icon || '🍽️'}</span>
+                    <div class="ar-pin-info-stack">
+                      <span class="ar-pin-cal-val">${fmt(c.kcal)}</span>
+                      <span class="ar-pin-cal-label">calories</span>
+                    </div>
+                  </div>
+                  <div class="ar-pin-anchor"></div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
+
+        <!-- Photo Actions Toolbar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="display:flex; gap:6px;">
+            <button class="btn s sm" style="font-size:11px; padding:4px 10px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
+            <button class="btn g sm" style="font-size:11px; padding:4px 10px; color:#DC2626;" onclick="clearDraftPhoto()">🗑️ ลบรูป</button>
+          </div>
+          ${draft.components && draft.components.length ? `
+            <button class="pill ${draft.showArPins ? 'active' : ''}" style="font-size:11px; padding:4px 10px;" onclick="toggleArPins()">
+              ${draft.showArPins ? '👁️ ซ่อนป้าย AR' : '✨ แสดงป้าย AR'}
+            </button>
+          ` : ''}
+        </div>
+
+        <!-- Macro Breakdown Overview 5-Pill Grid -->
+        ${draft.kcal ? `
+          <div class="ar-macro-summary-grid">
+            <div class="ar-macro-pill cal">
+              <span class="ar-macro-icon">🔥</span>
+              <span class="ar-macro-title">แคลอรี</span>
+              <b class="ar-macro-val">${fmt(draft.kcal || 0)} <small>kcal</small></b>
+            </div>
+            <div class="ar-macro-pill carbs">
+              <span class="ar-macro-icon">🍞</span>
+              <span class="ar-macro-title">แป้ง (คาร์บ)</span>
+              <b class="ar-macro-val">${fmt(draft.carbs || 0)} <small>g</small></b>
+            </div>
+            <div class="ar-macro-pill sugar">
+              <span class="ar-macro-icon">🍬</span>
+              <span class="ar-macro-title">น้ำตาล</span>
+              <b class="ar-macro-val">${fmt(draft.sugar || 0)} <small>g</small></b>
+            </div>
+            <div class="ar-macro-pill protein">
+              <span class="ar-macro-icon">🥩</span>
+              <span class="ar-macro-title">โปรตีน</span>
+              <b class="ar-macro-val">${fmt(draft.protein || 0)} <small>g</small></b>
+            </div>
+            <div class="ar-macro-pill fat">
+              <span class="ar-macro-icon">🥑</span>
+              <span class="ar-macro-title">ไขมัน</span>
+              <b class="ar-macro-val">${fmt(draft.fat || 0)} <small>g</small></b>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Components Breakdown Card -->
+        ${draft.components && draft.components.length ? `
+          <div class="ar-components-card">
+            <div class="ar-components-header">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:16px;">🍱</span>
+                <b style="font-size:12.5px; color:var(--ink);">แจกแจงแยกชิ้นในจาน (${draft.components.length} รายการ)</b>
+              </div>
+              <small style="color:var(--mute); font-size:10.5px;">แตะเพื่อชี้เป้าบนรูป</small>
+            </div>
+            <div class="ar-components-list">
+              ${draft.components.map((c, idx) => `
+                <div class="ar-comp-item ${draft.activePinIdx === idx ? 'active' : ''}" onclick="selectArPin(${idx})">
+                  <div class="ar-comp-main">
+                    <span class="ar-comp-icon">${c.icon || '🍽️'}</span>
+                    <div class="ar-comp-info">
+                      <span class="ar-comp-name">${esc(c.name)}</span>
+                      <div class="ar-comp-sub-macros">
+                        <span class="sub-macro">🍞 แป้ง ${fmt(c.carbs || 0)}g</span>
+                        <span class="sub-macro">🍬 น้ำตาล ${fmt(c.sugar || 0)}g</span>
+                        <span class="sub-macro">🥩 โปรตีน ${fmt(c.protein || 0)}g</span>
+                        <span class="sub-macro">🥑 ไขมัน ${fmt(c.fat || 0)}g</span>
+                      </div>
+                    </div>
+                    <div class="ar-comp-cal-badge">
+                      <b>${fmt(c.kcal)}</b> <small>kcal</small>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
       ` : ''}
 
       <!-- Result Food Card (When food entered) -->
@@ -6471,7 +6763,10 @@ async function analyzeMeal() {
 
     draft.name = result.name || draft.name || 'มื้ออาหาร';
     draft.kcal = result.kcal;
+    draft.carbs = result.carbs !== undefined ? result.carbs : '';
     draft.sugar = result.sugar;
+    draft.protein = result.protein !== undefined ? result.protein : '';
+    draft.fat = result.fat !== undefined ? result.fat : '';
     draft.sugarFromPreset = false;
     draft.components = result.components || null;
     draft.showArPins = true;
@@ -6519,6 +6814,9 @@ async function saveMeal() {
         name: finalName,
         calorie: kcal,
         sugar,
+        carbs: Number(draft.carbs) || 0,
+        protein: Number(draft.protein) || 0,
+        fat: Number(draft.fat) || 0,
         portion_size: draft.portion,
         sweetness_level: draft.sweetness,
         is_private: draft.isPrivate ? 1 : 0,
@@ -6661,9 +6959,15 @@ function removeDraftComponent(idx) {
 function recalcDraftFromComponents() {
   if (!draft || !draft.components || !draft.components.length) return;
   const totalKcal = draft.components.reduce((sum, c) => sum + (Number(c.kcal) || 0), 0);
+  const totalCarbs = draft.components.reduce((sum, c) => sum + (Number(c.carbs) || 0), 0);
   const totalSugar = draft.components.reduce((sum, c) => sum + (Number(c.sugar) || 0), 0);
+  const totalProtein = draft.components.reduce((sum, c) => sum + (Number(c.protein) || 0), 0);
+  const totalFat = draft.components.reduce((sum, c) => sum + (Number(c.fat) || 0), 0);
   draft.kcal = Math.round(totalKcal);
+  draft.carbs = Math.round(totalCarbs * 10) / 10;
   draft.sugar = Math.round(totalSugar * 10) / 10;
+  draft.protein = Math.round(totalProtein * 10) / 10;
+  draft.fat = Math.round(totalFat * 10) / 10;
 }
 
 function getComponentIcon(name = '') {
@@ -6739,17 +7043,21 @@ function renderArPhotoModal() {
   const body = $('#arPhotoModalBody');
   if (!body) return;
 
+  const totalCarbs = log.carbs !== null && log.carbs !== undefined ? log.carbs : Math.round(comps.reduce((a, b) => a + (b.carbs || 0), 0) * 10) / 10;
+  const totalProtein = log.protein !== null && log.protein !== undefined ? log.protein : Math.round(comps.reduce((a, b) => a + (b.protein || 0), 0) * 10) / 10;
+  const totalFat = log.fat !== null && log.fat !== undefined ? log.fat : Math.round(comps.reduce((a, b) => a + (b.fat || 0), 0) * 10) / 10;
+
   body.innerHTML = `
     <!-- AR Scanner Viewport -->
-    <div class="ar-scanner-stage" style="min-height: 280px; max-height: 52vh; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-      <img src="${log.image_url}" alt="${esc(log.name)}" class="ar-scanner-img">
+    <div class="ar-scanner-stage" style="min-height: 280px; max-height: 52vh; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow:hidden; position:relative;">
+      <img src="${log.image_url}" alt="${esc(log.name)}" class="ar-scanner-img" style="width:100%; height:100%; object-fit:cover; display:block;">
       <div class="ar-scanner-vignette"></div>
 
-      <!-- Top Pill Badge: EASY • QUICK • ACCURATE -->
-      <div class="ar-scanner-badge-wrap">
-        <div class="ar-scanner-top-badge">
-          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#34D399; box-shadow:0 0 6px #34D399;"></span>
-          <span>EASY • QUICK • ACCURATE</span>
+      <!-- Top Badge: 📸 Scan Your Food (Like reference image) -->
+      <div class="ar-scanner-badge-wrap" style="position:absolute; top:12px; left:0; right:0; display:flex; justify-content:center; z-index:10; pointer-events:none;">
+        <div class="ar-scanner-top-badge" style="background:rgba(255,255,255,0.95); color:#166534; font-weight:800; padding:6px 16px; border-radius:999px; font-size:12.5px; border:1px solid rgba(255,255,255,0.85); box-shadow:0 4px 14px rgba(0,0,0,0.25); display:flex; align-items:center; gap:6px;">
+          <span>📸</span>
+          <span style="font-family:'Mali',sans-serif;">Scan Your Food</span>
         </div>
       </div>
 
@@ -6767,10 +7075,12 @@ function renderArPhotoModal() {
           <div class="ar-food-pin ${arModalActivePin === idx ? 'active' : ''}" 
                style="left: ${c.x || 50}%; top: ${c.y || 50}%;" 
                onclick="selectArModalPin(${idx})">
-            <div class="ar-pin-pill">
-              <span class="ar-pin-icon">${c.icon || '🍽️'}</span>
-              <span class="ar-pin-cal">${fmt(c.kcal)} cal</span>
-              <span class="ar-pin-name">${esc(c.name)}</span>
+            <div class="ar-pin-card">
+              <span class="ar-pin-icon-box">${c.icon || '🍽️'}</span>
+              <div class="ar-pin-info-stack">
+                <span class="ar-pin-cal-val">${fmt(c.kcal)}</span>
+                <span class="ar-pin-cal-label">calories</span>
+              </div>
             </div>
             <div class="ar-pin-anchor"></div>
           </div>
@@ -6778,35 +7088,66 @@ function renderArPhotoModal() {
       </div>
     </div>
 
+    <!-- Macro Breakdown Overview 5-Pill Grid -->
+    <div class="ar-macro-summary-grid">
+      <div class="ar-macro-pill cal">
+        <span class="ar-macro-icon">🔥</span>
+        <span class="ar-macro-title">แคลอรี</span>
+        <b class="ar-macro-val">${fmt(log.calorie || 0)} <small>kcal</small></b>
+      </div>
+      <div class="ar-macro-pill carbs">
+        <span class="ar-macro-icon">🍞</span>
+        <span class="ar-macro-title">แป้ง (คาร์บ)</span>
+        <b class="ar-macro-val">${fmt(totalCarbs || 0)} <small>g</small></b>
+      </div>
+      <div class="ar-macro-pill sugar">
+        <span class="ar-macro-icon">🍬</span>
+        <span class="ar-macro-title">น้ำตาล</span>
+        <b class="ar-macro-val">${fmt(log.sugar || 0)} <small>g</small></b>
+      </div>
+      <div class="ar-macro-pill protein">
+        <span class="ar-macro-icon">🥩</span>
+        <span class="ar-macro-title">โปรตีน</span>
+        <b class="ar-macro-val">${fmt(totalProtein || 0)} <small>g</small></b>
+      </div>
+      <div class="ar-macro-pill fat">
+        <span class="ar-macro-icon">🥑</span>
+        <span class="ar-macro-title">ไขมัน</span>
+        <b class="ar-macro-val">${fmt(totalFat || 0)} <small>g</small></b>
+      </div>
+    </div>
+
     <!-- Dish Overview & Ingredient List -->
-    <div style="background:var(--card); border-radius:20px; padding:14px; border:1px solid var(--line);">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+    <div class="ar-components-card">
+      <div class="ar-components-header">
         <div>
-          <h3 style="font-size:16px; margin:0 0 4px; color:var(--ink); font-family:'Mali',sans-serif;">${esc(log.name)}</h3>
-          <span style="font-size:12px; color:var(--mute);">บันทึกเมื่อ: ${new Date(log.created_at || Date.now()).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+          <h3 style="font-size:15px; margin:0 0 2px; color:var(--ink); font-family:'Mali',sans-serif;">${esc(log.name)}</h3>
+          <span style="font-size:11px; color:var(--mute);">บันทึกเมื่อ: ${new Date(log.created_at || Date.now()).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
         </div>
-        <div style="text-align:right;">
-          <b style="font-size:17px; color:var(--pink); display:block;">${fmt(log.calorie)} <small style="font-size:11px; color:var(--mute);">kcal</small></b>
-          <span style="font-size:12px; color:var(--mint); font-weight:600;">น้ำตาล ${fmt(log.sugar)} g</span>
-        </div>
+        <span class="badge ok" style="font-size:10px;">${comps.length} รายการ</span>
       </div>
 
       ${comps.length ? `
-        <div style="margin-top:10px; border-top:1px solid var(--line); padding-top:8px;">
-          <small style="color:var(--mute); font-size:11px; display:block; margin-bottom:6px; font-weight:600;">🍱 แจกแจงรายการในจาน (${comps.length} รายการ):</small>
-          <div style="display:flex; flex-direction:column; gap:5px;">
-            ${comps.map((c, idx) => `
-              <div class="component-row ${arModalActivePin === idx ? 'highlighted' : ''}" 
-                   onclick="selectArModalPin(${idx})"
-                   style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:10px; background:var(--bg); border:1px solid ${arModalActivePin === idx ? 'var(--mint)' : 'var(--line)'}; cursor:pointer;">
-                <div style="display:flex; align-items:center; gap:6px;">
-                  <span>${c.icon || '🍽️'}</span>
-                  <span style="font-size:12px; font-weight:600; color:var(--ink);">${esc(c.name)}</span>
+        <div class="ar-components-list">
+          ${comps.map((c, idx) => `
+            <div class="ar-comp-item ${arModalActivePin === idx ? 'active' : ''}" onclick="selectArModalPin(${idx})">
+              <div class="ar-comp-main">
+                <span class="ar-comp-icon">${c.icon || '🍽️'}</span>
+                <div class="ar-comp-info">
+                  <span class="ar-comp-name">${esc(c.name)}</span>
+                  <div class="ar-comp-sub-macros">
+                    <span class="sub-macro">🍞 แป้ง ${fmt(c.carbs || 0)}g</span>
+                    <span class="sub-macro">🍬 น้ำตาล ${fmt(c.sugar || 0)}g</span>
+                    <span class="sub-macro">🥩 โปรตีน ${fmt(c.protein || 0)}g</span>
+                    <span class="sub-macro">🥑 ไขมัน ${fmt(c.fat || 0)}g</span>
+                  </div>
                 </div>
-                <span style="font-size:11.5px; font-weight:700; color:var(--ink);">${fmt(c.kcal)} <small style="font-size:9.5px; color:var(--mute);">cal</small></span>
+                <div class="ar-comp-cal-badge">
+                  <b>${fmt(c.kcal)}</b> <small>kcal</small>
+                </div>
               </div>
-            `).join('')}
-          </div>
+            </div>
+          `).join('')}
         </div>
       ` : ''}
     </div>
