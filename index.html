@@ -939,37 +939,115 @@ nav button i { font-style: normal; font-size: 18px; }
 .m-pill.prot { color: #7C3AED; border-color: rgba(139, 92, 246, 0.25); background: #F5F3FF; }
 .m-pill.fat { color: #059669; border-color: rgba(16, 185, 129, 0.25); background: #ECFDF5; }
 
-/* Quick Water Tracker Widget */
+/* Quick Water Tracker Widget & Custom Bottle Showcase */
 .water-card {
   background: var(--card);
   border: 1.5px solid var(--line);
   border-radius: 20px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   margin: 10px 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
-.water-cups-row {
+.water-checkpoint-pill {
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
   display: flex;
-  gap: 6px;
-  justify-content: space-between;
   align-items: center;
-  padding: 6px 4px;
-}
-.water-cup-icon {
-  font-size: 20px;
-  line-height: 1;
+  gap: 4px;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  font-size: 11px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+.water-checkpoint-pill:hover {
+  transform: translateY(-2px);
+}
+.water-checkpoint-pill.filled {
+  border-color: #38BDF8;
+  background: #E0F2FE;
+  box-shadow: 0 2px 6px rgba(56, 189, 248, 0.25);
+}
+.water-checkpoint-pill.filled small {
+  color: #0284C7;
+  font-weight: 700;
+}
+.water-checkpoint-pill small {
+  color: var(--mute);
+  font-size: 10px;
+}
+
+/* Water Bottle Customizer Modal Styles (Inspired by Product Card Showcase) */
+.bottle-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  margin-bottom: 12px;
+}
+.bottle-select-card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 12px 10px 10px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.bottle-select-card:hover {
+  transform: translateY(-2px);
+  border-color: #38BDF8;
+}
+.bottle-select-card.active {
+  border-color: #0284C7;
+  background: #F0F9FF;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.2);
+  transform: translateY(-2px);
+}
+.bottle-card-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #E0F2FE;
+  color: #0284C7;
+  margin-top: 4px;
+}
+.bottle-select-card.active .bottle-card-badge {
+  background: #0284C7;
+  color: #fff;
+}
+.bottle-select-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0284C7;
+  color: #fff;
+  font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  user-select: none;
+  font-weight: bold;
 }
-.water-cup-icon:hover {
-  transform: scale(1.25);
-}
-.water-cup-icon.filled {
-  animation: popIn 0.3s ease;
+.bottle-hero-preview {
+  background: radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.8), rgba(240, 249, 255, 0.4));
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 12px;
+  text-align: center;
+  margin-bottom: 12px;
 }
 
 /* Weight Tracker Widget */
@@ -3684,12 +3762,20 @@ function renderToday() {
   const sodiumLimit = Number(currentUser?.sodium_goal) || 2000;
   const waterGoal = Number(currentUser?.water_goal) || 8;
 
-  // Water tracking calculations
+  // Water tracking calculations (Custom Bottle System)
+  const waterBottleMl = Number(currentUser?.water_bottle_ml) || 500;
+  const waterDailyTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const waterBottleName = currentUser?.water_bottle_name || 'ขวดน้ำ 500 ml';
+  const waterBottleIcon = currentUser?.water_bottle_icon || 'bottle_500';
+
   const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
   const waterCount = waterLogs.length;
-  const waterMl = waterCount * 250;
-  const waterGoalMl = waterGoal * 250;
-  const waterPct = Math.min(100, Math.round((waterCount / waterGoal) * 100));
+  const totalWaterMl = waterLogs.reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
+  const targetRounds = Math.max(1, Math.ceil(waterDailyTarget / waterBottleMl));
+  const roundsCompleted = Math.min(targetRounds, Math.floor(totalWaterMl / waterBottleMl));
+  const waterPct = Math.min(100, Math.round((totalWaterMl / waterDailyTarget) * 100));
+  const isWaterGoalReached = totalWaterMl >= waterDailyTarget;
+  const bottleUnit = waterBottleName.includes('แก้ว') ? 'แก้ว' : waterBottleName.includes('ถัง') ? 'ถัง' : 'ขวด';
 
   const carbsPct = Math.min(100, Math.round((totalCarbs / carbsGoal) * 100));
   const proteinPct = Math.min(100, Math.round((totalProtein / proteinGoal) * 100));
@@ -3828,41 +3914,85 @@ function renderToday() {
       ` : ''}
     </div>
 
-    <!-- Quick Water Tracker Card (ฟีเจอร์นับแก้วน้ำด่วน 💧) -->
+    <!-- Quick Water Tracker Card (ฟีเจอร์ขวดน้ำน่ารัก & นับรอบดื่มน้ำ 🍶💧) -->
     <div class="water-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:18px;">💧</span>
-          <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">ดื่มน้ำวันนี้ (${waterCount}/${waterGoal} แก้ว · ${waterMl} ml)</b>
-        </div>
-        <span class="badge ${waterCount >= waterGoal ? 'ok' : 'warn'}" style="font-size:10px;">
-          ${waterCount >= waterGoal ? '🎉 ครบเป้าแล้ว' : `${waterPct}%`}
-        </span>
-      </div>
-
-      <!-- Water Cups Interactive Indicator -->
-      <div class="water-cups-row">
-        ${Array.from({ length: Math.max(8, waterGoal) }).map((_, i) => `
-          <div class="water-cup-icon ${i < waterCount ? 'filled' : ''}" onclick="${i === waterCount - 1 ? 'undoWaterLog()' : 'triggerWaterLog()'}" title="${i < waterCount ? 'แตะแก้วล่าสุดเพื่อยกเลิก' : 'แตะเพื่อดื่มน้ำ 1 แก้ว'}">
-            <span>${i < waterCount ? '💧' : '🤍'}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">💧</span>
+          <div>
+            <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">ดื่มน้ำวันนี้ · ${esc(waterBottleName)}</b>
+            <div style="font-size:11.5px; color:var(--mute);">เป้าหมายวันละ ${targetRounds} ${bottleUnit} (${fmt(waterDailyTarget)} ml)</div>
           </div>
-        `).join('')}
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn s sm" style="font-size:11px; padding:3px 9px; border-radius:12px; background:#F0F9FF; border:1px solid #BAE6FD; color:#0369A1;" onclick="openWaterBottleModal()" title="เปลี่ยนขวดน้ำหรือเป้าหมาย">
+            ⚙️ เปลี่ยนขวด
+          </button>
+          <span class="badge ${isWaterGoalReached ? 'ok' : 'warn'}" style="font-size:10px;">
+            ${isWaterGoalReached ? '🎉 ครบเป้าแล้ว!' : `${waterPct}%`}
+          </span>
+        </div>
       </div>
 
+      <!-- Water Hero Interactive Body -->
+      <div style="display:flex; align-items:center; gap:14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:12px 14px;">
+        <!-- Left: SVG Animated Cute Water Bottle -->
+        <div style="cursor:pointer; flex-shrink:0;" onclick="triggerWaterLog()" title="แตะเพื่อดื่มน้ำ 1 ${bottleUnit}">
+          ${renderBottleSVG(waterBottleIcon, waterPct, 60, 84)}
+        </div>
+
+        <!-- Right: Progress, Checkpoints, and Metrics -->
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
+            <div style="display:flex; align-items:baseline; gap:5px;">
+              <span style="font-size:20px; font-weight:800; font-family:'Mali',sans-serif; color:var(--ink);">
+                ${roundsCompleted} / ${targetRounds}
+              </span>
+              <span style="font-size:12.5px; font-weight:600; color:var(--mute);">${bottleUnit}</span>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#0284C7;">
+              ${fmt(totalWaterMl)} / ${fmt(waterDailyTarget)} ml
+            </span>
+          </div>
+
+          <!-- Progress bar -->
+          <div style="background:#E2E8F0; border-radius:10px; height:10px; overflow:hidden; margin-bottom:8px; position:relative;">
+            <div style="width:${waterPct}%; height:100%; background:linear-gradient(90deg, #38BDF8, #3B82F6); border-radius:10px; transition:width 0.4s ease;"></div>
+          </div>
+
+          <!-- Round Checkpoints Row -->
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${Array.from({ length: targetRounds }).map((_, i) => {
+              const isDone = i < roundsCompleted;
+              const isCurrent = i === roundsCompleted;
+              return `
+                <div class="water-checkpoint-pill ${isDone ? 'completed' : isCurrent ? 'current' : ''}" 
+                     onclick="${isDone && i === roundsCompleted - 1 ? 'undoWaterLog()' : !isDone ? 'triggerWaterLog()' : ''}"
+                     title="${isDone ? 'ดื่มรอบนี้แล้ว (แตะรอบล่าสุดเพื่อยกเลิก)' : `แตะเพื่อบันทึก ${bottleUnit}ที่ ${i + 1}`}">
+                  <span>${isDone ? '✓' : (i + 1)}</span>
+                  <span>${bottleUnit}ที่ ${i + 1}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Water Footer Actions -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-        <span style="font-size:11px; color:var(--mute);">
+        <span style="font-size:11px; color:var(--mute); flex:1; padding-right:8px;">
           ${isSodiumAlert || isSodiumWarn 
-            ? '🧂 ดื่มน้ำเพิ่มอีกนิดเพื่อช่วยไตขับโซเดียมและลดบวมน้ำนะ' 
-            : waterCount >= waterGoal 
+            ? '🧂 ดื่มน้ำช่วยไตขับโซเดียมและลดบวมน้ำนะ' 
+            : isWaterGoalReached 
             ? '✨ ยอดเยี่ยมมาก ดื่มน้ำครบช่วยให้ผิวชุ่มชื้นและสดชื่น!' 
-            : 'เป้าหมาย 8 แก้ว (2,000 ml) ช่วยเผาผลาญและสดชื่น'}
+            : `ดื่มอีก ${Math.max(0, targetRounds - roundsCompleted)} ${bottleUnit} จะครบเป้าหมายวันนี้แล้วน้า 💧`}
         </span>
         <div style="display:flex; gap:6px;">
           ${waterCount > 0 ? `
-            <button class="btn g sm" style="font-size:11px; padding:3px 8px; color:var(--mute);" onclick="undoWaterLog()" title="ยกเลิกแก้วล่าสุด">- ลบแก้ว</button>
+            <button class="btn g sm" style="font-size:11px; padding:4px 8px; color:var(--mute);" onclick="undoWaterLog()" title="ยกเลิกรอบล่าสุด">- ลบล่าสุด</button>
           ` : ''}
-          <button class="btn s sm" style="font-size:11.5px; padding:4px 12px; display:flex; align-items:center; gap:4px;" onclick="triggerWaterLog()">
-            <span>+ ดื่ม 1 แก้ว</span>
+          <button class="btn s sm" style="font-size:11.5px; padding:5px 12px; display:flex; align-items:center; gap:4px;" onclick="triggerWaterLog()">
+            <span>+ ดื่ม 1 ${bottleUnit}</span>
             <small style="color:var(--pink); font-weight:700;">(+2 🪙)</small>
           </button>
         </div>
@@ -3989,18 +4119,397 @@ async function quickLogFavorite(favId) {
   toast(`บันทึก "${fav.name}" เรียบร้อยแล้ว 🍡`);
 }
 
+// ==========================================
+// Cute Custom Water Bottle & Rounds Tracker (🍶 ฟีเจอร์ขวดน้ำน่ารัก)
+// ==========================================
+const WATER_BOTTLE_PRESETS = [
+  {
+    id: 'bottle_1000',
+    name: 'ขวดบอกเวลา (Time-marked)',
+    capacity: 1000,
+    unitName: 'ขวด',
+    badge: '⭐ ยอดฮิต ดื่มวันละ 2 ขวด!',
+    desc: 'ขวด 1 ลิตรยอดนิยม แค่ดื่ม 2 รอบ/วัน ก็ครบ 2,000 ml สบายๆ',
+    icon: 'bottle_1000'
+  },
+  {
+    id: 'bottle_500',
+    name: 'แก้วเก็บความเย็น / Tumbler',
+    capacity: 500,
+    unitName: 'แก้ว',
+    badge: '✨ พกพาง่าย (4 รอบ/วัน)',
+    desc: 'ขนาด 500 ml มาตรฐาน ดื่มวันละ 4 แก้ว/ขวด สดชื่นตลอดวัน',
+    icon: 'bottle_500'
+  },
+  {
+    id: 'bottle_750',
+    name: 'ขวดสปอร์ต / ฟิตเนส',
+    capacity: 750,
+    unitName: 'ขวด',
+    badge: '⚡ สายแอคทีฟ (3 รอบ/วัน)',
+    desc: 'ขวดกีฬา 750 ml ดื่มประมาณ 2.5 - 3 ขวด ชดเชยเหงื่อดีเยี่ยม',
+    icon: 'bottle_750'
+  },
+  {
+    id: 'cup_250',
+    name: 'แก้วน้ำมาตรฐาน',
+    capacity: 250,
+    unitName: 'แก้ว',
+    badge: '🥛 ดื่มเรื่อยๆ (8 แก้ว/วัน)',
+    desc: 'แก้วน้ำออฟฟิศขนาด 250 ml จิบบ่อยๆ วันละ 8 แก้ว สมดุลดี',
+    icon: 'cup_250'
+  },
+  {
+    id: 'jug_2000',
+    name: 'ถังน้ำจัมโบ้ 2 ลิตร',
+    capacity: 2000,
+    unitName: 'ถัง',
+    badge: '🏆 เติมทีเดียว 1 ถัง/วัน',
+    desc: 'เติมน้ำเต็มถัง 2,000 ml ครั้งเดียว ดื่มให้หมดก่อนนอน ครบแน่นอน!',
+    icon: 'jug_2000'
+  },
+  {
+    id: 'custom',
+    name: 'ขวดของฉันเอง (กำหนดเอง)',
+    capacity: 600,
+    unitName: 'ขวด',
+    badge: '✏️ Custom ขนาดเองได้',
+    desc: 'มีขวดคู่ใจขนาดเฉพาะ ระบุจำนวน ml ตามจริงได้เลย',
+    icon: 'custom'
+  }
+];
+
+function renderBottleSVG(type = 'bottle_500', fillPct = 50, w = 64, h = 90) {
+  const pct = Math.min(100, Math.max(0, fillPct));
+  const bodyX = 14;
+  const bodyY = 24;
+  const bodyW = 36;
+  const bodyH = 58;
+  const bodyR = 10;
+  const fillH = (bodyH * pct) / 100;
+  const fillY = bodyY + bodyH - fillH;
+  const clipId = `bottle-clip-${Math.random().toString(36).substring(2, 8)}`;
+  
+  // Cap color per bottle type
+  const capColor = type === 'jug_2000' ? '#6366F1' : type === 'bottle_1000' ? '#EC4899' : type === 'bottle_750' ? '#10B981' : '#F43F5E';
+
+  return `
+    <svg width="${w}" height="${h}" viewBox="0 0 64 90" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 10px rgba(59,130,246,0.18));">
+      <defs>
+        <linearGradient id="waterGrad_${clipId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#38BDF8"/>
+          <stop offset="100%" stop-color="#2563EB"/>
+        </linearGradient>
+        <clipPath id="${clipId}">
+          <rect x="${bodyX}" y="${bodyY}" width="${bodyW}" height="${bodyH}" rx="${bodyR}" />
+        </clipPath>
+      </defs>
+      
+      <!-- Bottle Neck & Cap -->
+      <rect x="26" y="18" width="12" height="7" rx="1.5" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="1.2"/>
+      <rect x="22" y="10" width="20" height="9" rx="3.5" fill="${capColor}"/>
+      <path d="M22 13H42" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+      <path d="M32 5V10" stroke="${capColor}" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Bottle Glass Body Background -->
+      <rect x="${bodyX}" y="${bodyY}" width="${bodyW}" height="${bodyH}" rx="${bodyR}" fill="#F0F9FF" stroke="#BAE6FD" stroke-width="2"/>
+      
+      <!-- Water Fill (clipped) -->
+      <g clip-path="url(#${clipId})">
+        ${fillH > 0 ? `
+          <rect x="${bodyX - 2}" y="${fillY}" width="${bodyW + 4}" height="${fillH + 2}" fill="url(#waterGrad_${clipId})"/>
+          <ellipse cx="${bodyX + bodyW / 2}" cy="${fillY}" rx="${bodyW / 2}" ry="3" fill="#93C5FD" opacity="0.9"/>
+          ${fillH > 22 ? `
+            <circle cx="23" cy="${Math.min(bodyY + bodyH - 8, fillY + 16)}" r="2" fill="white" opacity="0.6"/>
+            <circle cx="39" cy="${Math.min(bodyY + bodyH - 14, fillY + 28)}" r="1.5" fill="white" opacity="0.5"/>
+            <circle cx="27" cy="${Math.min(bodyY + bodyH - 22, fillY + 36)}" r="1" fill="white" opacity="0.7"/>
+          ` : ''}
+        ` : ''}
+      </g>
+
+      <!-- Tick marks / Time marks on bottle side -->
+      <line x1="18" y1="36" x2="22" y2="36" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="18" y1="48" x2="24" y2="48" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="18" y1="60" x2="22" y2="60" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+      <line x1="18" y1="72" x2="24" y2="72" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- Kawaii Mochi face on bottle -->
+      <circle cx="30" cy="52" r="1.5" fill="${fillH > 35 ? '#FFFFFF' : '#64748B'}"/>
+      <circle cx="40" cy="52" r="1.5" fill="${fillH > 35 ? '#FFFFFF' : '#64748B'}"/>
+      <path d="M33 55Q35 57 37 55" stroke="${fillH > 35 ? '#FFFFFF' : '#64748B'}" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      <!-- Pink cheeks -->
+      <ellipse cx="27" cy="55" rx="1.5" ry="1" fill="#FDA4AF" opacity="0.8"/>
+      <ellipse cx="43" cy="55" rx="1.5" ry="1" fill="#FDA4AF" opacity="0.8"/>
+
+      <!-- Glass shine / reflection highlight -->
+      <path d="M44 30V74" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+  `;
+}
+
+let waterSetupState = {
+  selectedPreset: 'bottle_1000',
+  capacity: 1000,
+  bottleName: 'ขวดบอกเวลา (1,000 ml)',
+  dailyTarget: 2000,
+  autoDrinkAfterSave: false
+};
+
+function openWaterBottleModal(options = {}) {
+  const currentCap = Number(currentUser?.water_bottle_ml) || 1000;
+  const currentTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const currentName = currentUser?.water_bottle_name || 'ขวดบอกเวลา (1,000 ml)';
+  const currentIcon = currentUser?.water_bottle_icon || (currentCap === 1000 ? 'bottle_1000' : currentCap === 500 ? 'bottle_500' : currentCap === 750 ? 'bottle_750' : currentCap === 250 ? 'cup_250' : currentCap === 2000 ? 'jug_2000' : 'custom');
+
+  waterSetupState = {
+    selectedPreset: currentIcon,
+    capacity: currentCap,
+    bottleName: currentName,
+    dailyTarget: currentTarget,
+    autoDrinkAfterSave: Boolean(options.autoDrinkAfterSave)
+  };
+
+  const el = $('#sheet');
+  el.hidden = false;
+  renderWaterBottleModalContent();
+}
+
+function renderWaterBottleModalContent() {
+  const el = $('#sheet');
+  if (!el) return;
+
+  const target = Number(waterSetupState.dailyTarget) || 2000;
+  const cap = Number(waterSetupState.capacity) || 500;
+  const rounds = Math.max(1, Math.ceil(target / cap));
+  const isFirstTime = !currentUser?.water_bottle_setup;
+
+  const preset = WATER_BOTTLE_PRESETS.find(p => p.id === waterSetupState.selectedPreset) || WATER_BOTTLE_PRESETS[0];
+
+  el.innerHTML = `
+    <div class="sh" style="max-height:88vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">🍶</span>
+          <h2 class="hd" style="font-size:18px; margin:0;">ขวดน้ำประจำตัว & เป้าหมายการดื่มน้ำ</h2>
+        </div>
+        <button class="btn-icon" onclick="closeSheet()" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <div style="overflow-y:auto; flex:1; padding-right:2px;">
+        ${isFirstTime ? `
+          <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:14px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:24px;">✨</span>
+            <div style="font-size:12px; color:#1E40AF; line-height:1.45;">
+              <b>ยินดีต้อนรับ! เลือกขวดน้ำของคุณก่อนเริ่มบันทึกน้า</b><br>
+              เพราะแต่ละคนใช้ขวดขนาดไม่เท่ากัน ระบุขวดของคุณเพื่อให้โมจิคำนวณรอบการดื่มน้ำได้แม่นยำ
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Hero Preview Card with Bottle SVG & Calculation Formula -->
+        <div class="bottle-hero-preview">
+          <div style="flex-shrink:0;">
+            ${renderBottleSVG(waterSetupState.selectedPreset, 65, 76, 105)}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:11px; font-weight:700; color:#0284C7; text-transform:uppercase; letter-spacing:0.5px;">ขวดที่คุณเลือก</div>
+            <div style="font-size:16px; font-weight:800; font-family:'Mali',sans-serif; color:var(--ink); margin:2px 0;">
+              ${esc(waterSetupState.bottleName)}
+            </div>
+            <div style="font-size:12px; color:var(--mute); margin-bottom:6px;">
+              ขนาดขวด: <b>${fmt(cap)} ml</b> · เป้าหมาย: <b>${fmt(target)} ml/วัน</b>
+            </div>
+            
+            <div style="background:#FFFFFF; border:1px solid #BAE6FD; border-radius:10px; padding:6px 10px; font-size:12px; color:#0369A1; display:inline-flex; align-items:center; gap:6px;">
+              <span>🎯</span>
+              <span>ดื่มวันละ <b>${rounds} รอบ/ขวด</b> ก็ครบเป้าแล้ว!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets Selection Grid -->
+        <div style="margin-top:14px;">
+          <label style="font-size:12.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:8px;">
+            🍶 เลือกประเภทขวดน้ำที่คุณใช้ดื่มเป็นประจำ:
+          </label>
+          <div class="bottle-select-grid">
+            ${WATER_BOTTLE_PRESETS.map(p => {
+              const isSelected = waterSetupState.selectedPreset === p.id;
+              const pRounds = Math.max(1, Math.ceil(target / p.capacity));
+              return `
+                <div class="bottle-select-card ${isSelected ? 'active' : ''}" onclick="selectWaterPreset('${p.id}')">
+                  <div class="bottle-card-badge">${p.badge}</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <b style="font-size:13.5px; color:var(--ink);">${p.name}</b>
+                    <span class="bottle-select-check">${isSelected ? '✓' : ''}</span>
+                  </div>
+                  <div style="font-size:11.5px; color:var(--mute); line-height:1.35; margin-bottom:6px;">
+                    ${p.desc}
+                  </div>
+                  <div style="font-size:11px; font-weight:700; color:#0284C7;">
+                    ${p.id === 'custom' ? 'ระบุขนาดเอง' : `${fmt(p.capacity)} ml (วันละ ${pRounds} ${p.unitName})`}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Custom Capacity Input Field (if custom selected) -->
+        ${waterSetupState.selectedPreset === 'custom' ? `
+          <div style="background:#F0F9FF; border:1.5px solid #38BDF8; border-radius:14px; padding:12px 14px; margin-top:10px;">
+            <label style="font-size:12px; font-weight:700; color:#0369A1; display:block; margin-bottom:6px;">
+              ✏️ ระบุขนาดความจุขวดน้ำของคุณ (ml):
+            </label>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" id="customWaterBottleInput" value="${waterSetupState.capacity}" min="50" max="5000" step="50" style="flex:1; font-size:15px; font-weight:700; padding:8px 12px; border-radius:10px; border:1.5px solid #BAE6FD;" oninput="onCustomCapacityChange(this.value)">
+              <span style="font-size:14px; font-weight:700; color:#0369A1;">ml</span>
+            </div>
+            <small style="font-size:11px; color:#0284C7; display:block; margin-top:4px;">
+              * คำนวณเป็น: ดื่มวันละ ${Math.max(1, Math.ceil(target / (Number(waterSetupState.capacity) || 500)))} รอบ
+            </small>
+          </div>
+        ` : ''}
+
+        <!-- Daily Water Target Selector -->
+        <div style="margin-top:16px;">
+          <label style="font-size:12.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">
+            🎯 เป้าหมายการดื่มน้ำต่อวัน:
+          </label>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">
+            ${[1500, 2000, 2500, 3000].map(val => {
+              const isTargetActive = target === val;
+              return `
+                <button type="button" 
+                        class="btn ${isTargetActive ? '' : 'g'} sm" 
+                        style="font-size:11.5px; padding:7px 2px; text-align:center; ${isTargetActive ? 'background:linear-gradient(135deg, #38BDF8, #2563EB); color:#fff; font-weight:700; border:none;' : ''}" 
+                        onclick="setWaterTargetMl(${val})">
+                  ${fmt(val)} ml
+                </button>
+              `;
+            }).join('')}
+          </div>
+          <small style="font-size:11px; color:var(--mute); display:block; margin-top:5px;">
+            * คนทั่วไปแนะนำ 2,000 ml (8 แก้ว) หรือปรับตามน้ำหนักและกิจกรรมประจำวัน
+          </small>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--line);">
+        <button class="btn" style="width:100%; background:linear-gradient(135deg, #38BDF8, #2563EB); color:#fff; border:none; padding:12px; font-weight:700; border-radius:14px; box-shadow:0 4px 12px rgba(37,99,235,0.25);" onclick="saveWaterBottleSettings()">
+          <span>${waterSetupState.autoDrinkAfterSave ? 'บันทึกและเริ่มดื่มน้ำทันที (+2 🪙) 💧' : 'บันทึกขวดน้ำคู่ใจ 🍶'}</span>
+        </button>
+        <button class="btn g" style="width:100%; margin-top:6px;" onclick="closeSheet()">ยกเลิก</button>
+      </div>
+    </div>
+  `;
+}
+
+function selectWaterPreset(presetId) {
+  const p = WATER_BOTTLE_PRESETS.find(item => item.id === presetId);
+  if (!p) return;
+  waterSetupState.selectedPreset = p.id;
+  if (p.id !== 'custom') {
+    waterSetupState.capacity = p.capacity;
+    waterSetupState.bottleName = `${p.name} (${fmt(p.capacity)} ml)`;
+  } else {
+    waterSetupState.bottleName = `ขวดกำหนดเอง (${fmt(waterSetupState.capacity)} ml)`;
+  }
+  renderWaterBottleModalContent();
+}
+
+function setWaterTargetMl(targetMl) {
+  waterSetupState.dailyTarget = Number(targetMl) || 2000;
+  renderWaterBottleModalContent();
+}
+
+function onCustomCapacityChange(val) {
+  const num = Math.max(50, Math.min(5000, Number(val) || 500));
+  waterSetupState.capacity = num;
+  waterSetupState.bottleName = `ขวดกำหนดเอง (${fmt(num)} ml)`;
+}
+
+async function saveWaterBottleSettings() {
+  if (!currentUser) return;
+  
+  const cap = Number(waterSetupState.capacity) || 500;
+  const target = Number(waterSetupState.dailyTarget) || 2000;
+  let name = waterSetupState.bottleName;
+  if (waterSetupState.selectedPreset === 'custom') {
+    name = `ขวดกำหนดเอง ${cap} ml`;
+  }
+
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        water_bottle_ml: cap,
+        water_bottle_name: name,
+        water_bottle_icon: waterSetupState.selectedPreset,
+        water_daily_target_ml: target,
+        water_bottle_setup: 1,
+        water_goal: Math.ceil(target / cap)
+      })
+    });
+
+    const data = await res.json();
+    if (data && data.user) {
+      currentUser = data.user;
+      const idx = users.findIndex(u => u.id === data.user.id);
+      if (idx >= 0) users[idx] = data.user;
+    } else {
+      currentUser.water_bottle_ml = cap;
+      currentUser.water_bottle_name = name;
+      currentUser.water_bottle_icon = waterSetupState.selectedPreset;
+      currentUser.water_daily_target_ml = target;
+      currentUser.water_bottle_setup = 1;
+      currentUser.water_goal = Math.ceil(target / cap);
+    }
+
+    closeSheet();
+    toast('บันทึกการตั้งค่าขวดน้ำคู่ใจเรียบร้อยแล้ว 🍶✨');
+
+    if (waterSetupState.autoDrinkAfterSave) {
+      await triggerWaterLog();
+    } else {
+      render();
+    }
+  } catch (err) {
+    console.error('Error saving water settings:', err);
+    toast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+}
+
 async function triggerWaterLog() {
+  if (!currentUser) return;
+
+  // If user hasn't set up their bottle container yet, prompt them first!
+  if (!currentUser.water_bottle_setup) {
+    openWaterBottleModal({ autoDrinkAfterSave: true });
+    return;
+  }
+
+  const bottleMl = Number(currentUser.water_bottle_ml) || 500;
+  const bottleName = currentUser.water_bottle_name || 'ขวดน้ำ 500 ml';
+
   await fetch('/api/water', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
-    body: JSON.stringify({ userId: currentUser.id, date: key() })
+    body: JSON.stringify({ 
+      userId: currentUser.id, 
+      date: key(),
+      ml: bottleMl,
+      bottleName: bottleName
+    })
   });
   fireConfetti();
   await fetchLogs();
   await fetchStreak();
   render();
-  sendPushNotification('โมจิชื่นใจจัง 💧', 'ดื่มน้ำเปล่าดีต่อสุขภาพและช่วยลดความอยากหวานได้ดีมากเลย!');
-  toast('บันทึกการดื่มน้ำแล้ว เก่งมาก 💧 (+2 🪙)');
+  sendPushNotification('โมจิชื่นใจจัง 💧', `ดื่มน้ำ ${bottleName} (+${fmt(bottleMl)} ml) แล้ว! สดชื่นและดีต่อผิวมากเลย`);
+  toast(`บันทึกการดื่มน้ำ +${fmt(bottleMl)} ml (${bottleName}) แล้ว เก่งมาก 💧 (+2 🪙)`);
 }
 
 async function undoWaterLog() {
@@ -4013,7 +4522,7 @@ async function undoWaterLog() {
   if (data.success) {
     await fetchLogs();
     render();
-    toast('ยกเลิกบันทึกแก้วน้ำล่าสุดแล้ว 💧');
+    toast('ยกเลิกบันทึกรอบน้ำล่าสุดแล้ว 💧');
   } else {
     toast(data.message || 'ไม่มีรายการดื่มน้ำ');
   }
@@ -6005,6 +6514,20 @@ async function renderSettings() {
           <span class="settings-chev">›</span>
         </div>
       </div>
+
+      <div class="settings-row" onclick="openWaterBottleModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#E0F2FE; color:#0369A1;">🍶</div>
+          <div>
+            <span class="settings-label-title">ขวดน้ำประจำตัวและการดื่มน้ำ</span>
+            <span class="settings-label-sub">${esc(currentUser?.water_bottle_name || 'ขวดบอกเวลา (1,000 ml)')} · เป้าหมาย ${fmt(currentUser?.water_daily_target_ml || 2000)} ml</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">${Math.max(1, Math.ceil((Number(currentUser?.water_daily_target_ml) || 2000) / (Number(currentUser?.water_bottle_ml) || 1000)))} รอบ/วัน</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
     </div>
 
     <!-- Category 2: ปรับแต่งตัวละครโมจิ -->
@@ -7475,7 +7998,12 @@ async function saveProfileChanges() {
         goal_type: currentUser.goal_type || 'weight_loss',
         calorie_goal: currentUser.calorie_goal,
         sugar_goal: currentUser.sugar_goal,
-        privacy_level: currentUser.privacy_level || 'full'
+        privacy_level: currentUser.privacy_level || 'full',
+        water_bottle_ml: currentUser.water_bottle_ml || 500,
+        water_bottle_name: currentUser.water_bottle_name || 'ขวดน้ำพกพา 500 ml',
+        water_bottle_icon: currentUser.water_bottle_icon || 'bottle_500',
+        water_daily_target_ml: currentUser.water_daily_target_ml || 2000,
+        water_bottle_setup: currentUser.water_bottle_setup || 0
       })
     });
     const data = await res.json();

@@ -175,7 +175,12 @@ const neededCols = [
   { name: 'protein_goal', type: 'REAL' },
   { name: 'fat_goal', type: 'REAL' },
   { name: 'sodium_goal', type: 'REAL DEFAULT 2000' },
-  { name: 'water_goal', type: 'INTEGER DEFAULT 8' }
+  { name: 'water_goal', type: 'INTEGER DEFAULT 8' },
+  { name: 'water_bottle_ml', type: 'INTEGER DEFAULT 500' },
+  { name: 'water_bottle_name', type: 'TEXT DEFAULT "ขวดน้ำพกพา 500 ml"' },
+  { name: 'water_bottle_icon', type: 'TEXT DEFAULT "bottle_500"' },
+  { name: 'water_daily_target_ml', type: 'INTEGER DEFAULT 2000' },
+  { name: 'water_bottle_setup', type: 'INTEGER DEFAULT 0' }
 ];
 
 for (const col of neededCols) {
@@ -192,7 +197,8 @@ const neededLogCols = [
   { name: 'carbs', type: 'REAL' },
   { name: 'protein', type: 'REAL' },
   { name: 'fat', type: 'REAL' },
-  { name: 'sodium', type: 'REAL' }
+  { name: 'sodium', type: 'REAL' },
+  { name: 'water_ml', type: 'INTEGER' }
 ];
 
 for (const col of neededLogCols) {
@@ -254,7 +260,7 @@ try {
 }
 
 export function getAllUsers() {
-  const stmt = db.prepare("SELECT id, nickname, avatar_color, avatar_face, avatar_hat, avatar_image, personality, COALESCE(coins, 120) as coins, COALESCE(goal_score, 150) as goal_score, COALESCE(goal_type, 'weight_loss') as goal_type, calorie_goal, sugar_goal, privacy_level, consent_pdpa, created_at FROM users ORDER BY created_at ASC");
+  const stmt = db.prepare("SELECT * FROM users ORDER BY created_at ASC");
   return stmt.all();
 }
 
@@ -357,6 +363,11 @@ export function updateUser(id, data) {
   const fat_goal = data.fat_goal !== undefined ? (data.fat_goal !== null && data.fat_goal !== '' ? Number(data.fat_goal) : null) : current.fat_goal;
   const sodium_goal = data.sodium_goal !== undefined ? (data.sodium_goal !== null && data.sodium_goal !== '' ? Number(data.sodium_goal) : 2000) : (current.sodium_goal ?? 2000);
   const water_goal = data.water_goal !== undefined ? (data.water_goal !== null && data.water_goal !== '' ? Number(data.water_goal) : 8) : (current.water_goal ?? 8);
+  const water_bottle_ml = data.water_bottle_ml !== undefined ? (Number(data.water_bottle_ml) || 500) : (current.water_bottle_ml ?? 500);
+  const water_bottle_name = data.water_bottle_name !== undefined ? data.water_bottle_name : (current.water_bottle_name ?? 'ขวดน้ำพกพา 500 ml');
+  const water_bottle_icon = data.water_bottle_icon !== undefined ? data.water_bottle_icon : (current.water_bottle_icon ?? 'bottle_500');
+  const water_daily_target_ml = data.water_daily_target_ml !== undefined ? (Number(data.water_daily_target_ml) || 2000) : (current.water_daily_target_ml ?? 2000);
+  const water_bottle_setup = data.water_bottle_setup !== undefined ? (data.water_bottle_setup ? 1 : 0) : (current.water_bottle_setup ?? 0);
 
   const stmt = db.prepare(`
     UPDATE users
@@ -365,7 +376,8 @@ export function updateUser(id, data) {
         gender = ?, age = ?, height = ?, weight = ?, target_weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
         goal_type = ?, goal_score = ?,
-        carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?
+        carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?,
+        water_bottle_ml = ?, water_bottle_name = ?, water_bottle_icon = ?, water_daily_target_ml = ?, water_bottle_setup = ?
     WHERE id = ?
   `);
 
@@ -376,6 +388,7 @@ export function updateUser(id, data) {
     consent_pdpa, consent_pdpa, Date.now(),
     goal_type, goal_score,
     carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
+    water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
     id
   );
   return getUser(id);
@@ -498,7 +511,7 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
+export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json, water_ml }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const compStr = typeof components_json === 'string'
@@ -508,8 +521,8 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
 
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, water_ml, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     id,
@@ -527,6 +540,7 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     is_private ? 1 : 0,
     image_url || null,
     compStr,
+    water_ml !== undefined && water_ml !== null ? Number(water_ml) : null,
     Date.now()
   );
 

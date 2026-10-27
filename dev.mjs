@@ -301,7 +301,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { user: u });
       }
 
-      if (userMatch && req.method === 'PUT') {
+      if (userMatch && (req.method === 'PUT' || req.method === 'POST')) {
         const body = await parseJsonBody(req);
         const updated = db.updateUser(userMatch[1], body);
         if (!updated) return sendJson(res, 404, { error: 'User not found' });
@@ -363,22 +363,26 @@ const server = http.createServer(async (req, res) => {
         const userId = req.headers['x-user-id'] || body.userId;
         if (!userId) return sendJson(res, 400, { error: 'userId is required' });
         const date = body.date || new Date().toISOString().slice(0, 10);
+        const user = db.getUser(userId);
+        const bottleMl = Number(body.ml) || user?.water_bottle_ml || 500;
+        const bottleName = body.bottleName || user?.water_bottle_name || `ขวดน้ำ ${bottleMl} ml`;
         const log = db.addLog({
           userId,
           date,
-          name: 'น้ำเปล่าบริสุทธิ์ 1 แก้ว (250 ml)',
+          name: `ดื่มน้ำเปล่า (${bottleName})`,
           calorie: 0,
           sugar: 0,
           carbs: 0,
           protein: 0,
           fat: 0,
           sodium: 0,
-          portion_size: 'normal',
+          portion_size: `${bottleMl}ml`,
           sweetness_level: 'none',
-          is_private: 0
+          is_private: 0,
+          water_ml: bottleMl
         });
-        const act = db.recordActivity(userId, 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2);
-        return sendJson(res, 200, { success: true, log, activity: act, coinsEarned: 2 });
+        const act = db.recordActivity(userId, 'water', `ดื่มน้ำเปล่า ${bottleName} 💧 (+2 🪙)`, 2);
+        return sendJson(res, 200, { success: true, log, activity: act, coinsEarned: 2, water_ml: bottleMl });
       }
 
       if (pathname === '/api/water/undo' && req.method === 'POST') {
