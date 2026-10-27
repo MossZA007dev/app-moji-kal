@@ -818,6 +818,275 @@ nav button i { font-style: normal; font-size: 18px; }
   box-shadow: 0 0 0 1.5px var(--mint);
 }
 
+/* Simplified & Fast Meal Logging Modal UX */
+.sheet-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sheet-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--mute);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.sheet-close-btn:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+.quick-input-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.quick-input-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.quick-input-tab:active {
+  transform: scale(0.97);
+}
+.quick-input-tab.primary-cam {
+  background: linear-gradient(135deg, #FF758C, #FF7EB3);
+  color: #FFFFFF;
+  border: none;
+  box-shadow: 0 4px 14px rgba(255, 117, 140, 0.35);
+}
+.smart-food-input-box {
+  position: relative;
+  margin-bottom: 10px;
+}
+.smart-food-input {
+  width: 100%;
+  padding: 13px 44px 13px 14px;
+  font-size: 14.5px;
+  border-radius: 18px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.smart-food-input:focus {
+  outline: none;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px var(--pinkS);
+}
+.smart-voice-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 19px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pink);
+  transition: transform 0.15s ease;
+}
+.smart-voice-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+.fast-chips-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+.fast-chips-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+.fast-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.fast-chip:active {
+  background: var(--pinkS);
+  border-color: var(--pink);
+  color: var(--pink);
+  transform: scale(0.95);
+}
+.fast-chip.fav {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  color: #B45309;
+}
+.quick-nutrition-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: linear-gradient(135deg, rgba(255, 158, 181, 0.14), rgba(110, 203, 176, 0.14));
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+.qn-box {
+  text-align: center;
+  flex: 1;
+}
+.qn-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mute);
+  margin-bottom: 2px;
+  display: block;
+}
+.qn-val-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+}
+.qn-input {
+  width: 85px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  padding: 0;
+  margin: 0;
+}
+.qn-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--pink);
+}
+.qn-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute);
+}
+.qn-sep {
+  width: 1px;
+  height: 38px;
+  background: var(--line);
+}
+.drink-sweet-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.drink-sweet-pills {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sweet-pill-btn {
+  flex: 1;
+  text-align: center;
+  padding: 7px 2px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sweet-pill-btn.active {
+  background: var(--mint);
+  color: #FFFFFF;
+  border-color: var(--mint);
+  box-shadow: 0 2px 8px rgba(110, 203, 176, 0.4);
+}
+.hero-save-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 18px;
+  margin: 10px 0 6px;
+  box-shadow: 0 4px 18px rgba(255, 117, 140, 0.4);
+  background: linear-gradient(135deg, #FF758C, #FF7EB3);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s ease;
+}
+.hero-save-btn:active {
+  transform: scale(0.98);
+}
+.accordion-more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  user-select: none;
+  border-radius: 10px;
+  transition: color 0.15s ease;
+}
+.accordion-more-toggle:hover {
+  color: var(--ink);
+}
+.accordion-content {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
 input, textarea, select {
   width: 100%;
   font: inherit;
@@ -4816,7 +5085,22 @@ function toggleTopping(topId) {
   renderSheet();
 }
 
-// Add Meal Sheet & Component Breakdown
+// Pre-configured Popular Thai Dishes for Instant 1-Tap Logging
+const POPULAR_THAI_DISHES = [
+  { name: 'ข้าวมันไก่ตอน', kcal: 580, sugar: 1.5, icon: '🍗', isDrink: false, components: [{ name: 'ข้าวมัน', kcal: 300, sugar: 0.5, icon: '🍚', x: 38, y: 60 }, { name: 'เนื้อไก่ตอน', kcal: 220, sugar: 0, icon: '🍗', x: 62, y: 45 }, { name: 'น้ำจิ้มและน้ำซุป', kcal: 60, sugar: 1, icon: '🥣', x: 50, y: 25 }] },
+  { name: 'ผัดกะเพราหมูสับ + ไข่ดาว', kcal: 630, sugar: 3.0, icon: '🍳', isDrink: false, components: [{ name: 'ข้าวสวย 1 จาน', kcal: 200, sugar: 0, icon: '🍚', x: 34, y: 58 }, { name: 'ผัดกะเพราหมูสับ', kcal: 310, sugar: 2.5, icon: '🥩', x: 68, y: 46 }, { name: 'ไข่ดาว', kcal: 120, sugar: 0.5, icon: '🍳', x: 48, y: 28 }] },
+  { name: 'ข้าวผัดหมู/ไก่', kcal: 550, sugar: 2.5, icon: '🍚', isDrink: false, components: [{ name: 'ข้าวผัดน้ำมัน', kcal: 420, sugar: 1.5, icon: '🍚', x: 45, y: 56 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 1, icon: '🥩', x: 65, y: 40 }] },
+  { name: 'ก๋วยเตี๋ยวต้มยำน้ำข้น', kcal: 480, sugar: 9.0, icon: '🍜', isDrink: false, components: [{ name: 'เส้นก๋วยเตี๋ยว', kcal: 180, sugar: 0, icon: '🍜', x: 42, y: 55 }, { name: 'หมูสับ/ลูกชิ้น', kcal: 160, sugar: 1, icon: '🥩', x: 68, y: 42 }, { name: 'น้ำซุปต้มยำ', kcal: 140, sugar: 8, icon: '🥣', x: 50, y: 72 }] },
+  { name: 'ผัดไทยกุ้งสด', kcal: 550, sugar: 15.0, icon: '🦐', isDrink: false, components: [{ name: 'เส้นจันท์และเต้าหู้', kcal: 320, sugar: 2, icon: '🍜', x: 42, y: 54 }, { name: 'กุ้งสดและไข่', kcal: 110, sugar: 0, icon: '🦐', x: 66, y: 38 }, { name: 'น้ำซอสผัดไทย', kcal: 120, sugar: 13, icon: '🥣', x: 52, y: 72 }] },
+  { name: 'ส้มตำไทย', kcal: 120, sugar: 14.0, icon: '🥗', isDrink: false, components: [{ name: 'มะละกอและผัก', kcal: 45, sugar: 2, icon: '🥗', x: 45, y: 45 }, { name: 'น้ำส้มตำ', kcal: 75, sugar: 12, icon: '🥣', x: 62, y: 60 }] },
+  { name: 'สุกี้น้ำรวมมิตร', kcal: 320, sugar: 6.0, icon: '🍲', isDrink: false, components: [{ name: 'วุ้นเส้นและผักสด', kcal: 130, sugar: 1, icon: '🥗', x: 40, y: 50 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 0, icon: '🥩', x: 64, y: 42 }, { name: 'น้ำจิ้มสุกี้', kcal: 60, sugar: 5, icon: '🥣', x: 50, y: 70 }] },
+  { name: 'ชานมไข่มุก', kcal: 360, sugar: 28.0, icon: '🧋', isDrink: true, components: [{ name: 'ชาและนม', kcal: 220, sugar: 20, icon: '🧋', x: 50, y: 38 }, { name: 'ไข่มุกบราวน์ชูการ์', kcal: 140, sugar: 8, icon: '🧋', x: 50, y: 72 }] },
+  { name: 'ชาไทยเย็น', kcal: 220, sugar: 24.0, icon: '🧋', isDrink: true, components: [{ name: 'ชาไทยสกัด', kcal: 20, sugar: 0, icon: '🧋', x: 50, y: 35 }, { name: 'นมข้นหวานและนมสด', kcal: 200, sugar: 24, icon: '🥛', x: 50, y: 65 }] },
+  { name: 'ชาเขียวนมเย็น', kcal: 240, sugar: 22.0, icon: '🍵', isDrink: true, components: [{ name: 'มัทฉะแท้', kcal: 30, sugar: 0, icon: '🍵', x: 50, y: 35 }, { name: 'นมสดและไซรัป', kcal: 210, sugar: 22, icon: '🥛', x: 50, y: 65 }] },
+  { name: 'อเมริกาโน่เย็น', kcal: 15, sugar: 0.0, icon: '☕', isDrink: true, components: [{ name: 'เอสเพรสโซ่ช็อต + น้ำ', kcal: 15, sugar: 0, icon: '☕', x: 50, y: 50 }] },
+  { name: 'ลาเต้เย็น', kcal: 180, sugar: 12.0, icon: '☕', isDrink: true, components: [{ name: 'กาแฟ', kcal: 15, sugar: 0, icon: '☕', x: 50, y: 35 }, { name: 'นมสด', kcal: 165, sugar: 12, icon: '🥛', x: 50, y: 65 }] }
+];
+
 function openSheet() {
   const now = new Date();
   const h = now.getHours();
@@ -4830,7 +5114,6 @@ function openSheet() {
     name: '',
     kcal: '',
     sugar: '',
-    sugarFromPreset: true,
     txt: '',
     status: '',
     brand: 'standard',
@@ -4848,10 +5131,10 @@ function openSheet() {
     components: null,
     showArPins: true,
     activePinIdx: null,
-    isScanning: false
+    isScanning: false,
+    showAdvanced: false,
+    isDrink: false
   };
-  const initialEst = getSugarEstimate('standard', 'normal', []);
-  draft.sugar = initialEst.sugarGrams;
   renderSheet();
 }
 
@@ -4871,61 +5154,59 @@ function renderSheet() {
   }
   el.hidden = false;
 
-  const sugarEst = getSugarEstimate(draft.brand || 'standard', draft.sweetness || 'normal', draft.toppings || []);
+  const isDrink = Boolean(
+    draft.isDrink ||
+    (draft.name && (
+      draft.name.includes('ชา') || draft.name.includes('กาแฟ') || draft.name.includes('นม') ||
+      draft.name.includes('ลาเต้') || draft.name.includes('อเมริกาโน่') || draft.name.includes('โซดา') ||
+      draft.name.includes('ชานม') || draft.name.includes('amazon') || draft.name.includes('เต่าบิน') ||
+      draft.name.includes('สมูทตี้') || draft.name.includes('น้ำ')
+    ))
+  );
 
   el.innerHTML = `
     <div class="sh">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h2 class="hd" style="font-size:18px;">เพิ่มมื้ออาหาร 🍡</h2>
-        <span style="font-size:12px; color:var(--mute);">บันทึกให้ ${esc(currentUser?.nickname)}</span>
+      <!-- Clean Header with Title & Dismiss Button -->
+      <div class="sheet-header-clean">
+        <div>
+          <h2 class="hd" style="font-size:18px; margin:0 0 2px;">เพิ่มมื้ออาหาร 🍡</h2>
+          <span style="font-size:11.5px; color:var(--mute);">บันทึกให้ ${esc(currentUser?.nickname)}</span>
+        </div>
+        <button class="sheet-close-btn" onclick="closeSheet()" title="ปิด">✕</button>
       </div>
 
-      <!-- Late Night / Midnight Meal Prompt (Pillar 4) -->
+      <!-- Late Night Meal Indicator (Compact) -->
       ${draft.isLateNight ? `
-        <div style="background:#EDE9FE; border-radius:14px; padding:10px 12px; margin-bottom:10px; font-size:12px; color:#5B21B6; display:flex; justify-content:space-between; align-items:center;">
-          <span>🌙 บันทึกช่วงดึก (00:00 - 04:00): นับเป็นมื้อไหนดี?</span>
+        <div style="background:#EDE9FE; border-radius:12px; padding:6px 12px; margin-bottom:10px; font-size:11.5px; color:#5B21B6; display:flex; justify-content:space-between; align-items:center;">
+          <span>🌙 มื้อดึก (00:00 - 04:00):</span>
           <div style="display:flex; gap:4px;">
-            <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">เมื่อวาน</button>
-            <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">วันนี้</button>
+            <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="font-size:10.5px; padding:2px 8px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">นับเมื่อวาน</button>
+            <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="font-size:10.5px; padding:2px 8px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">นับวันนี้</button>
           </div>
         </div>
       ` : ''}
 
-      <!-- Date Selection Toggle (Today / Yesterday / Custom) -->
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:12px; color:var(--mute);">
-        <span>📅 วันที่บันทึก:</span>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="padding:4px 10px; font-size:11px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">วันนี้</button>
-          <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="padding:4px 10px; font-size:11px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">เมื่อวาน</button>
-          <input type="date" value="${draft.date}" style="font-size:11px; padding:3px 6px; border-radius:8px; border:1px solid #E5E7EB;" onchange="draft.date=this.value; renderSheet();">
-        </div>
+      <!-- Top 2 Fast Actions: Live Camera or Gallery -->
+      <div class="quick-input-tabs">
+        <button class="quick-input-tab primary-cam" onclick="openCameraModal()">
+          <span>📸</span> <span>เปิดกล้องถ่ายสด</span>
+        </button>
+        <label class="quick-input-tab" style="cursor:pointer;">
+          <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
+          <span>🖼️</span> <span>เลือกจากคลังรูป</span>
+        </label>
       </div>
 
-      <!-- Quick Favorite Fill in Sheet -->
-      ${favorites.length ? `
-        <div style="margin-bottom:8px;">
-          <small style="color:var(--mute); font-size:11px;">เลือกจากเมนูประจำ:</small>
-          <div class="fav-scroll">
-            ${favorites.map(f => `
-              <div class="fav-pill" onclick="fillDraftFromFavorite('${f.id}')">
-                <span>⭐ ${esc(f.name)}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Direct Camera Fallback (Hidden) -->
+      <!-- Hidden Direct Camera Fallback -->
       <input id="directCameraInput" type="file" accept="image/*" capture="environment" hidden onchange="pickImage(this.files[0])">
 
-      <!-- AR Food Scanner Stage / Photo Section -->
+      <!-- AR Food Scanner Viewport (if image uploaded/captured) -->
       ${draft.imageBase64 ? `
         <div class="ar-scanner-container">
           <div class="ar-scanner-stage" id="arScannerStage">
             <img src="${draft.imageBase64}" alt="รูปอาหาร" class="ar-scanner-img">
             <div class="ar-scanner-vignette"></div>
 
-            <!-- Top Pill Badge: EASY • QUICK • ACCURATE -->
             <div class="ar-scanner-badge-wrap">
               <div class="ar-scanner-top-badge">
                 <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#34D399; box-shadow:0 0 6px #34D399;"></span>
@@ -4933,7 +5214,6 @@ function renderSheet() {
               </div>
             </div>
 
-            <!-- Viewfinder Corner Brackets -->
             <div class="ar-corner-frame">
               <div class="ar-bracket tl"></div>
               <div class="ar-bracket tr"></div>
@@ -4941,10 +5221,8 @@ function renderSheet() {
               <div class="ar-bracket br"></div>
             </div>
 
-            <!-- AR Laser Scanning Beam (when scanning) -->
             ${draft.isScanning ? `<div class="ar-laser-beam"></div>` : ''}
 
-            <!-- Floating AR Food Calorie Pins -->
             ${(draft.showArPins && draft.components && draft.components.length) ? `
               <div class="ar-pins-layer">
                 ${draft.components.map((c, idx) => `
@@ -4965,243 +5243,276 @@ function renderSheet() {
 
             ${(!draft.components || !draft.components.length) ? `
               <div style="position:absolute; bottom:12px; background:rgba(0,0,0,0.68); color:#fff; font-size:11px; padding:4px 12px; border-radius:12px; backdrop-filter:blur(4px); z-index:6;">
-                🔍 ${draft.isScanning ? 'โมจิกำลังสแกนจานอาหาร...' : 'แตะ "วิเคราะห์อาหาร" เพื่อปักหมุด AR'}
+                🔍 ${draft.isScanning ? 'โมจิกำลังสแกนจานอาหาร...' : 'โมจิพร้อมวิเคราะห์รูปภาพ'}
               </div>
             ` : ''}
           </div>
 
-          <!-- Actions toolbar -->
           <div class="photo-preview-actions">
-            <button class="btn s sm" style="font-size:11.5px; padding:5px 10px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
-            <label class="btn s sm" style="font-size:11.5px; padding:5px 10px; cursor:pointer;">
-              <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
-              🖼️ เปลี่ยนรูป
-            </label>
-            <button class="btn s sm" style="font-size:11.5px; padding:5px 10px;" onclick="toggleArPins()" title="ซ่อน/แสดงหมุด AR">
+            <button class="btn s sm" style="font-size:11px; padding:4px 10px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
+            <button class="btn s sm" style="font-size:11px; padding:4px 10px;" onclick="toggleArPins()">
               ${draft.showArPins ? '👁️ ซ่อนหมุด' : '📍 แสดงหมุด'}
             </button>
-            <button class="btn g sm" style="font-size:11.5px; padding:5px 10px; color:#DC2626;" onclick="clearDraftPhoto()">🗑️ ลบรูป</button>
+            <button class="btn g sm" style="font-size:11px; padding:4px 10px; color:#DC2626;" onclick="clearDraftPhoto()">🗑️ ลบรูป</button>
           </div>
-        </div>
-      ` : `
-        <div class="photo-cta-card">
-          <div style="font-size:32px; margin-bottom:4px;">📸</div>
-          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">ถ่ายรูปอาหาร & เครื่องดื่ม</b>
-          <span style="font-size:11.5px; color:var(--mute); margin-bottom:10px; display:block;">เปิดกล้องถ่ายสดในแอพ พร้อมระบบตรวจจับอาหารและปักหมุด AR Calorie Pins</span>
-          
-          <div style="display:flex; gap:8px; width:100%; max-width:320px;">
-            <button class="btn sm" style="flex:1.2; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="openCameraModal()">
-              <span>📷</span> <span>เปิดกล้องถ่ายสด</span>
-            </button>
-            <label class="btn s sm" style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;">
-              <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
-              <span>🖼️</span> <span>คลังภาพ</span>
-            </label>
-          </div>
-        </div>
-      `}
-
-      <!-- Description Input & Voice Button (Phase 3) -->
-      <div style="position:relative;">
-        <textarea rows="2" placeholder="พิมพ์เล่าเมนู เช่น ชาเขียวเย็น Amazon หวาน 50% หรือข้าวกะเพรา" oninput="draft.txt=this.value">${esc(draft.txt)}</textarea>
-        <button id="voiceBtn" class="btn s sm" style="margin-bottom:8px;" onclick="toggleVoiceInput()">🎙️ พูดเล่าเมนู (Voice Input)</button>
-      </div>
-
-      <!-- BRAND & SHOP PRESET (Baseline sugar differs by brand) -->
-      <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; margin:8px 0;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label style="font-size:12px; font-weight:700; color:var(--ink);">🏪 เลือกร้าน/ประเภท (สูตรน้ำตาลต่างกัน):</label>
-          <span style="font-size:11px; color:var(--mute);">สูตรมาตรฐานไทย</span>
-        </div>
-        <div class="fav-scroll" style="padding-bottom:2px;">
-          ${THAI_DRINK_BRANDS.map(b => `
-            <div class="pill ${(draft.brand || 'standard') === b.id ? 'active' : ''}" style="flex-shrink:0; font-size:11.5px; padding:6px 10px;" onclick="setDrinkBrand('${b.id}')">
-              <span>${b.name}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div style="font-size:11px; color:var(--mute); margin-top:4px;">
-          💡 ${THAI_DRINK_BRANDS.find(b => b.id === (draft.brand || 'standard'))?.note}
-        </div>
-      </div>
-
-      <!-- SWEETNESS LEVEL CONTROLS WITH LIVE SPOON & GRAM ESTIMATOR -->
-      <div style="background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; margin:8px 0;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label style="font-size:12px; font-weight:700; color:var(--ink);">🍯 ระดับความหวานที่สั่ง:</label>
-          <span class="badge ${sugarEst.badgeClass}">${sugarEst.teaspoons} ช้อนชา (~${sugarEst.sugarGrams}g)</span>
-        </div>
-        <div class="pill-group" style="margin:0 0 8px; display:flex; gap:4px;">
-          ${[
-            { id: 'none', label: '0%', sub: '0 ช้อนชา' },
-            { id: 'less', label: '25%', sub: '~2-3 ช้อน' },
-            { id: 'half', label: '50%', sub: '~4-5 ช้อน' },
-            { id: 'normal', label: '100%', sub: '~8-12 ช้อน' },
-            { id: 'sweet', label: '120%', sub: '12+ ช้อน' }
-          ].map(s => `
-            <div class="pill ${draft.sweetness === s.id ? 'active' : ''}" onclick="setSweetness('${s.id}')" style="display:flex; flex-direction:column; align-items:center; padding:6px 4px; flex:1; min-width:55px;">
-              <span style="font-weight:700; font-size:12px;">${s.label}</span>
-              <small style="font-size:9.5px; opacity:0.8;">${s.sub}</small>
-            </div>
-          `).join('')}
-        </div>
-
-        <!-- DYNAMIC SUGAR METER CARD -->
-        <div style="background:${sugarEst.status === 'alert' ? 'var(--redS)' : sugarEst.status === 'warn' ? 'var(--warnS)' : 'var(--mintS)'}; border:1px solid ${sugarEst.status === 'alert' ? 'var(--red)' : sugarEst.status === 'warn' ? 'var(--warn)' : 'var(--mint)'}; border-radius:14px; padding:8px 10px; margin-top:6px;">
-          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px;">
-            <b style="font-size:12.5px; color:var(--ink);">🥄 น้ำตาลประมาณ: ~${sugarEst.sugarGrams} กรัม (≈ ${sugarEst.teaspoons} ช้อนชา)</b>
-            <span style="font-size:11px; font-weight:700; color:${sugarEst.status === 'alert' ? 'var(--red-ink)' : sugarEst.status === 'warn' ? 'var(--warn-ink)' : 'var(--mint-ink)'};">
-              ${sugarEst.percentOfDaily}% ของเกณฑ์ WHO
-            </span>
-          </div>
-
-          <!-- Progress Bar against 24g WHO daily limit -->
-          <div class="bar-track" style="height:6px; margin:4px 0 6px; background:rgba(0,0,0,0.08);">
-            <div class="bar-fill" style="width:${Math.min(100, sugarEst.percentOfDaily)}%; background:${sugarEst.status === 'alert' ? 'var(--red)' : sugarEst.status === 'warn' ? 'var(--warn)' : 'var(--mint)'};"></div>
-          </div>
-
-          <div style="font-size:11.5px; color:var(--ink); line-height:1.35;">
-            ${sugarEst.statusText}
-          </div>
-        </div>
-
-        <!-- TOPPINGS / ADD-ONS -->
-        <div style="margin-top:10px; border-top:1px dashed var(--line); padding-top:8px;">
-          <label style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:4px;">+ ท็อปปิ้งเพิ่มเติม (มีผลต่อน้ำตาลและแคลอรี):</label>
-          <div style="display:flex; flex-wrap:wrap; gap:6px;">
-            <div class="pill ${draft.toppings?.includes('boba') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('boba')">
-              🧋 ไข่มุกต้มน้ำตาล (+12g น้ำตาล / +100 kcal)
-            </div>
-            <div class="pill ${draft.toppings?.includes('whip') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('whip')">
-              🍦 วิปครีม (+80 kcal)
-            </div>
-            <div class="pill ${draft.toppings?.includes('jelly') ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="toggleTopping('jelly')">
-              🌱 บุก/วุ้นไม่อ้วน (+1g น้ำตาล)
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PORTION CONTROLS -->
-      <div style="margin: 8px 0 10px;">
-        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:4px;">ปริมาณอาหาร / ขนาดแก้ว:</label>
-        <div class="pill-group" style="margin:0 0 10px;">
-          ${[
-            { id: 'small', label: 'จาน/แก้วเล็ก' },
-            { id: 'normal', label: 'ขนาดปกติ' },
-            { id: 'large', label: 'จานใหญ่ / พิเศษ' }
-          ].map(p => `
-            <div class="pill ${draft.portion === p.id ? 'active' : ''}" onclick="setPortion('${p.id}')">${p.label}</div>
-          `).join('')}
-        </div>
-      </div>
-
-      <button class="btn s" onclick="analyzeMeal()">✨ ให้โมจิวิเคราะห์ (AI)</button>
-
-      <!-- AI Clarification Question Banner -->
-      ${draft.clarification ? `
-        <div class="clarification-box">
-          <b>❓ โมจิอยากรู้เพิ่ม:</b>
-          <div style="font-size:13px; margin-bottom:6px;">${esc(draft.clarification.question)}</div>
-          ${draft.clarification.options ? `
-            <div class="pill-group">
-              ${draft.clarification.options.map(opt => `
-                <div class="pill active" onclick="applyClarification('${esc(opt)}')">${esc(opt)}</div>
-              `).join('')}
-            </div>
-          ` : ''}
         </div>
       ` : ''}
 
-      <!-- Component Breakdown in Dish (Phase 3 & AR Scanner) -->
-      ${draft.components && draft.components.length ? `
-        <div class="component-box" style="background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:12px; margin:10px 0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <small style="color:var(--mint); font-weight:700; font-size:12px; display:flex; align-items:center; gap:5px;">
-              <span>🍱</span> <span>แจกแจงรายการในจาน (AR Calorie Pins):</span>
-            </small>
-            <button class="btn s sm" style="font-size:10.5px; padding:3px 8px;" onclick="addDraftComponent()">+ เพิ่มรายการ</button>
+      <!-- Smart Search / Input Box with Instant Voice Button -->
+      <div class="smart-food-input-box">
+        <input class="smart-food-input" 
+               type="text" 
+               placeholder="พิมพ์ชื่อเมนู เช่น ข้าวมันไก่, ส้มตำ, ชาเขียว..." 
+               value="${esc(draft.name || draft.txt)}" 
+               oninput="onFoodSearchInput(this.value)">
+        <button id="voiceBtn" class="smart-voice-btn" onclick="toggleVoiceInput()" title="กดเพื่อพูดเล่าเมนู">🎙️</button>
+      </div>
+
+      <!-- Fast Chips: User Favorites ⭐ & Common Thai Dishes -->
+      <div class="fast-chips-label">
+        <span>⚡ เมนูยอดนิยมแตะบันทึกทันที:</span>
+        ${(draft.name || draft.imageBase64) ? `<span style="color:var(--pink); cursor:pointer;" onclick="analyzeMeal()">✨ เรียก AI วิเคราะห์</span>` : ''}
+      </div>
+      <div class="fast-chips-scroll">
+        ${favorites.map(f => `
+          <div class="fast-chip fav" onclick="fillDraftFromFavorite('${f.id}')">
+            <span>⭐ ${esc(f.name)}</span>
+            <small style="opacity:0.8;">(${fmt(f.calorie)}k)</small>
           </div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            ${draft.components.map((c, idx) => `
-              <div class="component-row ${draft.activePinIdx === idx ? 'highlighted' : ''}" 
-                   onclick="selectArPin(${idx})" 
-                   style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:12px; background:var(--bg); border:1px solid ${draft.activePinIdx === idx ? 'var(--mint)' : 'var(--line)'}; transition:all 0.2s ease; cursor:pointer;">
-                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                  <span style="font-size:18px;">${c.icon || '🍽️'}</span>
-                  <div style="min-width:0; flex:1;">
-                    <b style="font-size:12.5px; color:var(--ink); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(c.name)}</b>
-                    <small style="color:var(--mute); font-size:11px;">น้ำตาล ${fmt(c.sugar)}g · พิกัดหมุด AR (${c.x || 50}%, ${c.y || 50}%)</small>
-                  </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="font-weight:700; font-size:12.5px; color:var(--ink); background:var(--card); padding:3px 8px; border-radius:8px; border:1px solid var(--line);">
-                    ${fmt(c.kcal)} <small style="font-size:10px; font-weight:normal; color:var(--mute);">cal</small>
-                  </span>
-                  <button class="x" style="font-size:16px; padding:2px 6px; color:var(--mute);" onclick="event.stopPropagation(); removeDraftComponent(${idx})" title="ลบรายการนี้">×</button>
-                </div>
+        `).join('')}
+        ${POPULAR_THAI_DISHES.map(d => `
+          <div class="fast-chip" onclick="applyQuickDish('${d.name}')">
+            <span>${d.icon} ${d.name.split('+')[0].trim()}</span>
+            <small style="opacity:0.65;">(${d.kcal}k)</small>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Drink Contextual Sweetness Selector (Only shown if detected as a drink) -->
+      ${isDrink ? `
+        <div class="drink-sweet-box">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; font-weight:700; color:var(--ink);">🍯 เลือกระดับความหวานของแก้วนี้:</span>
+            <span style="font-size:11.5px; color:var(--mint); font-weight:700;">น้ำตาล ${fmt(draft.sugar || 0)}g</span>
+          </div>
+          <div class="drink-sweet-pills">
+            ${[
+              { id: 'none', label: '0% ไม่หวาน', g: 0 },
+              { id: 'less', label: '25% หวานน้อย', g: 8 },
+              { id: 'half', label: '50% ปานกลาง', g: 15 },
+              { id: 'normal', label: '100% ปกติ', g: 24 }
+            ].map(s => `
+              <div class="sweet-pill-btn ${draft.sweetness === s.id ? 'active' : ''}" onclick="setQuickSweetness('${s.id}', ${s.g})">
+                ${s.label}
               </div>
             `).join('')}
           </div>
         </div>
       ` : ''}
 
-      <div class="st">${esc(draft.status || '💡 ตรวจสอบและแก้ไขตัวเลขได้ตามจริงก่อนบันทึกเสมอ')}</div>
+      <!-- AI Clarification Question Banner (if any) -->
+      ${draft.clarification ? `
+        <div class="clarification-box" style="margin: 8px 0;">
+          <b>❓ โมจิอยากรู้เพิ่ม:</b>
+          <div style="font-size:12.5px; margin-bottom:6px;">${esc(draft.clarification.question)}</div>
+          ${draft.clarification.options ? `
+            <div class="pill-group" style="margin:0;">
+              ${draft.clarification.options.map(opt => `
+                <div class="pill active" style="font-size:11px; padding:4px 8px;" onclick="applyClarification('${esc(opt)}')">${esc(opt)}</div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
 
-      <!-- Editable Results -->
-      <div class="g3">
-        <div>
-          <label>ชื่อเมนู</label>
-          <input value="${esc(draft.name)}" placeholder="ชื่ออาหาร" oninput="draft.name=this.value">
+      <!-- Status message / AI Note -->
+      ${draft.status ? `
+        <div style="font-size:11.5px; color:var(--mint); font-weight:600; padding:2px 4px; margin-bottom:4px;">
+          ${esc(draft.status)}
         </div>
-        <div>
-          <label>แคลอรี (kcal)</label>
-          <input type="number" inputmode="decimal" value="${draft.kcal}" oninput="draft.kcal=this.value">
+      ` : ''}
+
+      <!-- HERO RESULT DISPLAY: Big Bold Numbers, Instantly Editable -->
+      <div class="quick-nutrition-hero">
+        <div class="qn-box">
+          <span class="qn-label">แคลอรีรวม</span>
+          <div class="qn-val-wrap">
+            <input class="qn-input" type="number" inputmode="decimal" placeholder="0" value="${draft.kcal || ''}" oninput="draft.kcal=this.value">
+            <span class="qn-unit">kcal</span>
+          </div>
         </div>
-        <div>
-          <label>น้ำตาล (g)</label>
-          <input type="number" inputmode="decimal" value="${draft.sugar}" oninput="draft.sugar=this.value">
+        <div class="qn-sep"></div>
+        <div class="qn-box">
+          <span class="qn-label">ปริมาณน้ำตาล</span>
+          <div class="qn-val-wrap">
+            <input class="qn-input" type="number" inputmode="decimal" placeholder="0" value="${draft.sugar || ''}" oninput="draft.sugar=this.value">
+            <span class="qn-unit">g</span>
+          </div>
         </div>
       </div>
 
-      <label class="checkbox-label">
-        <input type="checkbox" ${draft.saveAsFav ? 'checked' : ''} onchange="draft.saveAsFav=this.checked">
-        <span>⭐ บันทึกเป็น "เมนูประจำ" (เพื่อกดบันทึกซ้ำในแตะเดียววันหลัง)</span>
-      </label>
+      <!-- THE BIG 1-CLICK SAVE BUTTON -->
+      <button class="hero-save-btn" onclick="saveMeal()">
+        <span>บันทึกมื้อนี้ 🍡</span>
+      </button>
 
-      <label class="checkbox-label">
-        <input type="checkbox" ${draft.isPrivate ? 'checked' : ''} onchange="draft.isPrivate=this.checked">
-        <span>🔒 บันทึกเป็นเมนูส่วนตัว (เพื่อนจะเห็นแค่ตัวเลขรวม ไม่เห็นชื่อเมนูนี้)</span>
-      </label>
-
-      <div class="gap" style="margin-top:14px;">
-        <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
-        <button class="btn" onclick="saveMeal()">บันทึกมื้อนี้</button>
+      <!-- COLLAPSIBLE ACCORDION FOR ADVANCED SETTINGS (Progressive Disclosure) -->
+      <div class="accordion-more-toggle" onclick="toggleAdvancedOptions()">
+        <span>${draft.showAdvanced ? '▲ ซ่อนตัวเลือกเพิ่มเติม' : '▼ ⚙️ ตัวเลือกเพิ่มเติม (วันที่, ขนาดจาน, เมนูประจำ, รายการในจาน)'}</span>
       </div>
+
+      ${draft.showAdvanced ? `
+        <div class="accordion-content">
+          <!-- Date Picker -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:12px;">
+            <span style="font-weight:600; color:var(--ink);">📅 วันที่บันทึก:</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <button class="pill ${draft.date === draft.todayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.todayStr}'; renderSheet();">วันนี้</button>
+              <button class="pill ${draft.date === draft.yesterdayStr ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="draft.date='${draft.yesterdayStr}'; renderSheet();">เมื่อวาน</button>
+              <input type="date" value="${draft.date}" style="width:auto; font-size:11px; padding:2px 6px;" onchange="draft.date=this.value; renderSheet();">
+            </div>
+          </div>
+
+          <!-- Portion Size -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:12px;">
+            <span style="font-weight:600; color:var(--ink);">🍽️ ขนาดจาน:</span>
+            <div style="display:flex; gap:4px;">
+              ${[
+                { id: 'small', label: 'จานเล็ก' },
+                { id: 'normal', label: 'ปกติ' },
+                { id: 'large', label: 'พิเศษ/จานใหญ่' }
+              ].map(p => `
+                <button class="pill ${draft.portion === p.id ? 'active' : ''}" style="font-size:11px; padding:3px 8px;" onclick="setPortion('${p.id}')">${p.label}</button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Drink Brand Preset (Optional for drinks) -->
+          ${isDrink ? `
+            <div style="margin-bottom:10px;">
+              <small style="font-size:11.5px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">🏪 แบรนด์เครื่องดื่ม:</small>
+              <div class="fav-scroll">
+                ${THAI_DRINK_BRANDS.map(b => `
+                  <div class="pill ${(draft.brand || 'standard') === b.id ? 'active' : ''}" style="font-size:11px; padding:4px 8px;" onclick="setDrinkBrand('${b.id}')">
+                    <span>${b.name}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Component Breakdown in Dish -->
+          ${draft.components && draft.components.length ? `
+            <div style="margin-bottom:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <small style="color:var(--mint); font-weight:700; font-size:11.5px;">🍱 วัตถุดิบในจาน (${draft.components.length} รายการ):</small>
+                <button class="btn s sm" style="font-size:10px; padding:2px 6px;" onclick="addDraftComponent()">+ เพิ่ม</button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                ${draft.components.map((c, idx) => `
+                  <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:5px 8px; font-size:11.5px;">
+                    <span>${c.icon || '🍽️'} ${esc(c.name)}</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <b>${fmt(c.kcal)} cal</b>
+                      <button class="x" style="font-size:14px; padding:0 4px;" onclick="removeDraftComponent(${idx})">×</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Checkboxes -->
+          <label class="checkbox-label" style="font-size:12px; margin-bottom:6px;">
+            <input type="checkbox" ${draft.saveAsFav ? 'checked' : ''} onchange="draft.saveAsFav=this.checked">
+            <span>⭐ บันทึกเป็น "เมนูประจำ"</span>
+          </label>
+
+          <label class="checkbox-label" style="font-size:12px;">
+            <input type="checkbox" ${draft.isPrivate ? 'checked' : ''} onchange="draft.isPrivate=this.checked">
+            <span>🔒 บันทึกเป็นเมนูส่วนตัว (ซ่อนชื่อจากเพื่อน)</span>
+          </label>
+        </div>
+      ` : ''}
     </div>
   `;
 }
 
-function fillDraftFromFavorite(favId) {
-  const f = favorites.find(x => x.id === favId);
-  if (!f) return;
-  draft.name = f.name;
-  draft.kcal = f.calorie;
-  draft.sugar = f.sugar;
-  draft.portion = f.portion_size;
-  draft.sweetness = f.sweetness_level;
-  draft.status = `เลือกเมนูประจำ "${f.name}" แล้ว`;
+function applyQuickDish(dishName) {
+  const dish = POPULAR_THAI_DISHES.find(d => d.name === dishName);
+  if (!dish || !draft) return;
+  draft.name = dish.name;
+  draft.txt = dish.name;
+  draft.kcal = dish.kcal;
+  draft.sugar = dish.sugar;
+  draft.isDrink = dish.isDrink;
+  draft.components = JSON.parse(JSON.stringify(dish.components));
+  draft.showArPins = true;
+  draft.status = `✨ เลือกเมนู "${dish.name}" (${dish.kcal} kcal)`;
   renderSheet();
 }
 
-function setSweetness(val) {
+function onFoodSearchInput(val) {
+  if (!draft) return;
+  draft.name = val;
+  draft.txt = val;
+
+  const lower = val.trim().toLowerCase();
+  const matched = POPULAR_THAI_DISHES.find(d => 
+    d.name.toLowerCase().includes(lower) || 
+    (lower.length >= 2 && (
+      (lower.includes('กะเพรา') && d.name.includes('กะเพรา')) ||
+      (lower.includes('ข้าวมันไก่') && d.name.includes('ข้าวมันไก่')) ||
+      (lower.includes('ชานม') && d.name.includes('ชานม')) ||
+      (lower.includes('ชาไทย') && d.name.includes('ชาไทย')) ||
+      (lower.includes('ชาเขียว') && d.name.includes('ชาเขียว')) ||
+      (lower.includes('อเมริกาโน่') && d.name.includes('อเมริกาโน่')) ||
+      (lower.includes('ลาเต้') && d.name.includes('ลาเต้')) ||
+      (lower.includes('ส้มตำ') && d.name.includes('ส้มตำ')) ||
+      (lower.includes('สุกี้') && d.name.includes('สุกี้')) ||
+      (lower.includes('ผัดไทย') && d.name.includes('ผัดไทย'))
+    ))
+  );
+
+  if (matched) {
+    draft.isDrink = matched.isDrink;
+    if (!draft.kcal || draft.autoMatched !== matched.name) {
+      draft.autoMatched = matched.name;
+      draft.kcal = matched.kcal;
+      draft.sugar = matched.sugar;
+      draft.components = JSON.parse(JSON.stringify(matched.components));
+      draft.status = `💡 แนะนำตัวเลขของ "${matched.name}" (${matched.kcal} kcal)`;
+      renderSheet();
+    }
+  } else {
+    draft.isDrink = lower.includes('ชา') || lower.includes('กาแฟ') || lower.includes('นม') || lower.includes('ลาเต้') || lower.includes('น้ำ') || lower.includes('โซดา');
+  }
+}
+
+function setQuickSweetness(val, grams) {
   if (!draft) return;
   draft.sweetness = val;
-  const est = getSugarEstimate(draft.brand || 'standard', draft.sweetness, draft.toppings || []);
-  if (!draft.sugar || draft.sugarFromPreset) {
-    draft.sugar = est.sugarGrams;
-    draft.sugarFromPreset = true;
-  }
+  draft.sugar = grams;
+  renderSheet();
+}
+
+function toggleAdvancedOptions() {
+  if (!draft) return;
+  draft.showAdvanced = !draft.showAdvanced;
+  renderSheet();
+}
+
+function fillDraftFromFavorite(favId) {
+  const f = favorites.find(x => x.id === favId);
+  if (!f || !draft) return;
+  draft.name = f.name;
+  draft.txt = f.name;
+  draft.kcal = f.calorie;
+  draft.sugar = f.sugar;
+  draft.portion = f.portion_size || 'normal';
+  draft.sweetness = f.sweetness_level || 'normal';
+  draft.isDrink = f.name.includes('ชา') || f.name.includes('กาแฟ') || f.name.includes('นม');
+  draft.status = `✨ เลือกเมนูประจำ "${f.name}" แล้ว`;
   renderSheet();
 }
 
@@ -5211,17 +5522,18 @@ function setPortion(val) {
   renderSheet();
 }
 
+function setDrinkBrand(brandId) {
+  if (!draft) return;
+  draft.brand = brandId;
+  renderSheet();
+}
+
 function applyClarification(optText) {
   draft.txt = (draft.txt ? draft.txt + ' ' : '') + optText;
   if (optText.includes('0%')) draft.sweetness = 'none';
   else if (optText.includes('25%')) draft.sweetness = 'less';
   else if (optText.includes('50%')) draft.sweetness = 'half';
   else if (optText.includes('100%')) draft.sweetness = 'normal';
-  const est = getSugarEstimate(draft.brand || 'standard', draft.sweetness, draft.toppings || []);
-  if (!draft.sugar || draft.sugarFromPreset) {
-    draft.sugar = est.sugarGrams;
-    draft.sugarFromPreset = true;
-  }
   draft.clarification = null;
   analyzeMeal();
 }
@@ -5451,14 +5763,16 @@ async function analyzeMeal() {
 }
 
 async function saveMeal() {
-  const name = (draft.name || '').trim();
+  const name = (draft.name || draft.txt || '').trim();
   const kcal = Number(draft.kcal) || 0;
   const sugar = Number(draft.sugar) || 0;
 
-  if (!name) {
-    toast('กรุณาระบุชื่อเมนูก่อนบันทึกนะ');
+  if (!name && !kcal) {
+    toast('กรุณาระบุชื่อเมนูก่อนบันทึกนะ 🍡');
     return;
   }
+
+  const finalName = name || 'มื้ออาหาร';
 
   try {
     const mealDate = draft.date || key();
@@ -5468,7 +5782,7 @@ async function saveMeal() {
       body: JSON.stringify({
         userId: currentUser.id,
         date: mealDate,
-        name,
+        name: finalName,
         calorie: kcal,
         sugar,
         portion_size: draft.portion,
