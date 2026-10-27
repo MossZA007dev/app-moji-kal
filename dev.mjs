@@ -149,6 +149,24 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, user });
       }
 
+      // 1.1 Developer Secure PIN Login
+      if (pathname === '/api/auth/dev-login' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const inputPin = String(body.pin || '').trim();
+        const correctPin = String(process.env.DEV_PIN || '7788').trim();
+
+        if (!inputPin || inputPin !== correctPin) {
+          return sendJson(res, 401, { success: false, error: 'รหัส PIN ไม่ถูกต้อง สิทธิ์เข้าถึงบัญชีผู้ดูแลถูกปฏิเสธ 🛡️' });
+        }
+
+        const devUser = db.getUser('u1') || db.getAllUsers().find(u => u.role === 'dev' || u.nickname === 'มอส');
+        if (!devUser) {
+          return sendJson(res, 404, { success: false, error: 'ไม่พบบัญชีผู้ดูแลในระบบ' });
+        }
+
+        return sendJson(res, 200, { success: true, user: devUser, message: 'ยืนยันตัวตนสำเร็จ เข้าสู่ระบบในฐานะผู้ดูแล 🛡️' });
+      }
+
       // 2. PDPA Consent
       if (pathname === '/api/auth/consent' && req.method === 'POST') {
         const body = await parseJsonBody(req);

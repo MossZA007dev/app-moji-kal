@@ -3315,13 +3315,13 @@ textarea { resize: none; margin-bottom: 8px; }
 <canvas id="confettiCanvas"></canvas>
 
 <div id="app">
-  <!-- Top User Switcher Header -->
+  <!-- Top User Profile Header -->
   <div class="user-bar">
     <div class="user-info" onclick="openProfileModal()">
       <div id="uAvatar" class="mini-avatar"></div>
       <div class="user-meta">
         <b id="uName">กำลังโหลด...</b>
-        <small id="uPrivacy">แตะเพื่อจัดการบัญชี / สลับเพื่อน ▾</small>
+        <small id="uPrivacy">แตะเพื่อดูโปรไฟล์และความเป็นส่วนตัว ▾</small>
       </div>
     </div>
     <div style="display:flex; gap:6px;">
@@ -4025,7 +4025,7 @@ function renderToday() {
           ✨ สร้างตัวละครโมจิของคุณ ➜
         </button>
         <div>
-          <button class="btn s sm" onclick="openProfileModal()">👥 มีโปรไฟล์ในแก๊งอยู่แล้ว? เลือกสลับบัญชี</button>
+          <button class="btn s sm" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</button>
         </div>
       </div>
     `;
@@ -5779,7 +5779,7 @@ function renderFeed() {
           <span style="font-size:24px; display:block; margin-bottom:4px;">🍡</span>
           <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">แก๊งเรายังมีสมาชิกร่วมท้าชิง 3 คน</b>
           <p style="font-size:12px; color:var(--mute); margin:4px 0 10px;">ชวนเพื่อนเพิ่มเพื่อมาไต่อันดับคอยน์รับเหรียญทองไปด้วยกันเลย!</p>
-          <button class="btn s sm" onclick="openProfileModal()">+ เพิ่มเพื่อน / สลับบัญชี</button>
+          <button class="btn s sm" onclick="shareGangInviteLink()">🔗 ชวนเพื่อนเข้าแก๊ง</button>
         </div>
       `}
     ` : ''}
@@ -6696,8 +6696,8 @@ async function renderSettings() {
         <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px;" onclick="openOnboardingModal({ isNewUser: true })">
           ✨ สร้างตัวละครใหม่
         </button>
-        <button class="btn s sm" style="width:100%; max-width:280px; margin:0 auto;" onclick="openProfileModal()">
-          👥 เลือกสมาชิกเดิมในแก๊ง
+        <button class="btn s sm" style="width:100%; max-width:280px; margin:0 auto;" onclick="openDevLoginModal()">
+          🔐 เข้าสู่ระบบผู้ดูแล (Developer PIN)
         </button>
       </div>
     `;
@@ -6777,8 +6777,8 @@ async function renderSettings() {
       </div>
 
       <div style="margin-top:12px; display:flex; gap:8px;">
-        <button class="btn s sm" style="flex:1;" onclick="openProfileModal()">👥 สลับเพื่อน / เพิ่มสมาชิก</button>
-        <button class="btn sm" style="flex:1;" onclick="openEditProfileModal()">✏️ แก้ไขเป้าหมาย</button>
+        <button class="btn s sm" style="flex:1;" onclick="openMyProfileModal()">👤 โปรไฟล์ของฉัน</button>
+        <button class="btn sm" style="flex:1;" onclick="shareGangInviteLink()">🔗 ชวนเพื่อนเข้าแก๊ง</button>
       </div>
     </div>
 
@@ -7483,11 +7483,9 @@ function renderOnboardingStep() {
 
         <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: สรีระร่างกาย (เพศ, อายุ, สส, นน) ➜</button>
 
-        ${users && users.length > 0 ? `
-          <div style="text-align:center; margin-top:12px;">
-            <a style="font-size:12px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openProfileModal()">👥 มีบัญชีอยู่แล้ว? กดที่นี่เพื่อสลับบัญชีเพื่อน</a>
-          </div>
-        ` : ''}
+        <div style="text-align:center; margin-top:12px;">
+          <a style="font-size:11px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</a>
+        </div>
       </div>
     `;
   } else if (step === 2) {
@@ -8018,87 +8016,210 @@ async function saveProfileFromModal() {
   }
 }
 
-// Main Account Switcher & Member Management Modal
+// Main Account & Personal Profile Management Modal (Private to this Device)
+function openMyProfileModal() {
+  if (!currentUser) {
+    openOnboardingModal({ isNewUser: true });
+    return;
+  }
+  const el = $('#sheet');
+  el.hidden = false;
+
+  const u = currentUser;
+  const isDev = isCurrentUserDev(u);
+  const goalIcon = u.goal_type === 'sugar_cut' ? '🧋' : u.goal_type === 'healthy_balance' ? '🥗' : u.goal_type === 'muscle_gain' ? '💪' : '🏃‍♂️';
+  const goalName = u.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : u.goal_type === 'healthy_balance' ? 'สมดุลสุขภาพ' : u.goal_type === 'muscle_gain' ? 'สร้างกล้ามเนื้อ' : 'ลดน้ำหนัก';
+  const genderTh = u.gender === 'male' ? 'ชาย' : 'หญิง';
+
+  el.innerHTML = `
+    <div class="sh">
+      <!-- User Profile Header -->
+      <div style="text-align:center; padding-bottom:12px; border-bottom:1px solid var(--line); margin-bottom:12px;">
+        <div style="margin-bottom:8px;">
+          ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:72px; height:72px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 72, u.avatar_hat)}
+        </div>
+        <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; gap:6px;">
+          ${esc(u.nickname)}
+          ${isDev ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:2px 8px; border-radius:10px;">🛠️ DEVELOPER</span>' : '<span style="font-size:10px; font-weight:700; background:var(--pinkS); color:var(--pink-ink); padding:2px 8px; border-radius:10px;">🍡 สมาชิกแก๊ง</span>'}
+        </b>
+        <span style="font-size:12px; color:var(--mute);">${goalIcon} ${goalName} · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120} คอยน์</span>
+      </div>
+
+      <!-- Quick Edit Name -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ชื่อเล่นของคุณ</label>
+        <div style="display:flex; gap:6px;">
+          <input id="editProfileNick" value="${esc(u.nickname)}" maxlength="20" style="flex:1; font-size:13.5px;">
+          <button class="btn s sm" onclick="saveNicknameChange()">บันทึก</button>
+        </div>
+      </div>
+
+      <!-- Privacy Setting -->
+      <div style="background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:12px; margin-bottom:12px;">
+        <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">🔒 ความเป็นส่วนตัวในฟีดเพื่อน:</label>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="radio" name="privacyOpt" value="full" ${u.privacy_level === 'full' ? 'checked' : ''} onchange="updatePrivacySetting('full')">
+            <span>📢 <b>แชร์ปกติ:</b> แสดงชื่อเมนูและสถิติให้เพื่อนในแก๊งเห็น</span>
+          </label>
+          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="radio" name="privacyOpt" value="summary" ${u.privacy_level === 'summary' ? 'checked' : ''} onchange="updatePrivacySetting('summary')">
+            <span>📊 <b>เฉพาะตัวเลข:</b> ซ่อนชื่อเมนู แสดงเฉพาะแคลอรี่รวม</span>
+          </label>
+          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="radio" name="privacyOpt" value="private" ${u.privacy_level === 'private' ? 'checked' : ''} onchange="updatePrivacySetting('private')">
+            <span>🔒 <b>ส่วนตัว 100%:</b> ไม่แชร์กิจกรรมลงฟีดแก๊ง</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Body Profile Summary -->
+      <div style="background:linear-gradient(135deg, rgba(255, 158, 181, 0.12), rgba(110, 203, 176, 0.12)); border:1.5px solid var(--line); border-radius:16px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="font-size:12.5px; color:var(--ink);">⚖️ สรีระและเป้าหมายสุขภาพ</b>
+          <button class="btn s sm" style="font-size:11px; padding:3px 8px;" onclick="closeSheet(); openOnboardingModal({ isNewUser: false, initialStep: 2 });">✏️ ปรับข้อมูล</button>
+        </div>
+        <div style="font-size:11.5px; color:var(--mute); line-height:1.5;">
+          เพศ ${genderTh} · อายุ ${u.age || 21} ปี · สูง ${u.height || 178} cm · หนัก ${u.weight || 60} kg<br>
+          ⚡ เป้าแคลอรี่: <b>${u.calorie_goal || 1850} kcal</b> · 🍬 น้ำตาล: <b>${u.sugar_goal || 20}g</b> · 💧 น้ำ: <b>${u.water_daily_target_ml || 2000} ml</b>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="btn sm" style="flex:1;" onclick="closeSheet(); shareGangInviteLink();">🔗 ชวนเพื่อนเข้าแก๊ง</button>
+        <button class="btn s sm" style="flex:1;" onclick="closeSheet(); go('fashion');">🛍️ แต่งตัวโมจิ</button>
+      </div>
+
+      <!-- Dev PIN login link (only available for users who need to authenticate as Dev) -->
+      ${!isDev ? `
+        <div style="text-align:center; margin-bottom:10px;">
+          <a style="font-size:11px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openDevLoginModal()">
+            🔐 เข้าสู่ระบบผู้ดูแล (Developer PIN Login)
+          </a>
+        </div>
+      ` : ''}
+
+      <button class="btn g" style="width:100%;" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
+      <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="logoutThisDevice()">
+        🚪 ออกจากระบบบนเครื่องนี้ (เพื่อสร้างตัวละครใหม่)
+      </button>
+    </div>
+  `;
+}
+
+// Backward-compatibility alias
 function openProfileModal() {
+  openMyProfileModal();
+}
+
+async function saveNicknameChange() {
+  const newNick = $('#editProfileNick')?.value.trim();
+  if (!newNick) return toast('กรุณาระบุชื่อเล่น');
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nickname: newNick })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      updateUserHeader();
+      toast('อัปเดตชื่อเล่นเรียบร้อยแล้ว 🍡');
+      openMyProfileModal();
+    }
+  } catch (e) {
+    toast('บันทึกชื่อเล่นไม่สำเร็จ');
+  }
+}
+
+async function updatePrivacySetting(level) {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ privacy_level: level })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      updateUserHeader();
+      toast(`ปรับความเป็นส่วนตัวเป็น "${level === 'full' ? 'แชร์ปกติ' : level === 'summary' ? 'เฉพาะตัวเลข' : 'โหมดส่วนตัว'}" แล้ว 🔒`);
+    }
+  } catch (e) {
+    toast('บันทึกไม่สำเร็จ');
+  }
+}
+
+function openDevLoginModal() {
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = `
     <div class="sh">
       <div style="text-align:center; margin-bottom:14px;">
-        <span style="font-size:34px; display:block; margin-bottom:4px;">👥</span>
-        <h2 class="hd" style="font-size:18.5px;">สลับบัญชีเพื่อน & สมาชิก</h2>
-        <span style="font-size:12px; color:var(--mute);">เลือกเล่นเป็นเพื่อนคนไหน หรือเพิ่มสมาชิกใหม่ในแก๊ง</span>
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🛡️</span>
+        <h2 class="hd" style="font-size:18px;">เข้าสู่ระบบ Developer</h2>
+        <span style="font-size:12px; color:var(--mute);">ใส่รหัส PIN ลับ 4 หลัก เพื่อเข้าสู่ระบบในฐานะผู้ดูแล (คุณมอส)</span>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
-        ${users.map(u => {
-          const isCurrent = u.id === currentUser?.id;
-          const goalIcon = u.goal_type === 'sugar_cut' ? '🧋' : u.goal_type === 'healthy_balance' ? '🥗' : u.goal_type === 'muscle_gain' ? '💪' : '🏃‍♂️';
-          const goalName = u.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : u.goal_type === 'healthy_balance' ? 'สมดุลสุขภาพ' : u.goal_type === 'muscle_gain' ? 'สร้างกล้ามเนื้อ' : 'ลดน้ำหนัก';
-          return `
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--card); border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; border-radius:16px;">
-              <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
-                <div class="mini-avatar" style="width:40px; height:40px;">
-                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}">` : mascotSVG(u.avatar_face, u.avatar_color, 40, u.avatar_hat)}
-                </div>
-                <div>
-                  <b style="font-size:13.5px; color:var(--ink);">
-                    ${esc(u.nickname)} ${isCurrent ? '<span style="font-size:11px; color:var(--pink);">(กำลังใช้งาน)</span>' : ''}
-                    ${isCurrentUserDev(u) ? '<span style="font-size:9.5px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 6px; border-radius:8px; margin-left:3px; vertical-align:middle;">🛠️ DEV</span>' : ''}
-                  </b>
-                  <div style="font-size:11px; color:var(--mute);">${goalIcon} ${goalName} · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
-                </div>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                ${isCurrent ? `
-                  <span class="badge ok">ใช้งานอยู่</span>
-                ` : `
-                  <button class="btn s sm" style="font-size:11.5px; padding:4px 10px;" onclick="switchActiveUser('${u.id}')">สลับใช้</button>
-                  ${isCurrentUserDev() ? `
-                    <button class="btn g sm" style="font-size:11px; padding:4px 7px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="event.stopPropagation(); deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')" title="[สิทธิ์ Dev] ลบสมาชิกออกจากแก๊ง">🗑️</button>
-                  ` : ''}
-                `}
-              </div>
-            </div>
-          `;
-        }).join('')}
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">รหัส PIN ผู้ดูแล</label>
+        <input type="password" id="devPinInput" placeholder="ใส่รหัส PIN" maxlength="10" style="font-size:18px; text-align:center; letter-spacing:4px; font-weight:700;">
       </div>
 
-      <!-- Add New Member Section -->
-      <div style="background:var(--pinkS); border:1.5px dashed var(--pink); border-radius:18px; padding:14px; margin-bottom:14px; text-align:center;">
-        <span style="font-size:24px; display:block; margin-bottom:4px;">✨</span>
-        <b style="font-size:13.5px; color:var(--pink-ink); display:block; margin-bottom:4px;">ชวน / เพิ่มสมาชิกใหม่ในแก๊ง</b>
-        <span style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:10px;">ส่งลิงก์ให้เพื่อนเปิดบนมือถือเพื่อสร้างตัวละครโมจิได้เลย (ไม่ต้องใช้รหัสคำเชิญ)</span>
-        <div style="display:flex; gap:8px;">
-          <button class="btn sm" style="flex:1;" onclick="shareGangInviteLink()">🔗 แชร์ลิงก์ชวนเพื่อน</button>
-          <button class="btn s sm" style="flex:1;" onclick="openOnboardingModal({ isNewUser: true })">➕ เพิ่มบนเครื่องนี้</button>
-        </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn" onclick="submitDevPinLogin()">ยืนยันรหัส PIN ➜</button>
+        <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
       </div>
-
-      <button class="btn g" style="width:100%;" onclick="closeSheet()">ปิดหน้าต่าง</button>
-      <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="logoutThisDevice()">🚪 ออกจากระบบบนเครื่องนี้ (รีเซ็ตเพื่อสร้างตัวละครใหม่)</button>
     </div>
   `;
+  setTimeout(() => $('#devPinInput')?.focus(), 100);
 }
 
-function logoutThisDevice() {
-  if (confirm('ต้องการออกจากระบบบนเครื่องนี้ใช่หรือไม่?\n\n💡 ข้อมูลสถิติของแก๊งจะไม่สูญหาย คุณหรือเพื่อนสามารถสลับบัญชีกลับมาได้ตลอดเวลา')) {
-    localStorage.removeItem('mochi_user_id');
-    localStorage.removeItem('mochi_onboarded');
-    window.location.reload();
+async function submitDevPinLogin() {
+  const pin = $('#devPinInput')?.value.trim();
+  if (!pin) {
+    toast('กรุณาใส่รหัส PIN');
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/dev-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      localStorage.setItem('mochi_onboarded', 'true');
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
+      render();
+      fireConfetti();
+      toast('🎉 เข้าสู่ระบบ Developer เรียบร้อยแล้ว ยินดีต้อนรับคุณมอส!');
+    } else {
+      toast(data.error || 'รหัส PIN ไม่ถูกต้อง สิทธิ์ถูกปฏิเสธ 🛡️');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการตรวจสอบรหัส PIN');
   }
 }
 
-async function switchActiveUser(newUserId) {
-  const target = users.find(u => u.id === newUserId);
-  if (!target) return;
-  currentUser = target;
-  localStorage.setItem('mochi_user_id', currentUser.id);
-  closeSheet();
-  updateUserHeader();
-  await Promise.all([fetchLogs(), fetchFeed(), fetchLeaderboard()]);
-  render();
-  toast(`สลับผู้ใช้เป็น "${currentUser.nickname}" แล้ว 🍡`);
+function logoutThisDevice() {
+  if (confirm('ต้องการออกจากระบบบนเครื่องนี้ใช่หรือไม่?\n\n💡 บัญชีและข้อมูลในแก๊งจะยังคงอยู่ คุณหรือเพื่อนสามารถเข้าสู่ระบบใหม่ได้ตลอดเวลา')) {
+    localStorage.removeItem('mochi_user_id');
+    localStorage.removeItem('mochi_user_profile');
+    localStorage.removeItem('mochi_onboarded');
+    window.location.reload();
+  }
 }
 
 async function addNewMemberFromModal() {
@@ -8131,7 +8252,14 @@ async function addNewMemberFromModal() {
     const data = await res.json();
     await fetchUsers();
     await fetchLeaderboard();
-    switchActiveUser(data.user.id);
+    currentUser = data.user;
+    localStorage.setItem('mochi_user_id', currentUser.id);
+    localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+    localStorage.setItem('mochi_onboarded', 'true');
+    closeSheet();
+    updateUserHeader();
+    await Promise.all([fetchLogs(), fetchFeed(), fetchLeaderboard()]);
+    render();
     toast(`ยินดีต้อนรับ ${nick} สู่แก๊งโมจิ! 🎉`);
   } catch (err) {
     toast('เกิดข้อผิดพลาดในการสร้างสมาชิก');
