@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moji-cache-v18';
+const CACHE_NAME = 'moji-cache-v19';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -63,4 +63,45 @@ self.addEventListener('fetch', event => {
       return cachedResponse || fetchPromise;
     })
   );
+});
+
+// Notification Click Handler (focuses existing tab or opens new window)
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+// Push Event Handler (for Web Push notifications)
+self.addEventListener('push', event => {
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const title = data.title || 'โมจิ 🍡';
+      const options = {
+        body: data.body || '',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
+        data: data
+      };
+      event.waitUntil(self.registration.showNotification(title, options));
+    } catch (_) {
+      event.waitUntil(self.registration.showNotification('โมจิ 🍡', {
+        body: event.data.text(),
+        icon: '/favicon.svg',
+        badge: '/favicon.svg'
+      }));
+    }
+  }
 });

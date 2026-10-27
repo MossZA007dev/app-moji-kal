@@ -4573,6 +4573,434 @@ textarea { resize: none; margin-bottom: 8px; }
   position: relative;
   box-shadow: 0 4px 16px rgba(255, 158, 181, 0.2);
 }
+
+/* ========================================================
+   NOTIFICATION SYSTEM (Bell, Badge, Banner & Drawer)
+   ======================================================== */
+.notif-bell-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+}
+.notif-bell-btn:hover {
+  transform: scale(1.08);
+  border-color: var(--pink);
+  box-shadow: 0 4px 12px rgba(255, 117, 140, 0.22);
+}
+.notif-bell-btn:active {
+  transform: scale(0.92);
+}
+.notif-bell-icon {
+  font-size: 17px;
+  line-height: 1;
+  display: inline-block;
+}
+.notif-bell-btn.ring .notif-bell-icon {
+  animation: notifBellWobble 0.8s ease-in-out;
+}
+@keyframes notifBellWobble {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(18deg); }
+  40%, 80% { transform: rotate(-18deg); }
+}
+.notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #FF3B30;
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.45);
+  line-height: 1;
+  pointer-events: none;
+  animation: notifBadgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes notifBadgePop {
+  0% { transform: scale(0); }
+  80% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Floating Top Banner */
+.notif-floating-banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 10001;
+  width: calc(100% - 24px);
+  max-width: 440px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18), 0 3px 10px rgba(0,0,0,0.06);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.notif-floating-banner.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal and Drawer Root */
+.notif-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+.notif-modal-root[hidden] {
+  display: none !important;
+}
+.notif-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 12, 18, 0.55);
+  backdrop-filter: blur(6px);
+  animation: notifFadeIn 0.22s ease-out;
+}
+@keyframes notifFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Drawer Pane */
+.notif-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 36px rgba(0,0,0,0.22);
+  animation: notifSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+@keyframes notifSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.notif-drawer-header {
+  padding: 16px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.notif-drawer-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--pinkS);
+  color: var(--pink-ink);
+  border: 1px solid var(--pink);
+}
+.notif-icon-action-btn {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.notif-icon-action-btn:hover {
+  background: var(--card);
+  border-color: var(--pink);
+  transform: translateY(-1px);
+}
+.notif-icon-action-btn.close {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  font-size: 15px;
+  border-radius: 50%;
+}
+
+/* Category Filter Bar */
+.notif-filters-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.notif-filters-bar::-webkit-scrollbar {
+  display: none;
+}
+.notif-filter-tab {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.notif-filter-tab.active {
+  background: var(--pinkS);
+  border-color: var(--pink);
+  color: var(--pink-ink);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 117, 140, 0.2);
+}
+
+/* List Area */
+.notif-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-item-card {
+  position: relative;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.notif-item-card.unread {
+  border-color: #FFC0CB;
+  background: #FFFDFE;
+  box-shadow: 0 3px 12px rgba(255, 158, 181, 0.14);
+}
+.notif-unread-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF3B30;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
+}
+.notif-item-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.notif-item-content {
+  flex: 1;
+  min-width: 0;
+}
+.notif-item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 3px;
+  padding-right: 14px;
+}
+.notif-item-body {
+  font-size: 12.5px;
+  color: var(--ink);
+  opacity: 0.88;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+.notif-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--mute);
+}
+.notif-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Drawer Footer */
+.notif-drawer-footer {
+  padding: 12px 16px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Settings Modal Dialog */
+.notif-settings-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 32px);
+  max-width: 460px;
+  max-height: 90vh;
+  background: var(--bg);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: notifDialogPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 10000;
+}
+@keyframes notifDialogPop {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.notif-settings-header {
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.notif-settings-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.notif-settings-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+.notif-settings-box-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notif-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.notif-toggle-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.notif-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.notif-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.notif-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #E2E8F0;
+  transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 24px;
+}
+.notif-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+input:checked + .notif-slider {
+  background-color: var(--pink);
+}
+input:checked + .notif-slider:before {
+  transform: translateX(20px);
+}
+.notif-time-input {
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+  outline: none;
+}
+.notif-time-input:focus {
+  border-color: var(--pink);
+}
+
 </style>
 </head>
 <body>
@@ -4589,7 +5017,11 @@ textarea { resize: none; margin-bottom: 8px; }
         <small id="uPrivacy">แตะเพื่อดูโปรไฟล์และความเป็นส่วนตัว ▾</small>
       </div>
     </div>
-    <div style="display:flex; gap:6px;">
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotificationDrawer()" title="การแจ้งเตือน" aria-label="Notifications">
+        <span class="notif-bell-icon">🔔</span>
+        <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+      </button>
       <button class="btn s sm" onclick="openCameraFromToday()" title="เปิดกล้องถ่ายอาหาร">📷 ถ่ายรูป</button>
       <button class="btn sm" onclick="openSheet()">+ มื้อ</button>
     </div>
@@ -4609,6 +5041,49 @@ textarea { resize: none; margin-bottom: 8px; }
 
   <div id="main"></div>
 </div>
+
+<!-- Floating Top Notification Banner -->
+<div id="notifFloatingBanner" class="notif-floating-banner" hidden></div>
+
+<!-- In-App Notification Center Drawer Modal -->
+<div id="notificationModal" class="notif-modal-root" hidden>
+  <div class="notif-drawer-backdrop" onclick="closeNotificationDrawer()"></div>
+  <div class="notif-drawer">
+    <div class="notif-drawer-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">🔔</span>
+        <h2 style="font-size:17px; font-weight:800; margin:0; font-family:'Mali',sans-serif; color:var(--ink);">การแจ้งเตือน</h2>
+        <span id="notifDrawerUnreadPill" class="notif-drawer-pill" style="display:none;">0 ใหม่</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="notif-icon-action-btn" onclick="openNotificationSettingsModal()" title="ตั้งค่าการแจ้งเตือน">⚙️</button>
+        <button class="notif-icon-action-btn" onclick="markAllNotificationsAsRead()" title="อ่านทั้งหมด">✓ อ่านหมด</button>
+        <button class="notif-icon-action-btn close" onclick="closeNotificationDrawer()" title="ปิด">✕</button>
+      </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="notif-filters-bar">
+      <button class="notif-filter-tab active" data-filter="all" onclick="setNotifFilter('all')">ทั้งหมด</button>
+      <button class="notif-filter-tab" data-filter="meal" onclick="setNotifFilter('meal')">🍱 มื้ออาหาร</button>
+      <button class="notif-filter-tab" data-filter="water" onclick="setNotifFilter('water')">💧 ดื่มน้ำ</button>
+      <button class="notif-filter-tab" data-filter="quest" onclick="setNotifFilter('quest')">🎯 ภารกิจ</button>
+      <button class="notif-filter-tab" data-filter="social" onclick="setNotifFilter('social')">👥 เพื่อน ๆ</button>
+    </div>
+
+    <!-- Notification Cards List -->
+    <div id="notifListContainer" class="notif-list-container"></div>
+
+    <!-- Drawer Footer -->
+    <div class="notif-drawer-footer">
+      <button class="btn s sm" onclick="testNotificationFromDrawer()" style="font-size:11.5px; padding:6px 12px; border-radius:12px;">🧪 ทดสอบแจ้งเตือน</button>
+      <button class="btn g sm" onclick="clearAllNotifications()" style="font-size:11.5px; padding:6px 12px; border-radius:12px; color:var(--mute);">🗑️ ล้างทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Settings Modal -->
+<div id="notificationSettingsModal" class="notif-modal-root" hidden></div>
 
 <!-- Bottom Modal Sheet -->
 <div id="sheet" hidden></div>
@@ -5176,6 +5651,9 @@ async function fetchQuests() {
       const data = await res.json();
       if (data.success && data.quests) {
         userQuests = data.quests;
+        if (typeof checkClaimableQuestNotifications === 'function') {
+          checkClaimableQuestNotifications(userQuests);
+        }
       }
     }
   } catch (err) {
@@ -5198,11 +5676,17 @@ async function fetchFeed() {
     if (socData.success) {
       socialPosts = socData.posts || [];
       gangStories = socData.stories || [];
+      if (typeof checkFriendPostNotifications === 'function') {
+        checkFriendPostNotifications(socialPosts);
+      }
     }
     if (questRes.ok) {
       const qData = await questRes.json();
       if (qData.success && qData.quests) {
         userQuests = qData.quests;
+        if (typeof checkClaimableQuestNotifications === 'function') {
+          checkClaimableQuestNotifications(userQuests);
+        }
       }
     }
     if (coopRes.ok) {
@@ -5691,6 +6175,7 @@ function updateUserHeader() {
   }
   const privacyText = currentUser.privacy_level === 'full' ? 'แชร์ชื่อเมนูให้เพื่อน' : currentUser.privacy_level === 'summary' ? 'แชร์เฉพาะตัวเลขรวม' : 'โหมดส่วนตัว';
   $('#uPrivacy').textContent = `${privacyText} ▾`;
+  if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
 }
 
 // Check PDPA Consent
@@ -5797,6 +6282,996 @@ function fireConfetti() {
   }
   requestAnimationFrame(update);
 }
+
+/* ========================================================
+   MOJI NOTIFICATION SYSTEM & SMART SCHEDULER
+   ======================================================== */
+const NOTIF_STORAGE_KEY = 'mochi_notifications_v1';
+const NOTIF_SETTINGS_KEY = 'mochi_notif_settings_v1';
+const NOTIF_TRIGGERS_KEY = 'mochi_notif_triggers_v1';
+
+let activeNotifFilter = 'all'; // 'all' | 'meal' | 'water' | 'quest' | 'social'
+let floatingBannerTimer = null;
+let notifSchedulerInterval = null;
+
+function getNotifSettings() {
+  const defaults = {
+    enabled: true,
+    sound: true,
+    mealBreakfast: true,
+    mealBreakfastTime: '08:30',
+    mealLunch: true,
+    mealLunchTime: '12:00',
+    mealDinner: true,
+    mealDinnerTime: '18:30',
+    waterEnabled: true,
+    waterInterval: 2, // hours
+    questEnabled: true,
+    questTime: '19:30',
+    socialEnabled: true
+  };
+  try {
+    const saved = localStorage.getItem(NOTIF_SETTINGS_KEY);
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+  } catch (_) {
+    return defaults;
+  }
+}
+
+function saveNotifSettings(settings) {
+  try {
+    localStorage.setItem(NOTIF_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (_) {}
+}
+
+function getStoredNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveStoredNotifications(list) {
+  try {
+    localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function getUnreadNotificationCount() {
+  const list = getStoredNotifications();
+  return list.filter(n => !n.read).length;
+}
+
+function getNotifTriggersState() {
+  const defaults = {
+    lastBreakfastDate: '',
+    lastLunchDate: '',
+    lastDinnerDate: '',
+    lastWaterTrigger: 0,
+    lastQuestEveningDate: '',
+    notifiedClaimableQuests: [],
+    seenPostIds: []
+  };
+  try {
+    const raw = localStorage.getItem(NOTIF_TRIGGERS_KEY);
+    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+  } catch (_) {
+    return defaults;
+  }
+}
+
+function saveNotifTriggersState(state) {
+  try {
+    localStorage.setItem(NOTIF_TRIGGERS_KEY, JSON.stringify(state));
+  } catch (_) {}
+}
+
+function playNotificationChime() {
+  try {
+    const settings = getNotifSettings();
+    if (!settings.sound) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    
+    const playNote = (freq, start, duration, gainVal = 0.08) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(gainVal, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+
+    // Soft, pleasant double harmonic chime: G5 (784Hz) -> C6 (1046.5Hz)
+    playNote(783.99, now, 0.18, 0.06);
+    playNote(1046.50, now + 0.11, 0.32, 0.08);
+  } catch (_) {}
+}
+
+function updateNotificationBadge() {
+  const count = getUnreadNotificationCount();
+  const badge = document.getElementById('notifBadge');
+  if (badge) {
+    if (count > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = count > 99 ? '99+' : count;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  const unreadPill = document.getElementById('notifDrawerUnreadPill');
+  if (unreadPill) {
+    if (count > 0) {
+      unreadPill.style.display = 'inline-block';
+      unreadPill.textContent = `${count} ใหม่`;
+    } else {
+      unreadPill.style.display = 'none';
+    }
+  }
+}
+
+function pushMojiNotification({ type = 'system', icon = '🔔', title, body = '', action = null, actionLabel = null }) {
+  if (!title) return;
+
+  const notifs = getStoredNotifications();
+  const newNotif = {
+    id: 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    type: type, // 'meal' | 'water' | 'quest' | 'social' | 'system'
+    icon: icon,
+    title: title,
+    body: body,
+    time: new Date().toISOString(),
+    read: false,
+    action: action,
+    actionLabel: actionLabel
+  };
+
+  notifs.unshift(newNotif);
+  if (notifs.length > 60) notifs.length = 60;
+  saveStoredNotifications(notifs);
+
+  updateNotificationBadge();
+  playNotificationChime();
+
+  // Wobble bell button
+  const bellBtn = document.getElementById('notifBellBtn');
+  if (bellBtn) {
+    bellBtn.classList.remove('ring');
+    void bellBtn.offsetWidth;
+    bellBtn.classList.add('ring');
+  }
+
+  // Floating Dropdown Banner
+  showNotificationFloatingBanner(newNotif);
+
+  // Re-render drawer if open
+  const drawer = document.getElementById('notificationModal');
+  if (drawer && !drawer.hidden) {
+    renderNotificationDrawerContent();
+  }
+
+  // System Push Notification (PWA / Web Notification)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, {
+            body: body,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            tag: newNotif.id,
+            renotify: true,
+            data: { url: '/', notifId: newNotif.id, action: action }
+          });
+        }).catch(() => {
+          new Notification(title, { body: body, icon: '/favicon.svg' });
+        });
+      } else {
+        new Notification(title, { body: body, icon: '/favicon.svg' });
+      }
+    } catch (_) {}
+  }
+}
+
+function sendPushNotification(title, body, options = {}) {
+  pushMojiNotification({
+    type: options.type || 'system',
+    icon: options.icon || '🔔',
+    title: title,
+    body: body,
+    action: options.action || null,
+    actionLabel: options.actionLabel || null
+  });
+}
+
+function enablePushNotifications() {
+  openNotificationSettingsModal();
+}
+
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    toast('เบราว์เซอร์นี้ยังไม่รองรับ Web Notification');
+    return false;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      toast('เปิดรับการแจ้งเตือนสำเร็จแล้ว 🎉');
+      pushMojiNotification({
+        type: 'system',
+        icon: '🎉',
+        title: 'เปิดการแจ้งเตือนสำเร็จแล้ว!',
+        body: 'โมจิจะคอยเตือนเรื่องมื้ออาหาร น้ำดื่ม และกิจกรรมแก๊งให้คุณอย่างอบอุ่นนะ',
+        action: 'openToday',
+        actionLabel: '🍡 หน้าแรก'
+      });
+      if (typeof renderSettings === 'function' && tab === 'settings') renderSettings();
+      renderNotificationSettingsModal();
+      return true;
+    } else {
+      toast('การแจ้งเตือนยังไม่ได้รับอนุญาต คุณสามารถเปิดในตั้งค่าเบราว์เซอร์ได้');
+      if (typeof renderSettings === 'function' && tab === 'settings') renderSettings();
+      renderNotificationSettingsModal();
+      return false;
+    }
+  } catch (err) {
+    console.error('Request notification permission error:', err);
+    return false;
+  }
+}
+
+function showNotificationFloatingBanner(notif) {
+  const banner = document.getElementById('notifFloatingBanner');
+  if (!banner) return;
+
+  const typeBgMap = {
+    meal: 'background: #FFF7ED; border: 1.5px solid #FED7AA; color: #C2410C;',
+    water: 'background: #F0F9FF; border: 1.5px solid #BAE6FD; color: #0284C7;',
+    quest: 'background: #FAF5FF; border: 1.5px solid #E9D5FF; color: #7E22CE;',
+    social: 'background: #FDF2F8; border: 1.5px solid #FBCFE8; color: #BE185D;',
+    system: 'background: #F0FDF4; border: 1.5px solid #BBF7D0; color: #15803D;'
+  };
+  const iconStyle = typeBgMap[notif.type] || typeBgMap.system;
+
+  banner.innerHTML = `
+    <div style="width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; ${iconStyle}">
+      ${notif.icon || '🔔'}
+    </div>
+    <div style="flex:1; min-width:0;" onclick="handleFloatingBannerClick('${notif.id}')">
+      <div style="font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        ${esc(notif.title)}
+      </div>
+      <div style="font-size:11.5px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;">
+        ${esc(notif.body)}
+      </div>
+    </div>
+    <button onclick="event.stopPropagation(); closeNotificationFloatingBanner();" style="background:none; border:none; color:var(--mute); font-size:16px; cursor:pointer; padding:4px 6px; line-height:1;">✕</button>
+  `;
+
+  banner.hidden = false;
+  banner.classList.add('show');
+
+  if (floatingBannerTimer) clearTimeout(floatingBannerTimer);
+  floatingBannerTimer = setTimeout(closeNotificationFloatingBanner, 6000);
+}
+
+function closeNotificationFloatingBanner() {
+  const banner = document.getElementById('notifFloatingBanner');
+  if (banner) {
+    banner.classList.remove('show');
+    setTimeout(() => { banner.hidden = true; }, 300);
+  }
+}
+
+function handleFloatingBannerClick(notifId) {
+  closeNotificationFloatingBanner();
+  const notifs = getStoredNotifications();
+  const notif = notifs.find(n => n.id === notifId);
+  if (notif) {
+    markNotificationRead(notifId);
+    if (notif.action) {
+      executeNotificationAction(notif.action);
+    } else {
+      openNotificationDrawer();
+    }
+  }
+}
+
+function openNotificationDrawer() {
+  const modal = document.getElementById('notificationModal');
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  renderNotificationDrawerContent();
+}
+
+function closeNotificationDrawer() {
+  const modal = document.getElementById('notificationModal');
+  if (modal) {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+}
+
+function setNotifFilter(filter) {
+  activeNotifFilter = filter;
+  const tabs = document.querySelectorAll('.notif-filter-tab');
+  tabs.forEach(t => {
+    if (t.dataset.filter === filter) t.classList.add('active');
+    else t.classList.remove('active');
+  });
+  renderNotificationDrawerContent();
+}
+
+function renderNotificationDrawerContent() {
+  const container = document.getElementById('notifListContainer');
+  if (!container) return;
+
+  const notifs = getStoredNotifications();
+  const count = notifs.filter(n => !n.read).length;
+  updateNotificationBadge();
+
+  const filtered = notifs.filter(n => {
+    if (activeNotifFilter === 'all') return true;
+    return n.type === activeNotifFilter;
+  });
+
+  if (filtered.length === 0) {
+    const emptyIcon = activeNotifFilter === 'meal' ? '🍱' 
+                    : activeNotifFilter === 'water' ? '💧' 
+                    : activeNotifFilter === 'quest' ? '🎯' 
+                    : activeNotifFilter === 'social' ? '👥' : '✨';
+    const emptyMsg = activeNotifFilter === 'meal' ? 'ยังไม่มีการแจ้งเตือนมื้ออาหาร'
+                   : activeNotifFilter === 'water' ? 'ยังไม่มีการแจ้งเตือนดื่มน้ำ'
+                   : activeNotifFilter === 'quest' ? 'ยังไม่มีการแจ้งเตือนภารกิจ'
+                   : activeNotifFilter === 'social' ? 'ยังไม่มีการแจ้งเตือนกิจกรรมเพื่อน'
+                   : 'ไม่มีการแจ้งเตือนในขณะนี้';
+
+    container.innerHTML = `
+      <div style="text-align:center; padding:48px 20px; color:var(--mute);">
+        <div style="width:80px; margin:0 auto 12px;">
+          ${mascotSVG('happy', '#FFD1DC', 76, 'chef')}
+        </div>
+        <b style="font-size:14.5px; font-family:'Mali',sans-serif; color:var(--ink); display:block; margin-bottom:4px;">
+          ${emptyIcon} ${emptyMsg}
+        </b>
+        <p style="font-size:12px; margin:0; line-height:1.5;">
+          โมจิจะคอยสะกิดเตือนเรื่องสุขภาพ มื้ออาหาร น้ำดื่ม และกิจกรรมแก๊งให้คุณเองน้า~
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const typeBgMap = {
+    meal: 'background: #FFF7ED; border: 1px solid #FED7AA; color: #C2410C;',
+    water: 'background: #F0F9FF; border: 1px solid #BAE6FD; color: #0284C7;',
+    quest: 'background: #FAF5FF; border: 1px solid #E9D5FF; color: #7E22CE;',
+    social: 'background: #FDF2F8; border: 1px solid #FBCFE8; color: #BE185D;',
+    system: 'background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D;'
+  };
+
+  container.innerHTML = filtered.map(n => {
+    const iconStyle = typeBgMap[n.type] || typeBgMap.system;
+    const timeAgo = formatTimeAgo(n.time);
+
+    return `
+      <div class="notif-item-card ${n.read ? 'read' : 'unread'}" onclick="markNotificationRead('${n.id}')">
+        ${!n.read ? '<span class="notif-unread-dot"></span>' : ''}
+        <div class="notif-item-icon-wrap" style="${iconStyle}">
+          ${n.icon || '🔔'}
+        </div>
+        <div class="notif-item-content">
+          <div class="notif-item-title">${esc(n.title)}</div>
+          <div class="notif-item-body">${esc(n.body)}</div>
+          <div class="notif-item-meta">
+            <span>${timeAgo}</span>
+            <button onclick="event.stopPropagation(); deleteNotificationItem('${n.id}');" style="background:none; border:none; color:var(--mute); font-size:13px; cursor:pointer; padding:2px 4px;" title="ลบรายการนี้">🗑️</button>
+          </div>
+          ${n.action && n.actionLabel ? `
+            <div class="notif-card-actions">
+              <button class="btn sm" onclick="event.stopPropagation(); handleNotificationAction('${n.id}')" style="font-size:11px; padding:4px 10px; border-radius:10px;">
+                ${esc(n.actionLabel)}
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function markNotificationRead(id) {
+  const notifs = getStoredNotifications();
+  const item = notifs.find(n => n.id === id);
+  if (item && !item.read) {
+    item.read = true;
+    saveStoredNotifications(notifs);
+    updateNotificationBadge();
+    const card = document.querySelector(`.notif-item-card[onclick*="${id}"]`);
+    if (card) {
+      card.classList.remove('unread');
+      card.classList.add('read');
+      const dot = card.querySelector('.notif-unread-dot');
+      if (dot) dot.remove();
+    }
+  }
+}
+
+function markAllNotificationsAsRead() {
+  const notifs = getStoredNotifications();
+  let changed = false;
+  notifs.forEach(n => {
+    if (!n.read) { n.read = true; changed = true; }
+  });
+  if (changed) {
+    saveStoredNotifications(notifs);
+    updateNotificationBadge();
+    renderNotificationDrawerContent();
+    toast('อ่านการแจ้งเตือนทั้งหมดแล้ว ✨');
+  }
+}
+
+function deleteNotificationItem(id) {
+  let notifs = getStoredNotifications();
+  notifs = notifs.filter(n => n.id !== id);
+  saveStoredNotifications(notifs);
+  updateNotificationBadge();
+  renderNotificationDrawerContent();
+}
+
+function clearAllNotifications() {
+  saveStoredNotifications([]);
+  updateNotificationBadge();
+  renderNotificationDrawerContent();
+  toast('ล้างประวัติการแจ้งเตือนทั้งหมดแล้ว 🧹');
+}
+
+function handleNotificationAction(notifId) {
+  const notifs = getStoredNotifications();
+  const notif = notifs.find(n => n.id === notifId);
+  if (!notif) return;
+  markNotificationRead(notifId);
+  closeNotificationDrawer();
+  if (notif.action) {
+    executeNotificationAction(notif.action);
+  }
+}
+
+function executeNotificationAction(action) {
+  if (action === 'openCamera') {
+    openCameraFromToday();
+  } else if (action === 'triggerWater') {
+    triggerWaterLog();
+  } else if (action === 'openQuests') {
+    go('feed');
+    setFeedSubTab('activities');
+    setQuestTab('daily');
+  } else if (action === 'openFeed') {
+    go('feed');
+    setFeedSubTab('activities');
+  } else if (action === 'openRecommend') {
+    openRecommendMealModal();
+  } else if (action === 'openSheet') {
+    openSheet();
+  } else if (action === 'openToday') {
+    go('today');
+  }
+}
+
+function testNotificationFromDrawer() {
+  pushMojiNotification({
+    type: 'meal',
+    icon: '🍱',
+    title: 'ทดสอบแจ้งเตือนจากโมจิ! 🍡',
+    body: 'ระบบแจ้งเตือนมื้ออาหาร น้ำดื่ม ภารกิจ และแก๊งเพื่อน พร้อมใช้งานอย่างสมบูรณ์แล้ว!',
+    action: 'openToday',
+    actionLabel: '🍡 หน้าแรก'
+  });
+  toast('ส่งการแจ้งเตือนทดสอบแล้ว 🔔');
+}
+
+function openNotificationSettingsModal() {
+  const modal = document.getElementById('notificationSettingsModal');
+  if (!modal) return;
+  modal.hidden = false;
+  renderNotificationSettingsModal();
+}
+
+function closeNotificationSettingsModal() {
+  const modal = document.getElementById('notificationSettingsModal');
+  if (modal) modal.hidden = true;
+}
+
+function renderNotificationSettingsModal() {
+  const modal = document.getElementById('notificationSettingsModal');
+  if (!modal) return;
+  const s = getNotifSettings();
+  const permGranted = ('Notification' in window && Notification.permission === 'granted');
+  const permDenied = ('Notification' in window && Notification.permission === 'denied');
+
+  modal.innerHTML = `
+    <div class="notif-drawer-backdrop" onclick="closeNotificationSettingsModal()"></div>
+    <div class="notif-settings-dialog">
+      <div class="notif-settings-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">⚙️</span>
+          <h2 style="font-size:16.5px; font-weight:800; margin:0; font-family:'Mali',sans-serif; color:var(--ink);">ตั้งค่าการแจ้งเตือน</h2>
+        </div>
+        <button class="notif-icon-action-btn close" onclick="closeNotificationSettingsModal()">✕</button>
+      </div>
+
+      <div class="notif-settings-body">
+        <!-- Browser Push Permission Banner -->
+        <div style="background:${permGranted ? '#F0FDF4' : '#FFFBEB'}; border:1.5px solid ${permGranted ? '#BBF7D0' : '#FDE68A'}; border-radius:16px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:24px;">${permGranted ? '🔔' : '🔕'}</span>
+            <div>
+              <b style="font-size:13px; color:var(--ink); display:block;">
+                ${permGranted ? 'เปิดรับแจ้งเตือนเบราว์เซอร์แล้ว' : permDenied ? 'การแจ้งเตือนถูกปิดกั้น' : 'เปิดรับการแจ้งเตือนเบราว์เซอร์'}
+              </b>
+              <span style="font-size:11px; color:var(--mute);">
+                ${permGranted ? 'ระบบจะส่งการแจ้งเตือนแม้ไม่ได้เปิดหน้าแอปอยู่' : permDenied ? 'กรุณาเปิดสิทธิ์ในตั้งค่าเบราว์เซอร์เพื่อรับการแจ้งเตือน' : 'แตะเพื่อรับแจ้งเตือนเตือนกินข้าว ดื่มน้ำ และเพื่อน'}
+              </span>
+            </div>
+          </div>
+          ${!permGranted ? `
+            <button class="btn sm" style="font-size:11.5px; padding:6px 12px; white-space:nowrap; flex-shrink:0;" onclick="requestNotificationPermission()">
+              ${permDenied ? 'วิธีเปิดสิทธิ์' : 'เปิดรับสิทธิ์'}
+            </button>
+          ` : `
+            <span class="badge ok" style="font-size:11px; flex-shrink:0;">✓ ใช้งานได้</span>
+          `}
+        </div>
+
+        <!-- Master Switch & Sound -->
+        <div class="notif-settings-box">
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:13px; color:var(--ink); display:block;">เปิดระบบแจ้งเตือนทั้งหมด</b>
+              <span style="font-size:11px; color:var(--mute);">เปิด/ปิดการแจ้งเตือนทั้งในแอปและอุปกรณ์</span>
+            </div>
+            <label class="notif-switch">
+              <input type="checkbox" id="notifSetEnabled" ${s.enabled ? 'checked' : ''}>
+              <span class="notif-slider"></span>
+            </label>
+          </div>
+          <div class="notif-toggle-row" style="margin-top:4px;">
+            <div>
+              <b style="font-size:13px; color:var(--ink); display:block;">🔊 เสียงกระดิ่งโมจิน่ารัก (Sound Chime)</b>
+              <span style="font-size:11px; color:var(--mute);">ส่งเสียงเตือนนุ่มนวลเวลาแจ้งเตือนเข้า</span>
+            </div>
+            <label class="notif-switch">
+              <input type="checkbox" id="notifSetSound" ${s.sound ? 'checked' : ''}>
+              <span class="notif-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Meal Reminders -->
+        <div class="notif-settings-box">
+          <div class="notif-settings-box-title">
+            <span>🍱</span>
+            <span>เตือนมื้ออาหาร (Meal Reminders)</span>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">☀️ มื้อเช้า</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนเติมพลังมื้อแรกของวัน</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="time" id="notifSetBreakfastTime" class="notif-time-input" value="${s.mealBreakfastTime || '08:30'}">
+              <label class="notif-switch">
+                <input type="checkbox" id="notifSetBreakfast" ${s.mealBreakfast ? 'checked' : ''}>
+                <span class="notif-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">🍱 มื้อกลางวัน</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนพักทานข้าวเที่ยงตรงเวลา</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="time" id="notifSetLunchTime" class="notif-time-input" value="${s.mealLunchTime || '12:00'}">
+              <label class="notif-switch">
+                <input type="checkbox" id="notifSetLunch" ${s.mealLunch ? 'checked' : ''}>
+                <span class="notif-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">🥗 มื้อเย็น</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนอาหารเย็นเพื่อสุขภาพ</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="time" id="notifSetDinnerTime" class="notif-time-input" value="${s.mealDinnerTime || '18:30'}">
+              <label class="notif-switch">
+                <input type="checkbox" id="notifSetDinner" ${s.mealDinner ? 'checked' : ''}>
+                <span class="notif-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div style="font-size:10.5px; color:var(--mute); margin-top:8px; line-height:1.4;">
+            💡 <i>ระบบอัจฉริยะ: หากคุณบันทึกมื้ออาหารไปแล้ว ระบบจะไม่ส่งข้อความเตือนซ้ำให้รำคาญใจ</i>
+          </div>
+        </div>
+
+        <!-- Water Reminders -->
+        <div class="notif-settings-box">
+          <div class="notif-settings-box-title">
+            <span>💧</span>
+            <span>เตือนดื่มน้ำ (Water Reminders)</span>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">เตือนจิบน้ำสม่ำเสมอ</b>
+              <span style="font-size:11px; color:var(--mute);">ช่วยกระตุ้นให้ดื่มน้ำครบเป้าหมาย</span>
+            </div>
+            <label class="notif-switch">
+              <input type="checkbox" id="notifSetWater" ${s.waterEnabled ? 'checked' : ''}>
+              <span class="notif-slider"></span>
+            </label>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">ความถี่ในการเตือน</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนระหว่างช่วง 08:00 - 22:00 น.</span>
+            </div>
+            <select id="notifSetWaterInterval" class="notif-time-input" style="padding:4px 6px;">
+              <option value="1" ${Number(s.waterInterval) === 1 ? 'selected' : ''}>ทุก 1 ชั่วโมง</option>
+              <option value="1.5" ${Number(s.waterInterval) === 1.5 ? 'selected' : ''}>ทุก 1.5 ชั่วโมง</option>
+              <option value="2" ${Number(s.waterInterval) === 2 ? 'selected' : ''}>ทุก 2 ชั่วโมง</option>
+              <option value="3" ${Number(s.waterInterval) === 3 ? 'selected' : ''}>ทุก 3 ชั่วโมง</option>
+            </select>
+          </div>
+
+          <div style="font-size:10.5px; color:var(--mute); margin-top:8px; line-height:1.4;">
+            ✨ <i>เตือนเฉพาะตอนยังไม่ครบเป้า และหยุดเตือนอัตโนมัติทันทีที่ดื่มน้ำครบเป้าหมายประจำวัน</i>
+          </div>
+        </div>
+
+        <!-- Quests & Coins -->
+        <div class="notif-settings-box">
+          <div class="notif-settings-box-title">
+            <span>🎯</span>
+            <span>เตือนภารกิจ & รับเหรียญ (Quests & Rewards)</span>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">เตือนภารกิจ & รางวัลเหรียญ</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนเมื่อทำภารกิจสำเร็จและเตือนก่อนหมดวัน</span>
+            </div>
+            <label class="notif-switch">
+              <input type="checkbox" id="notifSetQuest" ${s.questEnabled ? 'checked' : ''}>
+              <span class="notif-slider"></span>
+            </label>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">เวลาเตือนภารกิจตอนค่ำ</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนเก็บแต้มรักษาสถิติ Streak</span>
+            </div>
+            <input type="time" id="notifSetQuestTime" class="notif-time-input" value="${s.questTime || '19:30'}">
+          </div>
+        </div>
+
+        <!-- Social Activity -->
+        <div class="notif-settings-box">
+          <div class="notif-settings-box-title">
+            <span>👥</span>
+            <span>กิจกรรมเพื่อนในแก๊ง (Social & Gang)</span>
+          </div>
+
+          <div class="notif-toggle-row">
+            <div>
+              <b style="font-size:12.5px; color:var(--ink); display:block;">แจ้งเตือนเพื่อนลงโพสต์ใหม่</b>
+              <span style="font-size:11px; color:var(--mute);">เตือนเมื่อเพื่อนลงรูปอาหารหรือแชร์กิจกรรม</span>
+            </div>
+            <label class="notif-switch">
+              <input type="checkbox" id="notifSetSocial" ${s.socialEnabled ? 'checked' : ''}>
+              <span class="notif-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:14px 20px; background:var(--card); border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <button class="btn s sm" onclick="testNotificationFromDrawer()" style="font-size:12px; padding:8px 14px; border-radius:12px;">
+          🧪 ทดสอบแจ้งเตือน
+        </button>
+        <button class="btn sm" onclick="saveNotificationSettingsFromModal()" style="font-size:12px; padding:8px 18px; border-radius:12px;">
+          💾 บันทึกการตั้งค่า
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function saveNotificationSettingsFromModal() {
+  const settings = {
+    enabled: document.getElementById('notifSetEnabled')?.checked ?? true,
+    sound: document.getElementById('notifSetSound')?.checked ?? true,
+    mealBreakfast: document.getElementById('notifSetBreakfast')?.checked ?? true,
+    mealBreakfastTime: document.getElementById('notifSetBreakfastTime')?.value || '08:30',
+    mealLunch: document.getElementById('notifSetLunch')?.checked ?? true,
+    mealLunchTime: document.getElementById('notifSetLunchTime')?.value || '12:00',
+    mealDinner: document.getElementById('notifSetDinner')?.checked ?? true,
+    mealDinnerTime: document.getElementById('notifSetDinnerTime')?.value || '18:30',
+    waterEnabled: document.getElementById('notifSetWater')?.checked ?? true,
+    waterInterval: Number(document.getElementById('notifSetWaterInterval')?.value) || 2,
+    questEnabled: document.getElementById('notifSetQuest')?.checked ?? true,
+    questTime: document.getElementById('notifSetQuestTime')?.value || '19:30',
+    socialEnabled: document.getElementById('notifSetSocial')?.checked ?? true
+  };
+
+  saveNotifSettings(settings);
+  toast('บันทึกการตั้งค่าการแจ้งเตือนแล้ว 🔔');
+  closeNotificationSettingsModal();
+  if (typeof renderSettings === 'function' && tab === 'settings') {
+    renderSettings();
+  }
+}
+
+function checkMealNotificationTriggers() {
+  if (!currentUser) return;
+  const settings = getNotifSettings();
+  if (!settings.enabled) return;
+
+  const now = new Date();
+  const todayStr = key();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+  const parseTimeToMinutes = (timeStr, defaultH, defaultM) => {
+    if (!timeStr || !timeStr.includes(':')) return defaultH * 60 + defaultM;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const triggersState = getNotifTriggersState();
+
+  // Breakfast Check
+  if (settings.mealBreakfast && triggersState.lastBreakfastDate !== todayStr) {
+    const bfMinutes = parseTimeToMinutes(settings.mealBreakfastTime, 8, 30);
+    if (currentTimeMinutes >= bfMinutes && currentTimeMinutes < (11 * 60)) {
+      const mealLogs = (currentLogs || []).filter(l => !l.name || !l.name.includes('น้ำเปล่า'));
+      if (mealLogs.length === 0) {
+        triggersState.lastBreakfastDate = todayStr;
+        saveNotifTriggersState(triggersState);
+        pushMojiNotification({
+          type: 'meal',
+          icon: '🥪',
+          title: 'อรุณสวัสดิ์! ได้เวลาเติมพลังมื้อเช้าแล้ว ☀️',
+          body: 'เริ่มต้นวันใหม่อย่างสดใส ทานมื้อเช้าที่มีประโยชน์แล้วอย่าลืมถ่ายรูปมาให้โมจิดูนะ',
+          action: 'openCamera',
+          actionLabel: '📷 ถ่ายรูปมื้อเช้า'
+        });
+        return;
+      }
+    }
+  }
+
+  // Lunch Check
+  if (settings.mealLunch && triggersState.lastLunchDate !== todayStr) {
+    const lunchMinutes = parseTimeToMinutes(settings.mealLunchTime, 12, 0);
+    if (currentTimeMinutes >= lunchMinutes && currentTimeMinutes < (14 * 60 + 30)) {
+      const mealLogs = (currentLogs || []).filter(l => !l.name || !l.name.includes('น้ำเปล่า'));
+      if (mealLogs.length < 2) {
+        triggersState.lastLunchDate = todayStr;
+        saveNotifTriggersState(triggersState);
+        pushMojiNotification({
+          type: 'meal',
+          icon: '🍱',
+          title: 'เที่ยงแล้ว! พักทานข้าวกลางวันกันเถอะ 🍱',
+          body: 'อย่าปล่อยให้ท้องร้องน้า แวะพักสายตาแล้วเติมพลังด้วยมื้อกลางวันอร่อยๆ กันดีกว่า',
+          action: 'openRecommend',
+          actionLabel: '💡 แนะนำเมนู'
+        });
+        return;
+      }
+    }
+  }
+
+  // Dinner Check
+  if (settings.mealDinner && triggersState.lastDinnerDate !== todayStr) {
+    const dinnerMinutes = parseTimeToMinutes(settings.mealDinnerTime, 18, 30);
+    if (currentTimeMinutes >= dinnerMinutes && currentTimeMinutes < (21 * 60 + 30)) {
+      triggersState.lastDinnerDate = todayStr;
+      saveNotifTriggersState(triggersState);
+      pushMojiNotification({
+        type: 'meal',
+        icon: '🥗',
+        title: 'เย็นแล้ว ได้เวลาอาหารมื้อเย็นแสนอร่อย 🥗',
+        body: 'มื้อเย็นเลือกเมนูเบาๆ ย่อยง่าย หรือให้โมจิ AI แนะนำเมนูตามโควต้าแคลอรี่ที่เหลือได้นะ',
+        action: 'openRecommend',
+        actionLabel: '💡 แนะนำเมนู'
+      });
+      return;
+    }
+  }
+
+  // Evening Quest Reminder
+  if (settings.questEnabled && triggersState.lastQuestEveningDate !== todayStr) {
+    const questMinutes = parseTimeToMinutes(settings.questTime, 19, 30);
+    if (currentTimeMinutes >= questMinutes && currentTimeMinutes < (23 * 60)) {
+      const daily = userQuests?.daily || [];
+      const hasUnfinished = daily.some(q => !q.completed && !q.claimed);
+      if (hasUnfinished) {
+        triggersState.lastQuestEveningDate = todayStr;
+        saveNotifTriggersState(triggersState);
+        pushMojiNotification({
+          type: 'quest',
+          icon: '🎯',
+          title: 'ภารกิจประจำวันใกล้หมดเวลาแล้วน้า 🎯',
+          body: 'เหลืออีกนิดเดียวจะครบภารกิจวันนี้ เข้ามาทำภารกิจเพื่อรักษาสถิติ Streak และสะสมเหรียญกันนะ',
+          action: 'openQuests',
+          actionLabel: '🎯 ดูภารกิจ'
+        });
+        return;
+      }
+    }
+  }
+}
+
+function checkWaterNotificationTriggers() {
+  if (!currentUser) return;
+  const settings = getNotifSettings();
+  if (!settings.enabled || !settings.waterEnabled) return;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  if (currentHour < 8 || currentHour >= 22) return;
+
+  const triggersState = getNotifTriggersState();
+  const intervalHours = Number(settings.waterInterval) || 2;
+  const intervalMs = intervalHours * 60 * 60 * 1000;
+
+  const lastTrigger = triggersState.lastWaterTrigger || 0;
+  if (Date.now() - lastTrigger < intervalMs) return;
+
+  const waterBottleMl = Number(currentUser?.water_bottle_ml) || 500;
+  const waterDailyTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const waterLogs = (currentLogs || []).filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const totalWaterMl = waterLogs.reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
+
+  if (totalWaterMl >= waterDailyTarget) return;
+
+  triggersState.lastWaterTrigger = Date.now();
+  saveNotifTriggersState(triggersState);
+
+  const targetRounds = Math.max(1, Math.ceil(waterDailyTarget / waterBottleMl));
+  const roundsCompleted = Math.min(targetRounds, Math.floor(totalWaterMl / waterBottleMl));
+
+  pushMojiNotification({
+    type: 'water',
+    icon: '💧',
+    title: 'โมจิชวนดื่มน้ำ! เติมความสดชื่นกันหน่อย 💧',
+    body: `วันนี้ดื่มไปแล้ว ${roundsCompleted}/${targetRounds} รอบ (${fmt(totalWaterMl)} / ${fmt(waterDailyTarget)} ml) จิบน้ำอีกนิดเพื่อผิวสวยและสมองปลอดโปร่งนะ`,
+    action: 'triggerWater',
+    actionLabel: '💧 ดื่มน้ำทันที'
+  });
+}
+
+function checkFriendPostNotifications(posts) {
+  if (!posts || !Array.isArray(posts) || posts.length === 0 || !currentUser) return;
+  const settings = getNotifSettings();
+  if (!settings.enabled || !settings.socialEnabled) return;
+
+  const triggersState = getNotifTriggersState();
+  const seenIds = new Set(triggersState.seenPostIds || []);
+
+  const friendPosts = posts.filter(p => p.user_id !== currentUser.id && !p.is_me);
+  if (friendPosts.length === 0) return;
+
+  if (!triggersState.seenPostIds || triggersState.seenPostIds.length === 0) {
+    triggersState.seenPostIds = friendPosts.map(p => p.id).slice(0, 50);
+    saveNotifTriggersState(triggersState);
+    return;
+  }
+
+  const newPosts = friendPosts.filter(p => !seenIds.has(p.id));
+  if (newPosts.length > 0) {
+    const latestPost = newPosts[0];
+    const isMeal = latestPost.type === 'meal';
+    const isWater = latestPost.type === 'water';
+    const descText = isMeal 
+      ? `ลงรูปอาหาร "${latestPost.dish_name || 'มื้ออร่อย'}" (${fmt(latestPost.calorie)} kcal)` 
+      : isWater 
+      ? 'ดื่มน้ำเติมความสดชื่นแล้ว 💧' 
+      : 'อัปเดตกิจกรรมใหม่ในแก๊ง 🎉';
+
+    pushMojiNotification({
+      type: 'social',
+      icon: isMeal ? '🍱' : isWater ? '💧' : '👥',
+      title: `👥 ${latestPost.nickname || 'เพื่อน'} มีโพสต์ใหม่!`,
+      body: `${latestPost.nickname} ${descText} แตะเพื่อดูและส่งหัวใจเป็นกำลังใจกันเถอะ ❤️`,
+      action: 'openFeed',
+      actionLabel: '👥 ดูโพสต์เพื่อน'
+    });
+
+    newPosts.forEach(p => seenIds.add(p.id));
+    triggersState.seenPostIds = Array.from(seenIds).slice(0, 100);
+    saveNotifTriggersState(triggersState);
+  }
+}
+
+function checkClaimableQuestNotifications(quests) {
+  if (!quests || !currentUser) return;
+  const settings = getNotifSettings();
+  if (!settings.enabled || !settings.questEnabled) return;
+
+  const triggersState = getNotifTriggersState();
+  const notifiedIds = new Set(triggersState.notifiedClaimableQuests || []);
+
+  const allQuests = [
+    ...(quests.daily || []),
+    ...(quests.weekly || []),
+    ...(quests.main || [])
+  ];
+
+  const claimable = allQuests.filter(q => (q.completed || q.claimable) && !q.claimed);
+  for (const q of claimable) {
+    if (!notifiedIds.has(q.id)) {
+      notifiedIds.add(q.id);
+      const coins = q.rewardCoins ?? q.reward_coins ?? q.coins ?? 10;
+      pushMojiNotification({
+        type: 'quest',
+        icon: '🎁',
+        title: `ภารกิจสำเร็จแล้ว! (+${coins} 🪙)`,
+        body: `คุณทำภารกิจ "${q.title}" สำเร็จแล้ว แตะเพื่อรับเหรียญรางวัลเลย`,
+        action: 'openQuests',
+        actionLabel: '🎁 รับรางวัล'
+      });
+    }
+  }
+
+  triggersState.notifiedClaimableQuests = Array.from(notifiedIds);
+  saveNotifTriggersState(triggersState);
+}
+
+function initNotificationScheduler() {
+  updateNotificationBadge();
+  
+  setTimeout(() => {
+    checkMealNotificationTriggers();
+    checkWaterNotificationTriggers();
+  }, 3000);
+
+  if (notifSchedulerInterval) clearInterval(notifSchedulerInterval);
+  notifSchedulerInterval = setInterval(() => {
+    checkMealNotificationTriggers();
+    checkWaterNotificationTriggers();
+  }, 30000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      updateNotificationBadge();
+      checkMealNotificationTriggers();
+      checkWaterNotificationTriggers();
+    }
+  });
+}
+
 
 // Render Views
 function render() {
@@ -7080,7 +8555,9 @@ function setFeedSubTab(subTab) {
 
 function formatTimeAgo(ts) {
   if (!ts) return '';
-  const diff = Date.now() - ts;
+  const timeMs = typeof ts === 'number' ? ts : (new Date(ts).getTime() || 0);
+  if (!timeMs) return '';
+  const diff = Math.max(0, Date.now() - timeMs);
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'เมื่อสักครู่';
   if (m < 60) return `${m} นาทีที่แล้ว`;
@@ -9776,17 +11253,17 @@ async function renderSettings() {
         </div>
       </div>
 
-      <div class="settings-row" onclick="enablePushNotifications()">
+      <div class="settings-row" onclick="openNotificationSettingsModal()">
         <div class="settings-row-left">
           <div class="settings-icon-box" style="background:#FFF0E0; color:#D96B00;">🔔</div>
           <div>
-            <span class="settings-label-title">การแจ้งเตือน (Push Notifications)</span>
-            <span class="settings-label-sub">เตือนมื้ออาหาร น้ำตาลใกล้เต็ม และเตือนดื่มน้ำ</span>
+            <span class="settings-label-title">การแจ้งเตือน (Notifications & Reminders)</span>
+            <span class="settings-label-sub">เตือนมื้ออาหาร ดื่มน้ำ ภารกิจ และเพื่อนโพสต์</span>
           </div>
         </div>
         <div class="settings-row-right">
           <span class="badge ${('Notification' in window && Notification.permission === 'granted') ? 'ok' : 'warn'}">
-            ${('Notification' in window && Notification.permission === 'granted') ? 'เปิดแล้ว' : 'แตะเปิด'}
+            ${('Notification' in window && Notification.permission === 'granted') ? 'เปิดแล้ว' : 'ตั้งค่า'}
           </span>
           <span class="settings-chev">›</span>
         </div>
@@ -14335,6 +15812,11 @@ async function installPwaApp() {
     fetchWeightLogs()
   ]);
   render();
+
+  // Initialize Notification Scheduler & Badge Counter
+  if (typeof initNotificationScheduler === 'function') {
+    initNotificationScheduler();
+  }
 
   // Trigger PWA banner after initial load if not standalone
   setTimeout(renderPwaBanner, 1500);
