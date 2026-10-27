@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const settingsFile = path.join(__dirname, 'data', 'settings.json');
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+const settingsFile = path.join(dataDir, 'settings.json');
 
 // Centralized AI Model Name (Pillar 2: Easy single-place modification)
 export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';

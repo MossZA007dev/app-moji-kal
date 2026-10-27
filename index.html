@@ -4445,14 +4445,50 @@ async function fetchUsers() {
 
 async function fetchLogs() {
   if (!currentUser) return;
+  const storageKey = `mochi_logs_${currentUser.id}_${key()}`;
   try {
     const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${key()}`, {
       headers: { 'x-user-id': currentUser.id }
     });
     const data = await res.json();
-    currentLogs = data.logs || [];
+    const serverLogs = data.logs || [];
+
+    // Self-Healing: If server redeployed and has empty logs, but client has cached logs today, restore them!
+    if (serverLogs.length === 0) {
+      const cachedLogsStr = localStorage.getItem(storageKey);
+      if (cachedLogsStr) {
+        try {
+          const cached = JSON.parse(cachedLogsStr);
+          if (Array.isArray(cached) && cached.length > 0) {
+            console.log('[Auto-Sync] Restoring cached logs to fresh server:', cached.length);
+            for (const item of cached) {
+              await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+                body: JSON.stringify({ ...item, userId: currentUser.id, date: key() })
+              });
+            }
+            const refetched = await fetch(`/api/logs?userId=${currentUser.id}&date=${key()}`, {
+              headers: { 'x-user-id': currentUser.id }
+            });
+            const refData = await refetched.json();
+            currentLogs = refData.logs || cached;
+            return;
+          }
+        } catch (_) {}
+      }
+    }
+
+    currentLogs = serverLogs;
+    if (serverLogs.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(serverLogs));
+    }
   } catch (err) {
     console.error('Fetch logs error:', err);
+    const cached = localStorage.getItem(storageKey);
+    if (cached) {
+      try { currentLogs = JSON.parse(cached); } catch (_) {}
+    }
   }
 }
 
