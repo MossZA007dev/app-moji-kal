@@ -2030,6 +2030,382 @@ textarea { resize: none; margin-bottom: 8px; }
   padding: 14px;
   margin-bottom: 12px;
 }
+
+/* Instagram-Style Stories Tray */
+.ig-stories-tray {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 14px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ig-stories-tray::-webkit-scrollbar { display: none; }
+.ig-story-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 66px;
+}
+.ig-story-avatar-wrap {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ig-story-avatar-wrap.achieved {
+  background: linear-gradient(135deg, #F59E0B, #10B981, #3B82F6);
+}
+.ig-story-avatar-wrap.idle {
+  background: var(--line);
+}
+.ig-story-item:hover .ig-story-avatar-wrap,
+.ig-story-item:active .ig-story-avatar-wrap {
+  transform: scale(1.06);
+}
+.ig-story-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  background: var(--card);
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.ig-story-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ig-story-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 9px;
+  font-weight: 800;
+  background: var(--ink);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 10px;
+  border: 1.5px solid var(--bg);
+  line-height: 1.2;
+}
+.ig-story-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Instagram-Style Post Card */
+.ig-post-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.035);
+  transition: transform 0.15s ease;
+}
+.ig-post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+.ig-post-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.ig-post-user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--pink), var(--mint));
+  flex-shrink: 0;
+}
+.ig-post-user-avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px solid var(--bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+}
+.ig-post-user-avatar-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ig-post-meta {
+  display: flex;
+  flex-direction: column;
+}
+.ig-post-author {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ig-post-time {
+  font-size: 11px;
+  color: var(--mute);
+}
+.ig-post-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 12px;
+  letter-spacing: 0.2px;
+}
+.ig-post-pill.meal { background: var(--pinkS); color: var(--pink-ink); border: 1px solid var(--pink); }
+.ig-post-pill.water { background: rgba(56, 189, 248, 0.15); color: #0284C7; border: 1px solid rgba(56, 189, 248, 0.4); }
+.ig-post-pill.goal { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+.ig-post-pill.challenge { background: #EDE9FE; color: #6D28D9; border: 1px solid #C4B5FD; }
+.ig-post-pill.shop { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+
+/* IG Post Media / Content Hero */
+.ig-post-media-wrap {
+  position: relative;
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+  max-height: 380px;
+}
+.ig-post-media-img {
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+  display: block;
+}
+.ig-post-floating-tag {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ig-post-dish-box {
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(255,158,181,0.06), rgba(111,203,176,0.06));
+}
+.ig-post-dish-title {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Mali', sans-serif;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.ig-post-nutri-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ig-nutri-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.ig-post-water-box {
+  padding: 16px 14px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(14, 165, 233, 0.06));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ig-post-goal-box {
+  padding: 16px 14px;
+  background: linear-gradient(135deg, rgba(254, 240, 138, 0.3), rgba(251, 191, 36, 0.15));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Post Actions (Like, Cheer) */
+.ig-post-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+}
+.ig-action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ig-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ig-action-btn:active {
+  transform: scale(0.9);
+}
+.ig-action-btn.liked {
+  color: #E11D48;
+}
+.ig-action-btn.liked .heart-icon {
+  animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.ig-likes-text {
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+/* Post Comments / Cheers */
+.ig-comments-list {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ig-comment-item {
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.4;
+  background: var(--bg);
+  padding: 4px 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+.ig-comment-item b {
+  font-family: 'Mali', sans-serif;
+  margin-right: 4px;
+}
+
+/* Quick Cheer Popup Pills */
+.quick-cheer-tray {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 14px 10px;
+  scrollbar-width: none;
+}
+.quick-cheer-tray::-webkit-scrollbar { display: none; }
+.quick-cheer-pill {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.quick-cheer-pill:hover,
+.quick-cheer-pill:active {
+  background: var(--pinkS);
+  border-color: var(--pink);
+  transform: translateY(-1px);
+}
+
+/* Category Filter Pills for IG Feed */
+.ig-filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+.ig-filter-bar::-webkit-scrollbar { display: none; }
+.ig-filter-btn {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--mute);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+.ig-filter-btn.active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* Profile Photo Upload Avatar Wrapper */
+.profile-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+.profile-avatar-wrap .camera-badge {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  background: #3B82F6;
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
 .friend-header {
   display: flex;
   justify-content: space-between;
@@ -3525,6 +3901,9 @@ let feedSubTab = 'activities'; // 'activities' | 'leaderboard' | 'members'
 let activitiesData = [];
 let leaderboardData = [];
 let leaderboardSort = 'goal'; // 'goal' | 'coins'
+let socialPosts = [];
+let gangStories = [];
+let socialFeedFilter = 'all'; // 'all' | 'meal' | 'water' | 'goal'
 let draft = null;
 let appSettings = {};
 let isListeningVoice = false;
@@ -3768,14 +4147,183 @@ async function fetchLogs() {
 async function fetchFeed() {
   if (!currentUser) return;
   try {
-    const res = await fetch(`/api/feed?date=${key()}&userId=${currentUser.id}`, {
-      headers: { 'x-user-id': currentUser.id }
-    });
-    const data = await res.json();
+    const [feedRes, socRes] = await Promise.all([
+      fetch(`/api/feed?date=${key()}&userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
+      fetch(`/api/feed/social?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } })
+    ]);
+    const data = await feedRes.json();
     feedData = data.feed || [];
+    const socData = await socRes.json();
+    if (socData.success) {
+      socialPosts = socData.posts || [];
+      gangStories = socData.stories || [];
+    }
   } catch (err) {
     console.error('Fetch feed error:', err);
   }
+}
+
+// -------------------------------------------------------------
+// LINE-Style Profile Photo Helpers (Client-side Compression & Storage)
+// -------------------------------------------------------------
+function compressProfileImage(file, maxSize = 300) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      return reject(new Error('กรุณาเลือกไฟล์รูปภาพ'));
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const width = img.width;
+        const height = img.height;
+        const minDim = Math.min(width, height);
+        const startX = (width - minDim) / 2;
+        const startY = (height - minDim) / 2;
+        const targetDim = Math.min(maxSize, minDim);
+        canvas.width = targetDim;
+        canvas.height = targetDim;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, targetDim, targetDim);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('โหลดรูปภาพไม่สำเร็จ'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadProfilePhoto(file) {
+  if (!file) return;
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  try {
+    toast('กำลังย่อและบันทึกรูปโปรไฟล์... 📸');
+    const base64 = await compressProfileImage(file, 320);
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar_image: base64 })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      updateUserHeader();
+      toast('อัปเดตรูปโปรไฟล์เหมือน LINE เรียบร้อยแล้ว! 📸✨');
+      fireConfetti();
+      openMyProfileModal();
+      render();
+    }
+  } catch (err) {
+    console.error(err);
+    toast(err.message || 'บันทึกรูปโปรไฟล์ไม่สำเร็จ');
+  }
+}
+
+async function removeProfilePhoto() {
+  if (!currentUser) return;
+  if (!confirm('ต้องการลบรูปโปรไฟล์และกลับไปใช้ตัวละครโมจิใช่หรือไม่?')) return;
+  try {
+    const res = await fetch(`/api/users/${currentUser.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar_image: null })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      updateUserHeader();
+      toast('กลับมาใช้ตัวละครโมจิเรียบร้อยแล้ว 🍡');
+      openMyProfileModal();
+      render();
+    }
+  } catch (e) {
+    toast('เกิดข้อผิดพลาดในการเปลี่ยนรูป');
+  }
+}
+
+// -------------------------------------------------------------
+// Instagram Feed Interactions (Like, Cheer & Filter)
+// -------------------------------------------------------------
+async function toggleLikePost(postId) {
+  if (!currentUser) return toast('กรุณาเลือกโปรไฟล์ก่อน');
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId, reactionType: 'heart' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const p = socialPosts.find(x => x.id === postId);
+      if (p) {
+        if (!p.reactions) p.reactions = { likes_count: 0, liked_by_me: false, likers: [], comments: [] };
+        if (data.liked) {
+          p.reactions.likes_count += 1;
+          p.reactions.liked_by_me = true;
+          if (!p.reactions.likers.includes(currentUser.nickname)) {
+            p.reactions.likers.push(currentUser.nickname);
+          }
+          fireConfetti();
+          toast('❤️ ส่งหัวใจให้เพื่อนแล้ว (+1 🪙)');
+        } else {
+          p.reactions.likes_count = Math.max(0, p.reactions.likes_count - 1);
+          p.reactions.liked_by_me = false;
+          p.reactions.likers = p.reactions.likers.filter(n => n !== currentUser.nickname);
+        }
+        renderFeed();
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function toggleCheerTray(postId) {
+  const el = $(`#cheerTray_${postId}`);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  }
+}
+
+async function sendQuickCheer(postId, cheerText) {
+  if (!currentUser) return toast('กรุณาเลือกโปรไฟล์ก่อน');
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId, commentText: cheerText })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const p = socialPosts.find(x => x.id === postId);
+      if (p) {
+        if (!p.reactions) p.reactions = { likes_count: 0, liked_by_me: false, likers: [], comments: [] };
+        p.reactions.comments.push({
+          id: data.commentId,
+          user_id: currentUser.id,
+          nickname: currentUser.nickname,
+          avatar_image: currentUser.avatar_image,
+          text: cheerText,
+          created_at: Date.now()
+        });
+        toast(`ส่งกำลังใจ "${cheerText}" ให้เพื่อนแล้ว (+1 🪙) 💖`);
+        renderFeed();
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function setSocialFeedFilter(filter) {
+  socialFeedFilter = filter;
+  renderFeed();
 }
 
 async function fetchActivities() {
@@ -5418,155 +5966,233 @@ function renderFeed() {
     <!-- Sub-tab Switcher (Dashboard / Leaderboard / Members) -->
     <div class="feed-tabs">
       <button class="feed-tab-btn ${feedSubTab === 'activities' ? 'active' : ''}" onclick="setFeedSubTab('activities')">
-        <span>⚡ กิจกรรม & มื้อ</span>
+        <span>📸 ฟีดแก๊งสไตล์ IG</span>
       </button>
       <button class="feed-tab-btn ${feedSubTab === 'leaderboard' ? 'active' : ''}" onclick="setFeedSubTab('leaderboard')">
         <span>🏆 อันดับลีดเดอร์บอร์ด</span>
       </button>
       <button class="feed-tab-btn ${feedSubTab === 'members' ? 'active' : ''}" onclick="setFeedSubTab('members')">
-        <span>👥 สมาชิก (${users.length})</span>
+        <span>👥 สมาชิก & มื้อวันนี้</span>
       </button>
     </div>
 
-    <!-- VIEW 1: Activities & Daily Meals Feed -->
+    <!-- VIEW 1: Instagram-Style Social Feed (Feed IG) -->
     ${feedSubTab === 'activities' ? `
-      <!-- Recent Activities Stream Card -->
-      <div class="activity-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">⚡ กระดานความเคลื่อนไหวล่าสุด</b>
-          <span style="font-size:11px; color:var(--mute);">อัปเดตสด</span>
-        </div>
-        ${activitiesData.length ? activitiesData.slice(0, 6).map(act => `
-          <div class="activity-item">
-            <div class="mini-avatar" style="width:34px; height:34px; cursor:pointer;" onclick="openMemberDetailModal('${act.user_id}')" title="กดดูโปรไฟล์เพื่อน">
-              ${act.avatar_image ? `<img src="${esc(act.avatar_image)}" alt="">` : mascotSVG(act.avatar_face, act.avatar_color, 34, act.avatar_hat)}
+      <!-- Stories Tray -->
+      <div class="ig-stories-tray">
+        <!-- Add Meal Story -->
+        <div class="ig-story-item" onclick="openCameraModal()" title="ถ่ายรูป / บันทึกอาหารใหม่">
+          <div class="ig-story-avatar-wrap" style="background:linear-gradient(45deg, var(--pink), var(--mint));">
+            <div class="ig-story-avatar">
+              ${currentUser?.avatar_image ? `<img src="${esc(currentUser.avatar_image)}">` : mascotSVG(currentUser?.avatar_face || 'happy', currentUser?.avatar_color || '#FF9EB5', 52, currentUser?.avatar_hat)}
             </div>
-            <div class="activity-text">
-              <span style="cursor:pointer; font-weight:700; color:var(--ink);" onclick="openMemberDetailModal('${act.user_id}')">${esc(act.nickname)}:</span>
-              <span style="color:var(--ink); opacity:0.9;"> ${esc(act.text)}</span>
-            </div>
-            <span class="activity-time">${formatTimeAgo(act.created_at)}</span>
+            <div class="ig-story-badge" style="background:var(--pink); font-size:11px;">+</div>
           </div>
-        `).join('') : '<p style="color:var(--mute); font-size:12px; margin:4px 0;">ยังไม่มีกิจกรรมล่าสุด เริ่มต้นบันทึกอาหารหรือดื่มน้ำเพื่อรับคอยน์กันเลย 🍡</p>'}
+          <span class="ig-story-name">โพสต์มื้อใหม่</span>
+        </div>
+
+        <!-- Friends Stories -->
+        ${gangStories.map(s => {
+          const isRingGold = s.goal_achieved;
+          const ringClass = isRingGold ? 'achieved' : (s.today_meals > 0 || s.today_water_ml > 0) ? '' : 'idle';
+          const badgeText = s.goal_achieved ? '🎯 สำเร็จ' : s.today_meals > 0 ? `🍱 ${s.today_meals}` : s.today_water_ml > 0 ? `💧 ${(s.today_water_ml/1000).toFixed(1)}L` : `🔥 ${s.streak}d`;
+          return `
+            <div class="ig-story-item" onclick="openMemberDetailModal('${s.id}')" title="กดดูโปรไฟล์ของ ${esc(s.nickname)}">
+              <div class="ig-story-avatar-wrap ${ringClass}">
+                <div class="ig-story-avatar">
+                  ${s.avatar_image ? `<img src="${esc(s.avatar_image)}">` : mascotSVG(s.avatar_face, s.avatar_color, 52, s.avatar_hat)}
+                </div>
+                <div class="ig-story-badge">${badgeText}</div>
+              </div>
+              <span class="ig-story-name">${esc(s.nickname)} ${s.is_me ? '(ฉัน)' : ''}</span>
+            </div>
+          `;
+        }).join('')}
       </div>
 
-      <!-- Group Challenges Card -->
-      <div class="challenge-banner">
-        <h2 class="hd" style="font-size:16px; margin-bottom:4px;">🎯 ชาเลนจ์สุขภาพของแก๊งเรา</h2>
-        <p style="font-size:12px; margin:0 0 10px;">ร่วมทำภารกิจลดหวานสร้างนิสัยไปด้วยกันแบบไม่กดดัน (+15 🪙)</p>
-        
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          ${challenges.map(c => `
-            <div class="challenge-item">
+      <!-- Filter Pills -->
+      <div class="ig-filter-bar">
+        <button class="ig-filter-btn ${socialFeedFilter === 'all' ? 'active' : ''}" onclick="setSocialFeedFilter('all')">
+          🌐 ทั้งหมด (${socialPosts.length})
+        </button>
+        <button class="ig-filter-btn ${socialFeedFilter === 'meal' ? 'active' : ''}" onclick="setSocialFeedFilter('meal')">
+          🍱 มื้ออาหาร (${socialPosts.filter(p => p.type === 'meal').length})
+        </button>
+        <button class="ig-filter-btn ${socialFeedFilter === 'water' ? 'active' : ''}" onclick="setSocialFeedFilter('water')">
+          💧 ดื่มน้ำ (${socialPosts.filter(p => p.type === 'water').length})
+        </button>
+        <button class="ig-filter-btn ${socialFeedFilter === 'goal' ? 'active' : ''}" onclick="setSocialFeedFilter('goal')">
+          🎯 ภารกิจสำเร็จ (${socialPosts.filter(p => p.type === 'goal' || p.type === 'challenge').length})
+        </button>
+      </div>
+
+      <!-- Group Challenges Accordion / Banner -->
+      <div class="challenge-banner" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">🎯 ภารกิจชาเลนจ์สุขภาพของแก๊ง</b>
+          <span style="font-size:11px; color:var(--mute);">+15 🪙 คอยน์</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${challenges.slice(0, 2).map(c => `
+            <div class="challenge-item" style="padding:8px 10px;">
               <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:20px;">${c.icon}</span>
+                <span style="font-size:18px;">${c.icon}</span>
                 <div>
-                  <b style="font-size:13px; font-family:'Mali',sans-serif;">${esc(c.title)}</b>
-                  <div style="font-size:11px; color:var(--mute);">${esc(c.description)}</div>
+                  <b style="font-size:12.5px; font-family:'Mali',sans-serif;">${esc(c.title)}</b>
+                  <div style="font-size:10.5px; color:var(--mute);">${esc(c.description)}</div>
                 </div>
               </div>
               ${c.is_joined ? `
-                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                  <span class="badge ok">ร่วมแล้ว (${c.progress_days}/${c.target_days} วัน)</span>
-                  <button class="btn g sm" style="padding:4px 8px; font-size:11px;" onclick="leaveChallenge('${c.id}')" title="ออกจากชาเลนจ์">ออก</button>
-                </div>
+                <span class="badge ok" style="font-size:10px;">ร่วมแล้ว (${c.progress_days}/${c.target_days} วัน)</span>
               ` : `
-                <button class="btn s sm" style="flex-shrink:0;" onclick="joinChallenge('${c.id}')">+ เข้าร่วม (+15 🪙)</button>
+                <button class="btn s sm" style="font-size:11px; padding:3px 8px;" onclick="joinChallenge('${c.id}')">+ ร่วม</button>
               `}
             </div>
           `).join('')}
         </div>
       </div>
 
-      <!-- Friends Daily Meals -->
-      <div style="margin: 6px 0 10px; font-weight:700; font-size:14px; font-family:'Mali',sans-serif;">🍱 มื้ออาหารของเพื่อนวันนี้:</div>
-      ${feedData.map(item => {
-        const u = item.user;
-        const s = item.stats;
-        const isOverSugar = s.sugar > u.sugar_goal;
-        const sugarStatus = isOverSugar ? 'alert' : s.sugar >= u.sugar_goal * 0.85 ? 'warn' : 'ok';
-        const statusLabel = isOverSugar ? 'น้ำตาลเกิน 🚨' : s.sugar >= u.sugar_goal * 0.85 ? 'ใกล้เต็มโควตา ⚠️' : s.meal_count === 0 ? 'ยังไม่บันทึก 💤' : 'หวานกำลังดี 🍡';
+      <!-- Feed Posts Stream -->
+      ${(() => {
+        const filteredPosts = socialPosts.filter(p => {
+          if (socialFeedFilter === 'meal') return p.type === 'meal';
+          if (socialFeedFilter === 'water') return p.type === 'water';
+          if (socialFeedFilter === 'goal') return p.type === 'goal' || p.type === 'challenge';
+          return true;
+        });
 
-        return `
-          <div class="friend-card">
-            <div class="friend-header">
-              <div class="friend-profile" style="cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
-                <div class="mini-avatar">
-                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" alt="">` : mascotSVG(u.avatar_face, u.avatar_color, 42, u.avatar_hat)}
-                </div>
-                <div>
-                  <b>${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
-                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
-                </div>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span class="badge ${sugarStatus}">${statusLabel}</span>
-                <button class="btn s sm" style="font-size:11px; padding:4px 8px;" onclick="openMemberDetailModal('${u.id}')">โปรไฟล์ 👤</button>
-              </div>
+        if (!filteredPosts.length) {
+          return `
+            <div style="text-align:center; padding:32px 16px; background:var(--card); border:1.5px dashed var(--line); border-radius:22px; margin-bottom:16px;">
+              <span style="font-size:38px; display:block; margin-bottom:8px;">📸</span>
+              <b style="font-size:14.5px; font-family:'Mali',sans-serif; color:var(--ink);">ยังไม่มีโพสต์ในหมวดนี้</b>
+              <p style="font-size:12px; color:var(--mute); margin:6px 0 14px;">ถ่ายรูปอาหารหรือดื่มน้ำเพื่อโพสต์ลงฟีดแก๊งเป็นคนแรกเลย!</p>
+              <button class="btn sm" onclick="openCameraModal()">📸 ถ่ายรูปบันทึกอาหาร</button>
             </div>
+          `;
+        }
 
-            <!-- Personalized Goal Card in Friend Feed -->
-            <div class="friend-goal-box ${item.today_goal?.achieved ? 'goal-achieved' : ''}">
-              <div style="display:flex; align-items:center; gap:8px; flex:1;">
-                <span style="font-size:20px; flex-shrink:0;">${item.today_goal?.badge_icon || '🎯'}</span>
-                <div style="flex:1;">
-                  <div class="friend-goal-title">
-                    <b>เป้าหมายเฉพาะบุคคล:</b> ${esc(item.today_goal?.goal_label || 'ลดน้ำหนัก')}
-                  </div>
-                  <div>
-                    ${item.today_goal?.achieved
-                      ? `<span class="goal-chip-achieved">🎉 วันนี้ทำตามเป้าหมายสำเร็จ! (+50 pt)</span>`
-                      : `<span class="goal-chip-progress">⏳ ${esc(item.today_goal?.status_text || 'กำลังคุมเป้าหมาย')}</span>`}
-                  </div>
-                </div>
-              </div>
-              <div style="text-align:right; flex-shrink:0;">
-                <span class="goal-score-tag">🎯 ${fmt(u.goal_score || 150)} pt</span>
-              </div>
-            </div>
+        return filteredPosts.map(p => {
+          const isMeal = p.type === 'meal';
+          const isWater = p.type === 'water';
+          const isGoal = p.type === 'goal';
+          const isChallenge = p.type === 'challenge';
+          const isShop = p.type === 'shop';
 
-            <div class="friend-bars">
-              <div class="bar-wrap">
-                <label>แคล</label>
-                <div class="bar-track">
-                  <div class="bar-fill" style="width: ${Math.min(100, s.calorie_percent)}%; background: var(--pink);"></div>
-                </div>
-                <div class="bar-val">${s.calorie} / ${u.calorie_goal}</div>
-              </div>
-              <div class="bar-wrap">
-                <label>น้ำตาล</label>
-                <div class="bar-track">
-                  <div class="bar-fill" style="width: ${Math.min(100, s.sugar_percent)}%; background: ${isOverSugar ? 'var(--red)' : 'var(--mint)'};"></div>
-                </div>
-                <div class="bar-val ${isOverSugar ? 'sug' : ''}">${s.sugar} / ${u.sugar_goal} g</div>
-              </div>
-            </div>
+          const pillClass = isMeal ? 'meal' : isWater ? 'water' : isGoal ? 'goal' : isChallenge ? 'challenge' : 'shop';
+          const pillText = isMeal ? `🍱 ${fmt(p.calorie)} kcal` : isWater ? `💧 ดื่มน้ำ` : isGoal ? `🎯 พิชิตเป้าหมาย` : isChallenge ? `🏆 ชาเลนจ์` : `🛍️ แฟชั่น`;
 
-            ${u.privacy_level === 'summary' && !u.is_me ? `
-              <div style="font-size:11.5px; color:var(--mute); text-align:center; padding: 4px 0;">
-                🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
-              </div>
-            ` : item.meals.length ? `
-              <div class="friend-meals">
-                ${item.meals.map(m => `
-                  <div class="meal-item" style="align-items:center;">
-                    ${m.image_url ? `
-                      <div class="meal-thumb-btn" onclick="openArPhotoModal('${m.id}')" title="ดูรูปและหมุดแคลอรี AR">
-                        <img src="${m.image_url}" alt="${esc(m.name)}" class="meal-thumb-img">
-                        <span class="meal-thumb-badge">AR</span>
-                      </div>
-                    ` : ''}
-                    <div style="flex:1; min-width:0; ${m.image_url ? 'cursor:pointer;' : ''}" ${m.image_url ? `onclick="openArPhotoModal('${m.id}')"` : ''}>
-                      <span style="display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(m.name)}</span>
-                      <span style="color:var(--mute); font-size:11px;">${fmt(m.calorie)} kcal · <span class="${m.sugar >= 12 ? 'sug' : ''}">${fmt(m.sugar)}g</span></span>
+          return `
+            <div class="ig-post-card">
+              <!-- Post Header -->
+              <div class="ig-post-header">
+                <div class="ig-post-user" onclick="openMemberDetailModal('${p.user_id}')">
+                  <div class="ig-post-user-avatar">
+                    <div class="ig-post-user-avatar-inner">
+                      ${p.avatar_image ? `<img src="${esc(p.avatar_image)}">` : mascotSVG(p.avatar_face, p.avatar_color, 38, p.avatar_hat)}
                     </div>
                   </div>
-                `).join('')}
+                  <div class="ig-post-meta">
+                    <span class="ig-post-author">
+                      ${esc(p.nickname)} ${p.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}
+                    </span>
+                    <span class="ig-post-time">${formatTimeAgo(p.created_at)}</span>
+                  </div>
+                </div>
+                <span class="ig-post-pill ${pillClass}">${pillText}</span>
               </div>
-            ` : '<div style="font-size:11.5px; color:var(--mute); padding: 4px 0;">ยังไม่มีมื้ออาหาร</div>'}
-          </div>
-        `;
-      }).join('')}
+
+              <!-- Post Visual Hero -->
+              ${isMeal ? `
+                ${p.image_url ? `
+                  <div class="ig-post-media-wrap" onclick="openArPhotoModal('${p.id}')" style="cursor:pointer;" title="แตะเพื่อดูรูปอาหารและหมุด AR">
+                    <img src="${p.image_url}" class="ig-post-media-img" alt="${esc(p.dish_name)}">
+                    <div class="ig-post-floating-tag">
+                      🔥 ${fmt(p.calorie)} kcal · 🍬 น้ำตาล ${fmt(p.sugar)}g ⚡ แตะดู AR
+                    </div>
+                  </div>
+                ` : ''}
+                <div class="ig-post-dish-box" style="${!p.image_url ? 'border-top:1px solid var(--line);' : ''}">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="ig-post-dish-title">${esc(p.dish_name)}</div>
+                    ${!p.image_url ? `<span style="font-size:16px; font-weight:800; color:var(--pink);">${fmt(p.calorie)} <small style="font-size:11px; font-weight:600; color:var(--mute);">kcal</small></span>` : ''}
+                  </div>
+                  <div class="ig-post-nutri-chips">
+                    <span class="ig-nutri-chip">⚡ ${fmt(p.calorie)} kcal</span>
+                    <span class="ig-nutri-chip">🍬 น้ำตาล ${fmt(p.sugar)}g</span>
+                    ${p.protein ? `<span class="ig-nutri-chip">💪 โปรตีน ${fmt(p.protein)}g</span>` : ''}
+                    ${p.carbs ? `<span class="ig-nutri-chip">🍚 คาร์บ ${fmt(p.carbs)}g</span>` : ''}
+                    ${p.fat ? `<span class="ig-nutri-chip">🥑 ไขมัน ${fmt(p.fat)}g</span>` : ''}
+                    ${p.sweetness_level && p.sweetness_level !== 'normal' ? `<span class="ig-nutri-chip">หวาน: ${esc(p.sweetness_level)}</span>` : ''}
+                  </div>
+                </div>
+              ` : isWater ? `
+                <div class="ig-post-water-box">
+                  <div style="font-size:32px; background:rgba(56,189,248,0.2); width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">💧</div>
+                  <div>
+                    <b style="font-size:14px; color:#0369A1; font-family:'Mali',sans-serif; display:block;">ดื่มน้ำเติมความสดชื่น!</b>
+                    <span style="font-size:12px; color:var(--ink);">${esc(p.text)}</span>
+                  </div>
+                </div>
+              ` : isGoal ? `
+                <div class="ig-post-goal-box">
+                  <div style="font-size:32px; background:rgba(251,191,36,0.3); width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">🎯</div>
+                  <div>
+                    <b style="font-size:14px; color:#B45309; font-family:'Mali',sans-serif; display:block;">พิชิตเป้าหมายประจำวันสำเร็จ! 🎉</b>
+                    <span style="font-size:12px; color:var(--ink);">${esc(p.text)}</span>
+                  </div>
+                </div>
+              ` : `
+                <div style="padding:14px; background:rgba(196,181,253,0.15); display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:26px;">🏆</span>
+                  <div style="font-size:12.5px; color:var(--ink); font-weight:600;">${esc(p.text)}</div>
+                </div>
+              `}
+
+              <!-- Action Bar (Like, Cheer) -->
+              <div class="ig-post-actions-bar">
+                <div class="ig-action-btn-group">
+                  <button class="ig-action-btn ${p.reactions?.liked_by_me ? 'liked' : ''}" onclick="toggleLikePost('${p.id}')">
+                    <span class="heart-icon">${p.reactions?.liked_by_me ? '❤️' : '🤍'}</span>
+                    <span>${p.reactions?.likes_count || 0}</span>
+                  </button>
+                  <button class="ig-action-btn" onclick="toggleCheerTray('${p.id}')">
+                    <span>💬</span>
+                    <span style="font-size:12px;">ส่งกำลังใจ</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Likes text -->
+              ${p.reactions?.likes_count ? `
+                <div class="ig-likes-text">
+                  ❤️ ${p.reactions.likers.slice(0, 3).join(', ')}${p.reactions.likers.length > 3 ? ` และเพื่อนอีก ${p.reactions.likers.length - 3} คน` : ''} ถูกใจ
+                </div>
+              ` : ''}
+
+              <!-- Quick Cheer Pills (Expandable) -->
+              <div id="cheerTray_${p.id}" class="quick-cheer-tray" style="display:none;">
+                <span class="quick-cheer-pill" onclick="sendQuickCheer('${p.id}', 'น่ากินมากก 😋')">😋 น่ากินจัง</span>
+                <span class="quick-cheer-pill" onclick="sendQuickCheer('${p.id}', 'เก่งมากก 👏')">👏 เก่งมาก</span>
+                <span class="quick-cheer-pill" onclick="sendQuickCheer('${p.id}', 'สู้ๆ ไปด้วยกัน 🔥')">🔥 สู้ๆ นะ</span>
+                <span class="quick-cheer-pill" onclick="sendQuickCheer('${p.id}', 'ดื่มน้ำเยอะๆ น้า 💧')">💧 ดื่มน้ำเยอะๆ</span>
+                <span class="quick-cheer-pill" onclick="sendQuickCheer('${p.id}', 'เป้าหมายอยู่ไม่ไกล 🎯')">🎯 ยอดเยี่ยม</span>
+              </div>
+
+              <!-- Comments / Cheers -->
+              ${p.reactions?.comments?.length ? `
+                <div class="ig-comments-list">
+                  ${p.reactions.comments.map(c => `
+                    <div class="ig-comment-item">
+                      <b>${esc(c.nickname)}:</b> ${esc(c.text)}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      })()}
     ` : ''}
 
     <!-- VIEW 2: 3D Isometric Gamified Leaderboard (Reference Spec) -->
@@ -5809,6 +6435,76 @@ function renderFeed() {
           </div>
         `).join('')}
       </div>
+
+      <!-- Friends Daily Meals Summary (In Members Tab) -->
+      <div style="margin: 16px 0 10px; font-weight:700; font-size:14px; font-family:'Mali',sans-serif;">🍱 สรุปมื้ออาหารของสมาชิกวันนี้:</div>
+      ${feedData.map(item => {
+        const u = item.user;
+        const s = item.stats;
+        const isOverSugar = s.sugar > u.sugar_goal;
+        const sugarStatus = isOverSugar ? 'alert' : s.sugar >= u.sugar_goal * 0.85 ? 'warn' : 'ok';
+        const statusLabel = isOverSugar ? 'น้ำตาลเกิน 🚨' : s.sugar >= u.sugar_goal * 0.85 ? 'ใกล้เต็มโควตา ⚠️' : s.meal_count === 0 ? 'ยังไม่บันทึก 💤' : 'หวานกำลังดี 🍡';
+
+        return `
+          <div class="friend-card">
+            <div class="friend-header">
+              <div class="friend-profile" style="cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
+                <div class="mini-avatar">
+                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" alt="">` : mascotSVG(u.avatar_face, u.avatar_color, 42, u.avatar_hat)}
+                </div>
+                <div>
+                  <b>${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
+                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="badge ${sugarStatus}">${statusLabel}</span>
+                <button class="btn s sm" style="font-size:11px; padding:4px 8px;" onclick="openMemberDetailModal('${u.id}')">โปรไฟล์ 👤</button>
+              </div>
+            </div>
+
+            <div class="friend-bars">
+              <div class="bar-wrap">
+                <label>แคล</label>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${Math.min(100, s.calorie_percent)}%; background: var(--pink);"></div>
+                </div>
+                <div class="bar-val">${s.calorie} / ${u.calorie_goal}</div>
+              </div>
+              <div class="bar-wrap">
+                <label>น้ำตาล</label>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: ${Math.min(100, s.sugar_percent)}%; background: ${isOverSugar ? 'var(--red)' : 'var(--mint)'};"></div>
+                </div>
+                <div class="bar-val ${isOverSugar ? 'sug' : ''}">${s.sugar} / ${u.sugar_goal} g</div>
+              </div>
+            </div>
+
+            ${u.privacy_level === 'summary' && !u.is_me ? `
+              <div style="font-size:11.5px; color:var(--mute); text-align:center; padding: 4px 0;">
+                🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
+              </div>
+            ` : item.meals.length ? `
+              <div class="friend-meals">
+                ${item.meals.map(m => `
+                  <div class="meal-item" style="align-items:center;">
+                    ${m.image_url ? `
+                      <div class="meal-thumb-btn" onclick="openArPhotoModal('${m.id}')" title="ดูรูปและหมุดแคลอรี AR">
+                        <img src="${m.image_url}" alt="${esc(m.name)}" class="meal-thumb-img">
+                        <span class="meal-thumb-badge">AR</span>
+                      </div>
+                    ` : ''}
+                    <div style="flex:1; min-width:0; ${m.image_url ? 'cursor:pointer;' : ''}" ${m.image_url ? `onclick="openArPhotoModal('${m.id}')"` : ''}>
+                      <span style="display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(m.name)}</span>
+                      <span style="color:var(--mute); font-size:11px;">${fmt(m.calorie)} kcal · <span class="${m.sugar >= 12 ? 'sug' : ''}">${fmt(m.sugar)}g</span></span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<div style="font-size:11.5px; color:var(--mute); padding: 4px 0;">ยังไม่มีมื้ออาหารวันนี้</div>'}
+          </div>
+        `;
+      }).join('')}
     ` : ''}
   `;
 }
@@ -7086,6 +7782,7 @@ let onboardingState = {
   nickname: '',
   avatar_color: '#FF9EB5',
   avatar_face: 'happy',
+  avatar_image: null,
   gender: 'male',
   age: 21,
   height: 178,
@@ -7280,6 +7977,7 @@ function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
     onboardingState.nickname = currentUser.nickname || '';
     onboardingState.avatar_color = currentUser.avatar_color || '#FF9EB5';
     onboardingState.avatar_face = currentUser.avatar_face || 'happy';
+    onboardingState.avatar_image = currentUser.avatar_image || null;
     onboardingState.gender = currentUser.gender || 'male';
     onboardingState.age = currentUser.age || 21;
     onboardingState.height = currentUser.height || 178;
@@ -7295,6 +7993,7 @@ function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
     onboardingState.nickname = '';
     onboardingState.avatar_color = '#FF9EB5';
     onboardingState.avatar_face = 'happy';
+    onboardingState.avatar_image = null;
     onboardingState.gender = 'male';
     onboardingState.age = 21;
     onboardingState.height = 178;
@@ -7319,9 +8018,27 @@ function setOnboardColor(color) {
     c.classList.toggle('active', c.dataset.color === color);
   });
   const preview = $('#onboardMascotPreview');
-  if (preview) {
-    preview.innerHTML = mascotSVG(onboardingState.avatar_face, color, 80);
+  if (preview && !onboardingState.avatar_image) {
+    preview.innerHTML = mascotSVG(onboardingState.avatar_face, color, 84);
   }
+}
+
+async function handleOnboardPhotoPick(file) {
+  if (!file) return;
+  try {
+    toast('กำลังย่อรูปโปรไฟล์... 📸');
+    const base64 = await compressProfileImage(file, 320);
+    onboardingState.avatar_image = base64;
+    renderOnboardingStep();
+    toast('เลือกรูปโปรไฟล์เรียบร้อยแล้ว ✨');
+  } catch (err) {
+    toast('เลือกรูปภาพไม่สำเร็จ');
+  }
+}
+
+function removeOnboardPhoto() {
+  onboardingState.avatar_image = null;
+  renderOnboardingStep();
 }
 
 function setOnboardGender(g) {
@@ -7460,11 +8177,19 @@ function renderOnboardingStep() {
       <div class="sh">
         ${dotsHtml}
         <div style="text-align:center; margin-bottom:12px;">
-          <div id="onboardMascotPreview" style="display:inline-block; margin-bottom:8px;">
-            ${mascotSVG(onboardingState.avatar_face, onboardingState.avatar_color, 80)}
+          <input type="file" id="onboardPhotoInput" accept="image/*" hidden onchange="handleOnboardPhotoPick(this.files[0])">
+          <div class="profile-avatar-wrap" onclick="$('#onboardPhotoInput').click()" title="แตะเพื่อใส่รูปโปรไฟล์เหมือน LINE">
+            <div id="onboardMascotPreview" style="width:84px; height:84px; border-radius:50%; overflow:hidden; border:2.5px solid var(--pink); margin:0 auto; display:flex; align-items:center; justify-content:center; background:var(--card);">
+              ${onboardingState.avatar_image ? `<img src="${esc(onboardingState.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(onboardingState.avatar_face, onboardingState.avatar_color, 84)}
+            </div>
+            <div class="camera-badge">📷</div>
           </div>
-          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">ยินดีต้อนรับสู่แก๊งโมจิ! 🍡</h2>
-          <span style="font-size:12px; color:var(--mute);">บอกชื่อเล่นและเลือกสีประจำตัว เพื่อเริ่มต้นการบันทึกอาหาร</span>
+          <div style="margin-top:6px; display:flex; justify-content:center; gap:8px;">
+            <button type="button" class="btn s sm" style="font-size:11px; padding:3px 10px;" onclick="$('#onboardPhotoInput').click()">📸 ใส่รูปจริง (เหมือน LINE)</button>
+            ${onboardingState.avatar_image ? `<button type="button" class="btn g sm" style="font-size:11px; padding:3px 8px; color:var(--mute);" onclick="removeOnboardPhoto()">🗑️ ใช้โมจิ</button>` : ''}
+          </div>
+          <h2 class="hd" style="font-size:18px; margin:8px 0 4px;">ยินดีต้อนรับสู่แก๊งโมจิ! 🍡</h2>
+          <span style="font-size:12px; color:var(--mute);">บอกชื่อเล่น ใส่รูปจริงหรือเลือกสีโมจิ เพื่อเริ่มต้นการบันทึกอาหาร</span>
         </div>
 
         <div style="margin-bottom:12px;">
@@ -7732,6 +8457,7 @@ async function submitOnboarding() {
           nickname: nick,
           avatar_color: onboardingState.avatar_color,
           avatar_face: onboardingState.avatar_face || 'happy',
+          avatar_image: onboardingState.avatar_image || null,
           gender: onboardingState.gender,
           age: onboardingState.age,
           height: onboardingState.height,
@@ -8035,8 +8761,18 @@ function openMyProfileModal() {
     <div class="sh">
       <!-- User Profile Header -->
       <div style="text-align:center; padding-bottom:12px; border-bottom:1px solid var(--line); margin-bottom:12px;">
+        <input type="file" id="profilePhotoFileInput" accept="image/*" hidden onchange="uploadProfilePhoto(this.files[0])">
         <div style="margin-bottom:8px;">
-          ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:72px; height:72px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 72, u.avatar_hat)}
+          <div class="profile-avatar-wrap" onclick="$('#profilePhotoFileInput').click()" title="แตะเพื่อเปลี่ยนรูปโปรไฟล์เหมือน LINE">
+            <div style="width:78px; height:78px; border-radius:50%; overflow:hidden; border:2.5px solid var(--pink); margin:0 auto; display:flex; align-items:center; justify-content:center; background:var(--card);">
+              ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 78, u.avatar_hat)}
+            </div>
+            <div class="camera-badge">📷</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:8px; margin-bottom:8px;">
+          <button class="btn s sm" style="font-size:11px; padding:3px 10px;" onclick="$('#profilePhotoFileInput').click()">📸 เปลี่ยนรูปโปรไฟล์ (เหมือน LINE)</button>
+          ${u.avatar_image ? `<button class="btn g sm" style="font-size:11px; padding:3px 8px; color:var(--mute);" onclick="removeProfilePhoto()">🗑️ ใช้โมจิ</button>` : ''}
         </div>
         <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; gap:6px;">
           ${esc(u.nickname)}

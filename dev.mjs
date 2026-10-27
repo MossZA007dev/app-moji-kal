@@ -404,6 +404,27 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { feed, date });
       }
 
+      // 10.0 Instagram-style Social Feed (Feed IG)
+      if (pathname === '/api/feed/social' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId') || '';
+        const limit = Number(parsedUrl.searchParams.get('limit')) || 40;
+        const posts = db.getSocialFeedPosts(limit, userId);
+        const stories = db.getGangStories(userId);
+        return sendJson(res, 200, { success: true, posts, stories });
+      }
+
+      // 10.0.1 Social Feed Reaction (Like / Cheer Comment)
+      if (pathname === '/api/feed/reaction' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        const { postId, reactionType, commentText } = body;
+        if (!userId || !postId) {
+          return sendJson(res, 400, { error: 'userId and postId required' });
+        }
+        const result = db.togglePostReaction(postId, userId, reactionType || 'heart', commentText || '');
+        return sendJson(res, 200, result);
+      }
+
       // 10.1 Activities Stream (Dashboard)
       if (pathname === '/api/activities' && req.method === 'GET') {
         const activities = db.getRecentActivities(30);

@@ -112,6 +112,17 @@ db.exec(`
     created_at INTEGER NOT NULL
   );
 
+  -- Social Feed Reactions (Likes & Cheer Comments like Instagram)
+  CREATE TABLE IF NOT EXISTS post_reactions (
+    id TEXT PRIMARY KEY,
+    post_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    reaction_type TEXT NOT NULL DEFAULT 'heart',
+    comment_text TEXT,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_post_reactions_post ON post_reactions(post_id);
+
   -- Group Verified Dishes Knowledge Cache (Learned from group confirmations)
   CREATE TABLE IF NOT EXISTS verified_dishes (
     name_clean TEXT PRIMARY KEY,
@@ -476,10 +487,11 @@ export function updateUser(id, data) {
   const unlocked_items = data.unlocked_items !== undefined ? (typeof data.unlocked_items === 'string' ? data.unlocked_items : JSON.stringify(data.unlocked_items)) : (current.unlocked_items ?? '[]');
   const role = data.role !== undefined ? data.role : (current.role ?? 'user');
   const is_dev = data.is_dev !== undefined ? (data.is_dev ? 1 : 0) : (current.is_dev ?? (role === 'dev' ? 1 : 0));
+  const avatar_image = data.avatar_image !== undefined ? (data.avatar_image || null) : current.avatar_image;
 
   const stmt = db.prepare(`
     UPDATE users
-    SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, avatar_accessory = ?, personality = ?,
+    SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, avatar_accessory = ?, personality = ?, avatar_image = ?,
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
         gender = ?, age = ?, height = ?, weight = ?, target_weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
@@ -491,7 +503,7 @@ export function updateUser(id, data) {
   `);
 
   stmt.run(
-    nickname, avatar_color, avatar_face, avatar_hat, avatar_accessory, personality,
+    nickname, avatar_color, avatar_face, avatar_hat, avatar_accessory, personality, avatar_image,
     calorie_goal, sugar_goal, privacy_level,
     gender, age, height, weight, target_weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),
@@ -1394,4 +1406,206 @@ export function sendCheer(fromUserId, toUserId, cheerType = 'heart') {
     cheerType,
     label
   };
+}
+
+// -----------------------------------------------------------------------------
+// Instagram-Style Social Feed (Feed IG: Posts, Stories, Likes & Reactions)
+// -----------------------------------------------------------------------------
+
+export function togglePostReaction(postId, userId, reactionType = 'heart', commentText = '') {
+  const user = getUser(userId);
+  if (!user) return { success: false, error: 'User not found' };
+
+  if (commentText && commentText.trim()) {
+    const commentId = `comm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    db.prepare(`
+      INSERT INTO post_reactions (id, post_id, user_id, reaction_type, comment_text, created_at)
+      VALUES (?, ?, ?, 'comment', ?, ?)
+    `).run(commentId, postId, userId, commentText.trim(), Date.now());
+
+    // Reward user for cheering
+    addCoins(userId, 1);
+    return { success: true, type: 'comment', commentId, commentText: commentText.trim(), userNickname: user.nickname };
+  }
+
+  // Heart Reaction (Toggle Like)
+  const existing = db.prepare(`
+    SELECT id FROM post_reactions WHERE post_id = ? AND user_id = ? AND reaction_type = 'heart'
+  `).get(postId, userId);
+
+  if (existing) {
+    db.prepare('DELETE FROM post_reactions WHERE id = ?').run(existing.id);
+    return { success: true, liked: false };
+  } else {
+    const reactId = `react_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    db.prepare(`
+      INSERT INTO post_reactions (id, post_id, user_id, reaction_type, created_at)
+      VALUES (?, ?, ?, 'heart', ?)
+    `).run(reactId, postId, userId, Date.now());
+
+    // Give coins
+    addCoins(userId, 1);
+
+    // Try finding post author to reward them +1 coin
+    let authorId = null;
+    const logAuthor = db.prepare('SELECT user_id FROM logs WHERE id = ?').get(postId);
+    if (logAuthor) authorId = logAuthor.user_id;
+    else {
+      const actAuthor = db.prepare('SELECT user_id FROM activities WHERE id = ?').get(postId);
+      if (actAuthor) authorId = actAuthor.user_id;
+    }
+    if (authorId && authorId !== userId) {
+      addCoins(authorId, 1);
+    }
+
+    return { success: true, liked: true };
+  }
+}
+
+export function getSocialFeedPosts(limit = 40, currentUserId = '') {
+  // 1. Fetch recent meals from logs
+  const mealRows = db.prepare(`
+    SELECT l.id, l.user_id, l.date, l.name, l.calorie, l.sugar, l.carbs, l.protein, l.fat, l.sodium,
+           l.portion_size, l.sweetness_level, l.is_private, l.image_url, l.water_ml, l.created_at,
+           u.nickname, u.avatar_color, u.avatar_face, u.avatar_hat, u.avatar_image, u.privacy_level
+    FROM logs l
+    JOIN users u ON l.user_id = u.id
+    WHERE (l.is_private = 0 OR l.user_id = ?)
+      AND (u.privacy_level = 'full' OR l.user_id = ?)
+    ORDER BY l.created_at DESC
+    LIMIT ?
+  `).all(currentUserId, currentUserId, limit);
+
+  // 2. Fetch recent activities (water, goal, challenge, shop, streak)
+  const actRows = db.prepare(`
+    SELECT a.id, a.user_id, a.type, a.text, a.coins, a.created_at,
+           u.nickname, u.avatar_color, u.avatar_face, u.avatar_hat, u.avatar_image, u.privacy_level
+    FROM activities a
+    JOIN users u ON a.user_id = u.id
+    WHERE a.type != 'meal'
+      AND (u.privacy_level = 'full' OR a.user_id = ?)
+    ORDER BY a.created_at DESC
+    LIMIT ?
+  `).all(currentUserId, limit);
+
+  // Map into unified post format
+  const mealPosts = mealRows.map(m => ({
+    id: m.id,
+    type: 'meal',
+    user_id: m.user_id,
+    nickname: m.nickname,
+    avatar_image: m.avatar_image,
+    avatar_color: m.avatar_color,
+    avatar_face: m.avatar_face,
+    avatar_hat: m.avatar_hat,
+    dish_name: m.name,
+    calorie: m.calorie,
+    sugar: m.sugar,
+    carbs: m.carbs,
+    protein: m.protein,
+    fat: m.fat,
+    sodium: m.sodium,
+    image_url: m.image_url,
+    portion_size: m.portion_size,
+    sweetness_level: m.sweetness_level,
+    created_at: m.created_at,
+    is_me: m.user_id === currentUserId
+  }));
+
+  const actPosts = actRows.map(a => ({
+    id: a.id,
+    type: a.type, // 'water', 'goal', 'challenge', 'shop', etc.
+    user_id: a.user_id,
+    nickname: a.nickname,
+    avatar_image: a.avatar_image,
+    avatar_color: a.avatar_color,
+    avatar_face: a.avatar_face,
+    avatar_hat: a.avatar_hat,
+    text: a.text,
+    coins: a.coins,
+    created_at: a.created_at,
+    is_me: a.user_id === currentUserId
+  }));
+
+  // Combine and sort by created_at DESC
+  const allPosts = [...mealPosts, ...actPosts]
+    .sort((a, b) => b.created_at - a.created_at)
+    .slice(0, limit);
+
+  if (allPosts.length === 0) return [];
+
+  // Batch query reactions
+  const postIds = allPosts.map(p => p.id);
+  const placeholders = postIds.map(() => '?').join(',');
+  const reactions = db.prepare(`
+    SELECT r.id, r.post_id, r.user_id, r.reaction_type, r.comment_text, r.created_at,
+           u.nickname, u.avatar_image, u.avatar_color, u.avatar_face
+    FROM post_reactions r
+    JOIN users u ON r.user_id = u.id
+    WHERE r.post_id IN (${placeholders})
+    ORDER BY r.created_at ASC
+  `).all(...postIds);
+
+  const reactionMap = {};
+  for (const r of reactions) {
+    if (!reactionMap[r.post_id]) {
+      reactionMap[r.post_id] = {
+        likes_count: 0,
+        liked_by_me: false,
+        likers: [],
+        comments: []
+      };
+    }
+    if (r.reaction_type === 'heart') {
+      reactionMap[r.post_id].likes_count += 1;
+      reactionMap[r.post_id].likers.push(r.nickname);
+      if (r.user_id === currentUserId) {
+        reactionMap[r.post_id].liked_by_me = true;
+      }
+    } else if (r.reaction_type === 'comment' && r.comment_text) {
+      reactionMap[r.post_id].comments.push({
+        id: r.id,
+        user_id: r.user_id,
+        nickname: r.nickname,
+        avatar_image: r.avatar_image,
+        text: r.comment_text,
+        created_at: r.created_at
+      });
+    }
+  }
+
+  return allPosts.map(p => ({
+    ...p,
+    reactions: reactionMap[p.id] || { likes_count: 0, liked_by_me: false, likers: [], comments: [] }
+  }));
+}
+
+export function getGangStories(currentUserId = '') {
+  const users = getAllUsers();
+  const todayDate = new Date().toISOString().slice(0, 10);
+
+  return users.map(u => {
+    const isMe = u.id === currentUserId;
+    const streak = calculateUserStreak(u.id);
+    const todayGoal = evaluateUserGoalToday(u, todayDate);
+    
+    // Count today's meals and water
+    const meals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ?').get(u.id, todayDate)?.c || 0;
+    const waterSum = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date = ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(u.id, todayDate)?.s || 0;
+
+    return {
+      id: u.id,
+      nickname: u.nickname,
+      avatar_image: u.avatar_image,
+      avatar_color: u.avatar_color,
+      avatar_face: u.avatar_face,
+      avatar_hat: u.avatar_hat,
+      is_me: isMe,
+      streak: streak.current,
+      today_meals: meals,
+      today_water_ml: waterSum,
+      goal_achieved: !!todayGoal?.achieved,
+      goal_label: todayGoal?.goal_label || ''
+    };
+  });
 }
