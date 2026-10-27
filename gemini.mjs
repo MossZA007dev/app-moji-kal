@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const settingsFile = path.join(__dirname, 'data', 'settings.json');
 
 // Centralized AI Model Name (Pillar 2: Easy single-place modification)
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
 
 const fmt = n => Math.round((Number(n) || 0) * 10) / 10;
 
@@ -350,7 +350,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
       });
     }
 
-    const candidateModels = [GEMINI_MODEL, 'gemini-3.5-flash-lite'];
+    const candidateModels = [GEMINI_MODEL, 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.5-flash'];
     let response = null;
     let lastStatus = 0;
 
@@ -452,6 +452,136 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
   }
 }
 
+// Smart Thai Conversational Engine for Mochi (when Gemini API is offline or quota exceeded)
+export function generateSmartMochiReply(message = '', userContext = {}) {
+  const {
+    nickname = 'เพื่อนโมจิ',
+    personality = 'kind',
+    goal_type = 'weight_loss',
+    calorie_goal = 1800,
+    sugar_goal = 25,
+    today_cal = 0,
+    today_sugar = 0,
+    today_carbs = 0,
+    today_sodium = 0,
+    today_protein = 0,
+    today_fat = 0,
+    today_meals = [],
+    streak = 0
+  } = userContext;
+
+  const remCal = Math.max(0, calorie_goal - today_cal);
+  const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
+  const isOverSugar = remSugar < 0;
+  const q = String(message || '').toLowerCase().trim();
+
+  // 1. GREETING INTENT
+  if (/^(สวัสดี|หวัดดี|ดีจ้า|ดีครับ|ดีค่ะ|ฮัลโหล|hello|hi|hey|โย่ว|ว่าไง)/i.test(q) || q === 'สวัสดี' || q === 'หวัดดี') {
+    if (personality === 'cheerful') {
+      return {
+        reply: `สวัสดีจ้าคุณ ${nickname}! 🌟 วันนี้โมจิพร้อมลุยช่วยดูแลแคลและน้ำตาลให้แบบจัดเต็มแล้วน้า! ตอนนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g มีเมนูไหนอยากให้ช่วยคิดหรือปรึกษาพิมพ์มาได้เลยจ้า 🍡✨`,
+        mochiMood: 'happy'
+      };
+    }
+    if (personality === 'disciplined') {
+      return {
+        reply: `สวัสดีครับคุณ ${nickname} 📋 วันนี้เป้าหมายคุมน้ำตาลอยู่ที่ < ${sugar_goal}g (ทานไปแล้ว ${fmt(today_sugar)}g เหลืออีก ${fmt(remSugar)}g) พร้อมบันทึกมื้ออาหารอย่างมีวินัยไปด้วยกันครับ!`,
+        mochiMood: 'ok'
+      };
+    }
+    return {
+      reply: `สวัสดีจ้าคุณ ${nickname} 💖 ดีใจที่ได้คุยกันนะคะ วันนี้ทานอะไรมาหรือยังเอ่ย? โมจิพร้อมคอยดูแลและแนะนำเรื่องอาหารให้อย่างสบายใจเสมอเลยน้า 🍡`,
+      mochiMood: 'happy'
+    };
+  }
+
+  // 2. FOOD RECOMMENDATION / HUNGER INTENT
+  if (q.includes('มื้อเย็น') || q.includes('กินอะไรดี') || q.includes('กินไรดี') || q.includes('หิว') || q.includes('แนะนำอาหาร') || q.includes('มื้อเที่ยง') || q.includes('มื้อเช้า') || q.includes('เมนู')) {
+    if (isOverSugar) {
+      return {
+        reply: `ตอนนี้น้ำตาลเกินโควตาไปนิดหน่อย (${fmt(Math.abs(remSugar))}g) ไม่ต้องกังวลน้า! โมจิแนะนำมื้อนี้เน้นอาหารไม่ใส่น้ำตาล เช่น แกงจืดเต้าหู้หมูสับ ต้มยำน้ำใสไม่หวาน หรือไข่ต้มผักลวก อิ่มท้องสบายใจแน่นอน 🍲🥬`,
+        mochiMood: 'worry'
+      };
+    }
+    if (goal_type === 'muscle_gain') {
+      return {
+        reply: `สำหรับสายสร้างกล้ามเนื้อ โมจิแนะนำมื้อเน้นโปรตีนแน่นๆ เช่น ข้าวกล้องอกไก่ย่าง ไข่ต้ม 2 ฟอง หรือสเต็กปลาแซลมอน/อกไก่พริกไทยดำ เติมพลังงานได้ดีและน้ำตาลน้อยมากจ้า 💪🍗`,
+        mochiMood: 'happy'
+      };
+    }
+    if (remSugar <= 6) {
+      return {
+        reply: `ตอนนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g น้า แนะนำเมนูเบาหวานน้อย เช่น สุกี้น้ำไม่หวาน (ใส่น้ำจิ้มน้อยๆ) ปลานึ่งมะนาว หรือเกาเหลาหมูตุ๋นไม่ปรุงน้ำตาลเพิ่มนะจ๊ะ 🐟🍲`,
+        mochiMood: 'ok'
+      };
+    }
+    return {
+      reply: `วันนี้น้ำตาลเหลือสบายๆ อีก ${fmt(remSugar)}g (แคลเหลือ ${Math.round(remCal)} kcal) แนะนำข้าวกะเพราไก่ไม่หวานคู่ไข่ดาว หรือส้มตำไทยหวานน้อยคู่ไก่ย่างได้เลย อิ่มอร่อยกำลังดีจ้า 😋✨`,
+      mochiMood: 'happy'
+    };
+  }
+
+  // 3. SWEET CRAVINGS INTENT
+  if (q.includes('ของหวาน') || q.includes('ชานม') || q.includes('ขนม') || q.includes('อยากกินหวาน') || q.includes('ไอติม') || q.includes('เค้ก') || q.includes('บิงซู') || q.includes('ชาเขียว') || q.includes('โกโก้')) {
+    if (remSugar < 6) {
+      return {
+        reply: `เข้าใจเลยว่าอยากกินของหวาน 💕 แต่วันนี้น้ำตาลเหลือแค่ ${fmt(remSugar)}g ลองจิบชาผลไม้หวาน 0% ชาเขียวร้อน หรือผลไม้ฉ่ำน้ำอย่างฝรั่งหรือชมพู่แทนก่อนน้า ดับความอยากได้ดีมากจ้า 🍎🍵`,
+        mochiMood: 'worry'
+      };
+    }
+    return {
+      reply: `ถ้าอยากทานชานมหรือของหวาน โมจิแนะนำสั่งระดับหวาน 25% หรือแชร์กับเพื่อนคนละครึ่งแก้ว จะได้รับความฟินแบบโควตาน้ำตาลยังปลอดภัยหายห่วงน้า 🧋✨`,
+      mochiMood: 'wink'
+    };
+  }
+
+  // 4. PROGRESS & NUTRIENTS STATUS
+  if (q.includes('น้ำตาล') || q.includes('แคล') || q.includes('เหลือ') || q.includes('สถานะ') || q.includes('วันนี้เป็นไง') || q.includes('สรุป')) {
+    const statusNote = isOverSugar ? 'เกินโควตาไปนิดหน่อย มื้อถัดไปเน้นผักโปรตีนน้า' : 'ยังอยู่ในเกณฑ์ที่ยอดเยี่ยม!';
+    return {
+      reply: `วันนี้คุณ ${nickname} ทานแคลไป ${Math.round(today_cal)} / ${calorie_goal} kcal (เหลือ ${Math.round(remCal)}) และน้ำตาล ${fmt(today_sugar)} / ${sugar_goal}g (เหลือ ${fmt(remSugar)}g) ${statusNote} 🔥 ติดต่อกัน ${streak} วันแล้ว สู้ๆ น้า!`,
+      mochiMood: isOverSugar ? 'worry' : 'happy'
+    };
+  }
+
+  // 5. SODIUM & WATER
+  if (q.includes('โซเดียม') || q.includes('เค็ม') || q.includes('บวม') || q.includes('ไต') || q.includes('ดื่มน้ำ') || q.includes('น้ำเปล่า')) {
+    if (today_sodium > 1500) {
+      return {
+        reply: `วันนี้รับโซเดียมไปแล้ว ${Math.round(today_sodium)} mg (เริ่มแตะระดับเกณฑ์ 2,000 mg) แนะนำจิบน้ำเปล่าบ่อยๆ ตลอดวัน เพื่อช่วยให้ไตขับโซเดียมส่วนเกินและลดอาการบวมน้ำน้า 💧🥒`,
+        mochiMood: 'worry'
+      };
+    }
+    return {
+      reply: `การดื่มน้ำวันละ 7-8 แก้ว (ประมาณ 2 ลิตร) ช่วยระบบเผาผลาญและช่วยลดความอยากหวานได้ดีมากๆ เลยน้า อย่าลืมจิบน้ำเรื่อยๆ นะจ๊ะ 💧✨`,
+      mochiMood: 'happy'
+    };
+  }
+
+  // 6. CHEAT MEAL / GUILT / MOTIVATION
+  if (q.includes('หลุด') || q.includes('กินเยอะ') || q.includes('อ้วน') || q.includes('ท้อ') || q.includes('เครียด') || q.includes('ผิดไหม') || q.includes('กังวล')) {
+    return {
+      reply: `ไม่เป็นไรเลยน้าคุณ ${nickname}! มื้ออร่อยคือความสุขของชีวิต การหลุดกินบ้างเป็นเรื่องธรรมชาติมาก ไม่ต้องอดอาหารหรือรู้สึกผิดเลย แค่มื้อต่อไปดื่มน้ำเยอะๆ แล้วค่อยปรับสมดุลไปด้วยกัน โมจิอยู่ข้างๆ เสมอนะ 💖🍡`,
+      mochiMood: 'love'
+    };
+  }
+
+  // 7. THANKS & PRAISE
+  if (q.includes('ขอบคุณ') || q.includes('แต๊ง') || q.includes('น่ารัก') || q.includes('เก่งมาก') || q.includes('รัก')) {
+    return {
+      reply: `ยินดีเสมอเลยจ้า! 💕 มีคุณ ${nickname} มาดูแลสุขภาพด้วยกันแบบนี้ โมจิมีความสุขที่สุดเลย ปรึกษาได้ตลอดเวลาเลยน้า 🍡✨`,
+      mochiMood: 'love'
+    };
+  }
+
+  // 8. DEFAULT DYNAMIC MOCHI RESPONSE
+  const toneEnd = personality === 'disciplined' ? 'พร้อมบันทึกและลุยเป้าหมายไปด้วยกันครับ 📋' : 'อยากปรึกษาเรื่องอาหารหรือระบายอะไร พิมพ์บอกโมจิได้เลยน้า 🍡';
+  return {
+    reply: `โมจิรับฟังอยู่น้า! วันนี้คุมน้ำตาลไป ${fmt(today_sugar)}g (เหลือ ${fmt(remSugar)}g จากเป้า ${sugar_goal}g) ${toneEnd}`,
+    mochiMood: isOverSugar ? 'worry' : 'happy'
+  };
+}
+
 // Phase 3: Conversational AI with Mochi
 export async function chatWithMochi({ message, userContext, history = [] }) {
   const settings = getSettings();
@@ -460,6 +590,11 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   const { nickname, personality, goal_type, calorie_goal, sugar_goal, today_cal, today_sugar, today_carbs, today_sodium, today_protein, today_fat, today_meals, streak } = userContext;
   const remCal = Math.max(0, calorie_goal - today_cal);
   const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
+
+  // If no API key configured, use our rich Smart Mochi engine immediately
+  if (!apiKey) {
+    return generateSmartMochiReply(message, userContext);
+  }
 
   const personalityDesc = personality === 'cheerful'
     ? 'ร่าเริง สดใส พลังบวกสูง ใช้ emoji เยอะ ชอบให้กำลังใจและชวนหัวเราะ'
@@ -491,65 +626,57 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
 4. ไม่ส่งเสริมการอดอาหารเด็ดขาด แนะนำให้กินโปรตีนและผักเพื่อความอิ่มท้อง
 `;
 
-  if (!apiKey) {
-    // Smart Rule-based Response if no API Key
-    let reply = '';
-    const q = (message || '').toLowerCase();
+  // Candidate models to attempt in case of model retirement or quota limits
+  const candidateModels = [
+    GEMINI_MODEL,
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-latest',
+    'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite'
+  ];
 
-    if (q.includes('มื้อเย็น') || q.includes('กินอะไรดี') || q.includes('หิว')) {
-      if (remSugar <= 4) {
-        reply = `ตอนนี้โควตาน้ำตาลเหลืออีกแค่ ${fmt(remSugar)}g น้า โมจิแนะนำมื้อเย็นแบบหวานน้อยแต่อิ่มท้อง เช่น แกงจืดเต้าหู้หมูสับ ต้มยำกุ้งน้ำใส หรือสุกี้น้ำไม่ใส่น้ำจิ้มเยอะนะ 🍡🍲`;
-      } else if (remSugar <= 12) {
-        reply = `น้ำตาลเหลือโควตาอีก ${fmt(remSugar)}g แนะนำข้าวกะเพราหมูสับไม่ใส่น้ำตาลเพิ่ม หรือส้มตำไทยเปรี้ยวเผ็ดหวานน้อย คู่กับไก่ย่างร้อนๆ ได้เลยนะ 😋`;
-      } else {
-        reply = `วันนี้คุมน้ำตาลได้เยี่ยมมาก ยังเหลือน้ำตาลอีกตั้ง ${fmt(remSugar)}g! มื้อเย็นกินอาหารตามใจชอบได้สบายๆ หรือจะตบท้ายด้วยผลไม้สดอย่างฝรั่งหรือแอปเปิ้ลก็สดชื่นน้า 🍎✨`;
-      }
-    } else if (q.includes('น้ำตาล') || q.includes('เหลือ')) {
-      reply = `วันนี้ ${nickname} กินน้ำตาลไปแล้ว ${fmt(today_sugar)}g จากเป้า ${sugar_goal}g (เหลืออีก ${fmt(remSugar)}g น้า) สู้ๆ ไปด้วยกันนะ! 🔥`;
-    } else if (q.includes('ของหวาน') || q.includes('ชานม') || q.includes('ขนม')) {
-      if (remSugar < 8) {
-        reply = `ใจเย็นๆ ก่อนน้า วันนี้น้ำตาลเหลือแค่ ${fmt(remSugar)}g เอง ลองดื่มชาผลไม้ไม่หวาน ชาเขียวร้อน หรือดื่มน้ำเปล่าเย็นๆ ชื่นใจแทนก่อนดีไหมคะ 💧`;
-      } else {
-        reply = `ถ้าอยากกินชานมหรือขนม แนะนำสั่งระดับความหวาน 25% หรือแชร์กับเพื่อนคนละครึ่งแก้ว จะได้ฟินแบบไม่เกินโควตาน้า 🧋💕`;
-      }
-    } else {
-      reply = `โมจิอยู่ตรงนี้เสมอเลย! วันนี้ ${nickname} คุมน้ำตาลไป ${fmt(today_sugar)}g (เหลืออีก ${fmt(remSugar)}g) มีอะไรอยากปรึกษาเรื่องอาหารพิมพ์บอกโมจิได้เลยนะ 🍡`;
-    }
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const contents = [
+        { role: 'user', parts: [{ text: systemPrompt + '\n\nคำถามจากผู้ใช้: ' + message }] }
+      ];
 
-    return { reply, mochiMood: remSugar < 0 ? 'worry' : 'happy' };
-  }
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(6000),
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000
+          }
+        })
+      });
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-    const contents = [
-      { role: 'user', parts: [{ text: systemPrompt + '\n\nคำถามจากผู้ใช้: ' + message }] }
-    ];
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2000
+      if (response.ok) {
+        const data = await response.json();
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const replyText = parts.map(p => p.text).filter(Boolean).join('\n').trim();
+        if (replyText) {
+          return {
+            reply: replyText,
+            mochiMood: remSugar < 0 ? 'worry' : 'happy'
+          };
         }
-      })
-    });
-
-    if (!response.ok) throw new Error('Gemini API error');
-
-    const data = await response.json();
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    const replyText = parts.map(p => p.text).filter(Boolean).join('\n').trim();
-    return {
-      reply: replyText || 'โมจิรับฟังอยู่นะ ค่อยๆ ปรับการกินไปด้วยกันนะ 🍡',
-      mochiMood: remSugar < 0 ? 'worry' : 'happy'
-    };
-  } catch (e) {
-    return {
-      reply: `วันนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g แนะนำทานอาหารที่มีโปรตีนและผักเพื่อสุขภาพที่ดีนะ 🍡`,
-      mochiMood: 'happy'
-    };
+      } else if (response.status === 429) {
+        console.warn(`[Mochi AI] Gemini API key quota exceeded (429) on model ${model}. Switching to Smart Mochi Engine.`);
+        break;
+      } else {
+        console.warn(`[Mochi AI] Model ${model} returned status ${response.status}`);
+      }
+    } catch (err) {
+      console.warn(`[Mochi AI] Model ${model} attempt error:`, err.message);
+    }
   }
+
+  // If all Gemini API models fail or quota is exhausted (429), fall back smoothly to smart conversational engine
+  return generateSmartMochiReply(message, userContext);
 }

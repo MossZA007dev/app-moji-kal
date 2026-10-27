@@ -165,6 +165,7 @@ const neededCols = [
   { name: 'weight', type: 'REAL DEFAULT 52' },
   { name: 'activity_level', type: 'TEXT DEFAULT "moderate"' },
   { name: 'avatar_hat', type: 'TEXT DEFAULT "none"' },
+  { name: 'avatar_accessory', type: 'TEXT DEFAULT "none"' },
   { name: 'personality', type: 'TEXT DEFAULT "kind"' },
   { name: 'coins', type: 'INTEGER DEFAULT 120' },
   { name: 'goal_type', type: 'TEXT DEFAULT "weight_loss"' },
@@ -278,11 +279,11 @@ export function getUserByEmail(email) {
   return stmt.get(email);
 }
 
-export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat }) {
+export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat, avatar_accessory }) {
   const newId = id || `u_${Date.now()}`;
   const stmt = db.prepare(`
-    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, personality, goal_type, goal_score, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality, goal_type, goal_score, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     newId,
@@ -298,6 +299,7 @@ export function createUser({ id, nickname, avatar_color, avatar_face, calorie_go
     consent_pdpa ? 1 : 0,
     consent_pdpa ? Date.now() : null,
     avatar_hat || 'none',
+    avatar_accessory || 'none',
     personality || 'cheerful',
     goal_type || 'weight_loss',
     goal_score !== undefined ? Number(goal_score) : 150,
@@ -342,6 +344,7 @@ export function updateUser(id, data) {
   const avatar_color = data.avatar_color ?? current.avatar_color;
   const avatar_face = data.avatar_face ?? current.avatar_face;
   const avatar_hat = data.avatar_hat ?? current.avatar_hat;
+  const avatar_accessory = data.avatar_accessory ?? current.avatar_accessory ?? 'none';
   const personality = data.personality ?? current.personality;
   const calorie_goal = Math.max(1200, Number(data.calorie_goal ?? current.calorie_goal));
   const sugar_goal = Math.max(10, Math.min(60, Number(data.sugar_goal ?? current.sugar_goal)));
@@ -363,7 +366,7 @@ export function updateUser(id, data) {
 
   const stmt = db.prepare(`
     UPDATE users
-    SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, personality = ?,
+    SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, avatar_accessory = ?, personality = ?,
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
         gender = ?, age = ?, height = ?, weight = ?, target_weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
@@ -373,7 +376,7 @@ export function updateUser(id, data) {
   `);
 
   stmt.run(
-    nickname, avatar_color, avatar_face, avatar_hat, personality,
+    nickname, avatar_color, avatar_face, avatar_hat, avatar_accessory, personality,
     calorie_goal, sugar_goal, privacy_level,
     gender, age, height, weight, target_weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),

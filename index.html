@@ -2691,6 +2691,198 @@ textarea { resize: none; margin-bottom: 8px; }
 }
 .checkbox-label input { width: auto; margin-top: 3px; }
 
+/* Wardrobe Dressing Room Styles */
+.wardrobe-stage {
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.95), rgba(255, 228, 235, 0.45));
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  padding: 14px 12px 10px;
+  text-align: center;
+  position: relative;
+  box-shadow: inset 0 2px 10px rgba(255, 158, 181, 0.12), 0 4px 16px rgba(0, 0, 0, 0.03);
+  margin-bottom: 12px;
+}
+.wardrobe-preview-box {
+  width: 110px;
+  height: 104px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 6px 12px rgba(255, 138, 166, 0.2));
+}
+.wardrobe-pedestal {
+  width: 80px;
+  height: 10px;
+  background: radial-gradient(ellipse at center, rgba(255, 138, 166, 0.4) 0%, rgba(255, 138, 166, 0) 70%);
+  margin: -4px auto 4px;
+  border-radius: 50%;
+}
+@keyframes mochiBounce {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.18, 0.82); }
+  50% { transform: scale(0.88, 1.15); }
+  75% { transform: scale(1.06, 0.96); }
+  100% { transform: scale(1, 1); }
+}
+.bounce-once {
+  animation: mochiBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.wardrobe-cat-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  margin-bottom: 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.wardrobe-cat-nav::-webkit-scrollbar {
+  display: none;
+}
+.wardrobe-cat-btn {
+  white-space: nowrap;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--mute);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+.wardrobe-cat-btn.active {
+  background: linear-gradient(135deg, var(--pink), #FF85A1);
+  border-color: var(--pink);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(255, 117, 140, 0.35);
+  transform: translateY(-1px);
+}
+.wardrobe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.wardrobe-item-card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 8px 4px 7px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+}
+.wardrobe-item-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--pink);
+}
+.wardrobe-item-card.active {
+  border-color: var(--pink);
+  background: var(--pinkS);
+  box-shadow: 0 3px 10px rgba(255, 117, 140, 0.22);
+  transform: translateY(-2px);
+}
+.wardrobe-item-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+}
+.wardrobe-item-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 92%;
+}
+.wardrobe-item-card.active .wardrobe-item-title {
+  color: var(--pink);
+  font-weight: 700;
+}
+.wardrobe-badge-equipped {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--pink);
+  color: #fff;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.wardrobe-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  border: 2px solid #fff;
+}
+.wardrobe-personality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.wardrobe-personality-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: left;
+}
+.wardrobe-personality-card.active {
+  border-color: var(--pink);
+  background: var(--pinkS);
+  box-shadow: 0 3px 10px rgba(255, 117, 140, 0.2);
+}
+.wardrobe-preview-tags {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.wardrobe-preview-tag {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  color: var(--mute);
+}
+
 /* Onboarding Goal Questionnaire Styles */
 .onboard-step-dots {
   display: flex;
@@ -3061,43 +3253,76 @@ window.addEventListener('beforeinstallprompt', (e) => {
   setTimeout(renderPwaBanner, 1200);
 });
 
-// Mascot SVG Generator with Hat Accessories
-function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none') {
+// Mascot SVG Generator with Hats, Accessories & Expressions
+function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', accessory = null) {
+  const acc = accessory !== null ? accessory : (currentUser?.avatar_accessory || 'none');
   const E = {
     happy: '<path d="M38 58q5-8 10 0M72 58q5-8 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
     ok: '<circle cx="43" cy="58" r="3.5" fill="#4A3F44"/><circle cx="77" cy="58" r="3.5" fill="#4A3F44"/>',
     worry: '<circle cx="43" cy="59" r="3.5" fill="#4A3F44"/><circle cx="77" cy="59" r="3.5" fill="#4A3F44"/><path d="M36 49l13 4M84 49l-13 4" stroke="#4A3F44" stroke-width="2.5" stroke-linecap="round"/>',
     alert: '<circle cx="43" cy="58" r="6" fill="#4A3F44"/><circle cx="77" cy="58" r="6" fill="#4A3F44"/><circle cx="45" cy="56" r="2" fill="#fff"/><circle cx="79" cy="56" r="2" fill="#fff"/><path d="M100 36q6 9 0 13q-6-4 0-13z" fill="#8FD3F4"/>',
-    wink: '<path d="M38 58q5-7 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/><circle cx="77" cy="58" r="4" fill="#4A3F44"/>'
+    wink: '<path d="M38 58q5-7 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/><circle cx="77" cy="58" r="4" fill="#4A3F44"/>',
+    love: '<path d="M40 54a3.5 3.5 0 0 1 7 0c0 4.5-7 8-7 8s-7-3.5-7-8a3.5 3.5 0 0 1 7 0z M74 54a3.5 3.5 0 0 1 7 0c0 4.5-7 8-7 8s-7-3.5-7-8a3.5 3.5 0 0 1 7 0z" fill="#E11D48"/>',
+    smart: '<path d="M37 56l10-2 M73 54l10 2" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/><circle cx="43" cy="59" r="3" fill="#4A3F44"/><circle cx="77" cy="59" r="3" fill="#4A3F44"/>',
+    sleepy: '<path d="M36 58q6 4 12 0 M72 58q6 4 12 0" fill="none" stroke="#4A3F44" stroke-width="2.5" stroke-linecap="round"/><text x="88" y="44" font-size="12" fill="#818CF8" font-family="sans-serif" font-weight="700">zZ</text>',
+    nom: '<path d="M38 56q5-6 10 0 M72 56q5-6 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>'
   };
   const M = {
     happy: '<path d="M52 70q8 9 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
     ok: '<path d="M54 71q6 5 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
     worry: '<path d="M52 76q8-6 16 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
     alert: '<ellipse cx="60" cy="75" rx="5" ry="6.5" fill="#4A3F44"/>',
-    wink: '<path d="M54 70q6 6 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>'
+    wink: '<path d="M54 70q6 6 12 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    love: '<ellipse cx="60" cy="73" rx="6" ry="4.5" fill="#E11D48"/><path d="M55 71q5 4 10 0" stroke="#fff" stroke-width="1.5" fill="none"/>',
+    smart: '<path d="M54 73q7 2 12-4" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
+    sleepy: '<circle cx="60" cy="72" r="2.5" fill="#4A3F44"/>',
+    nom: '<ellipse cx="60" cy="72" rx="5" ry="6" fill="#D946EF"/><ellipse cx="60" cy="74" rx="3" ry="3" fill="#FF8AA6"/>'
   };
 
-  // Hat / Accessory SVG elements
+  // Hat / Headwear elements
   const HATS = {
     none: '<path d="M60 14q-3-9 7-12" fill="none" stroke="#5ABEA3" stroke-width="4" stroke-linecap="round"/>',
     flower: '<circle cx="38" cy="18" r="8" fill="#FFB7B2"/><circle cx="38" cy="18" r="4" fill="#FFEAA7"/>',
     crown: '<polygon points="46,18 52,4 60,14 68,4 74,18" fill="#FFD166" stroke="#E09F3E" stroke-width="1.5"/><circle cx="52" cy="4" r="2" fill="#FF6B6B"/><circle cx="68" cy="4" r="2" fill="#4D96FF"/>',
     bow: '<path d="M52 14c-6-6-14 0-8 6l8-3z M68 14c6-6 14 0 8 6l-8-3z" fill="#FF6B8B"/><circle cx="60" cy="15" r="3.5" fill="#D81B60"/>',
     chef: '<path d="M42 20h36v-6c0-6-10-8-10-8s-2-6-8-6-8 6-8 6-10 2-10 8z" fill="#FFFFFF" stroke="#D3C5CA" stroke-width="1.5"/>',
-    sprout: '<path d="M60 16q-6-12 2-14c4 4 0 10-2 14z M60 16q6-12-2-14c-4 4 0 10 2 14z" fill="#2ECC71"/>'
+    sprout: '<path d="M60 16q-6-12 2-14c4 4 0 10-2 14z M60 16q6-12-2-14c-4 4 0 10 2 14z" fill="#2ECC71"/>',
+    cat_ears: '<polygon points="28,26 38,6 48,22" fill="#FF758C" stroke="#E11D48" stroke-width="1.5"/><polygon points="32,24 38,11 44,22" fill="#FFE4E8"/><polygon points="72,22 82,6 92,26" fill="#FF758C" stroke="#E11D48" stroke-width="1.5"/><polygon points="76,22 82,11 88,24" fill="#FFE4E8"/>',
+    cap: '<path d="M40 22c0-10 9-16 20-16s20 6 20 16z" fill="#3B82F6"/><path d="M38 22h44c6 0 12 3 14 6l-18 2h-40z" fill="#1D4ED8"/><circle cx="60" cy="6" r="2.5" fill="#FFFFFF"/>',
+    headphones: '<path d="M22 62c0-26 16-46 38-46s38 20 38 46" fill="none" stroke="#6366F1" stroke-width="5" stroke-linecap="round"/><rect x="15" y="52" width="12" height="20" rx="6" fill="#4338CA"/><rect x="93" y="52" width="12" height="20" rx="6" fill="#4338CA"/>',
+    party: '<polygon points="46,24 60,2 74,24" fill="#F43F5E"/><path d="M50 18l18 4 M54 10l12 3" stroke="#FBBF24" stroke-width="2"/><circle cx="60" cy="2" r="3.5" fill="#FBBF24"/>',
+    sunglasses: '<rect x="30" y="50" width="26" height="15" rx="5" fill="#1E293B"/><rect x="64" y="50" width="26" height="15" rx="5" fill="#1E293B"/><line x1="56" y1="56" x2="64" y2="56" stroke="#1E293B" stroke-width="3"/><line x1="24" y1="54" x2="30" y2="54" stroke="#1E293B" stroke-width="2.5"/><line x1="90" y1="54" x2="96" y2="54" stroke="#1E293B" stroke-width="2.5"/>',
+    wizard: '<polygon points="40,24 58,-4 76,24" fill="#7C3AED"/><ellipse cx="58" cy="24" rx="26" ry="6" fill="#6D28D9"/><circle cx="58" cy="-3" r="3.5" fill="#FBBF24"/>',
+    angel: '<ellipse cx="60" cy="8" rx="22" ry="5" fill="none" stroke="#FBBF24" stroke-width="3.5" opacity=".95"/>'
+  };
+
+  // Body Accessories / Held items
+  const ACCESSORIES = {
+    none: '',
+    boba: '<g transform="translate(86,64)"><rect x="0" y="4" width="18" height="24" rx="4" fill="#F59E0B" opacity=".9"/><rect x="2" y="2" width="14" height="4" rx="2" fill="#D97706"/><line x1="9" y1="2" x2="13" y2="-6" stroke="#4B5563" stroke-width="2.5" stroke-linecap="round"/><circle cx="5" cy="22" r="2" fill="#1E293B"/><circle cx="11" cy="22" r="2" fill="#1E293B"/><circle cx="8" cy="18" r="2" fill="#1E293B"/></g>',
+    dumbbell: '<g transform="translate(10,66)"><rect x="0" y="2" width="6" height="14" rx="2" fill="#475569"/><rect x="18" y="2" width="6" height="14" rx="2" fill="#475569"/><rect x="4" y="6" width="16" height="6" fill="#94A3B8"/></g>',
+    apple: '<g transform="translate(88,68)"><circle cx="8" cy="8" r="8" fill="#22C55E"/><path d="M8 2q2-5 5-3" stroke="#78350F" stroke-width="1.5" fill="none"/><circle cx="6" cy="6" r="2" fill="#86EFAC" opacity=".6"/></g>',
+    water: '<g transform="translate(88,62)"><rect x="1" y="6" width="14" height="24" rx="4" fill="#38BDF8"/><rect x="4" y="2" width="8" height="5" rx="1.5" fill="#0284C7"/><path d="M4 14q3 3 6 0" stroke="#FFFFFF" stroke-width="1.5" fill="none"/></g>',
+    spoon: '<g transform="translate(12,62)"><ellipse cx="6" cy="6" rx="5" ry="6" fill="#CBD5E1"/><line x1="6" y1="12" x2="6" y2="28" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/></g><g transform="translate(94,62)"><line x1="4" y1="4" x2="4" y2="12" stroke="#94A3B8" stroke-width="2"/><line x1="8" y1="4" x2="8" y2="12" stroke="#94A3B8" stroke-width="2"/><line x1="12" y1="4" x2="12" y2="12" stroke="#94A3B8" stroke-width="2"/><line x1="8" y1="12" x2="8" y2="28" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round"/></g>',
+    heart: '<g transform="translate(78,64)"><path d="M12 4a5 5 0 0 1 10 0c0 7-10 12-10 12s-10-5-10-12a5 5 0 0 1 10 0z" fill="#EC4899" stroke="#BE185D" stroke-width="1.5"/><circle cx="9" cy="4" r="2" fill="#FBCFE8" opacity=".7"/></g>',
+    wings: '<g opacity=".9"><path d="M20 54c-16-12-18 6-4 16z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><path d="M100 54c16-12 18 6 4 16z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/></g>',
+    sparkles: '<g fill="#FBBF24"><polygon points="18,34 20,38 24,40 20,42 18,46 16,42 12,40 16,38"/><polygon points="102,40 104,44 108,46 104,48 102,52 100,48 96,46 100,44"/><polygon points="26,82 27,85 30,86 27,87 26,90 25,87 22,86 25,85"/></g>'
   };
 
   const f = E[face] || E.happy;
   const m = M[face] || M.happy;
   const h = HATS[hat] || HATS.none;
+  const a = ACCESSORIES[acc] || '';
+  const isBackAccessory = acc === 'wings';
 
   return `<svg viewBox="0 0 120 112" width="${size}" height="${size * 0.93}">
+    ${isBackAccessory ? a : ''}
     <path d="M60 14C88 14 106 34 106 62c0 24-18 40-46 40S14 86 14 62C14 34 32 14 60 14z" fill="${color}"/>
     ${h}
     <ellipse cx="31" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
     <ellipse cx="89" cy="70" rx="8" ry="5" fill="#FF8AA6" opacity=".5"/>
     ${f}${m}
+    ${!isBackAccessory ? a : ''}
   </svg>`;
 }
 
@@ -3145,11 +3370,14 @@ async function fetchUsers() {
     const data = await res.json();
     users = data.users || [];
     const savedId = localStorage.getItem('mochi_user_id');
-    currentUser = users.find(u => u.id === savedId) || users[0] || null;
-    if (currentUser) {
+    const foundUser = savedId ? users.find(u => u.id === savedId) : null;
+    if (foundUser) {
+      currentUser = foundUser;
       localStorage.setItem('mochi_user_id', currentUser.id);
       updateUserHeader();
       checkPdpaConsent();
+    } else {
+      currentUser = null;
     }
   } catch (err) {
     console.error('Fetch users error:', err);
@@ -3414,6 +3642,26 @@ function go(t) {
 
 // 1. TODAY VIEW
 function renderToday() {
+  if (!currentUser) {
+    $('#main').innerHTML = `
+      <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0; border:2px solid var(--pink); background:radial-gradient(circle at 50% 20%, #FFF5F7, var(--card));">
+        <div style="font-size:54px; margin-bottom:12px;">🍡✨</div>
+        <h2 class="hd" style="font-size:20px; margin-bottom:8px;">ยินดีต้อนรับสู่ Moji Kal!</h2>
+        <p style="font-size:13px; color:var(--mute); margin-bottom:20px; line-height:1.6;">
+          แอปนับแคลอรีและคุมน้ำตาลสไตล์แก๊งโมจิสุดน่ารัก<br>
+          เริ่มต้นสร้างตัวละครและตั้งเป้าหมายสุขภาพของคุณกันเลย!
+        </p>
+        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 12px; font-size:15px; padding:12px 16px;" onclick="openOnboardingModal({ isNewUser: true })">
+          ✨ สร้างตัวละครโมจิของคุณ ➜
+        </button>
+        <div>
+          <button class="btn s sm" onclick="openProfileModal()">👥 มีโปรไฟล์ในแก๊งอยู่แล้ว? เลือกสลับบัญชี</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const totalCal = currentLogs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
   const totalSugar = currentLogs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
   const totalCarbs = Math.round(currentLogs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
@@ -4046,6 +4294,11 @@ function sendQuickMessage(text) {
 }
 
 async function sendChatMessage() {
+  if (!currentUser) {
+    toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนคุยน้า 🍡');
+    openOnboardingModal({ isNewUser: true });
+    return;
+  }
   const input = $('#chatInput');
   const msg = input.value.trim();
   if (!msg) return;
@@ -5551,7 +5804,24 @@ async function showDayDetail(dateStr) {
 // 5. SETTINGS VIEW (Professional Categorized UX/UI)
 async function renderSettings() {
   await fetchSettings();
-  const quotaRes = await fetch(`/api/auth/quota?userId=${currentUser.id}`);
+  if (!currentUser) {
+    $('#main').innerHTML = `
+      <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0;">
+        <div style="font-size:48px; margin-bottom:12px;">⚙️</div>
+        <h2 class="hd" style="font-size:18px; margin-bottom:8px;">ตั้งค่า & สมาชิก</h2>
+        <p style="font-size:12.5px; color:var(--mute); margin-bottom:18px;">ยังไม่ได้เลือกโปรไฟล์สมาชิกบนอุปกรณ์นี้</p>
+        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px;" onclick="openOnboardingModal({ isNewUser: true })">
+          ✨ สร้างตัวละครใหม่
+        </button>
+        <button class="btn s sm" style="width:100%; max-width:280px; margin:0 auto;" onclick="openProfileModal()">
+          👥 เลือกสมาชิกเดิมในแก๊ง
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const quotaRes = await fetch(`/api/auth/quota?userId=${currentUser?.id || ''}`);
   const quota = await quotaRes.json();
 
   const hatLabels = {
@@ -5559,7 +5829,27 @@ async function renderSettings() {
     flower: 'ซากุระ 🌸',
     crown: 'มงกุฎ 👑',
     bow: 'โบว์ 🎀',
-    chef: 'เชฟ 👨‍🍳'
+    chef: 'เชฟ 👨‍🍳',
+    sprout: 'ใบไม้คู่ 🌿',
+    cat_ears: 'หูแมว 🐱',
+    cap: 'หมวกแก๊ป 🧢',
+    headphones: 'หูฟัง 🎧',
+    party: 'ปาร์ตี้ 🥳',
+    sunglasses: 'แว่นกันแดด 😎',
+    wizard: 'พ่อมด 🧙‍♂️',
+    angel: 'วงแหวนเทวดา 😇'
+  };
+
+  const accLabels = {
+    none: 'มือเปล่า ✋',
+    boba: 'ชานมไข่มุก 🧋',
+    dumbbell: 'ดัมเบล 🏋️',
+    apple: 'แอปเปิ้ล 🍏',
+    water: 'ขวดน้ำ 💧',
+    spoon: 'ช้อนส้อม 🍴',
+    heart: 'หัวใจ 💖',
+    wings: 'ปีกนางฟ้า 🪽',
+    sparkles: 'ละอองวิเศษ ✨'
   };
 
   const personalityLabels = {
@@ -5577,8 +5867,8 @@ async function renderSettings() {
   $('#main').innerHTML = `
     <!-- Hero Profile Header -->
     <div class="settings-hero">
-      <div class="settings-hero-avatar" onclick="openWardrobeModal()">
-        ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat)}
+      <div class="settings-hero-avatar" onclick="openWardrobeModal('hat')">
+        ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat, currentUser?.avatar_accessory)}
       </div>
       <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">
         ${esc(currentUser?.nickname)}
@@ -5657,21 +5947,21 @@ async function renderSettings() {
     <!-- Category 2: ปรับแต่งตัวละครโมจิ -->
     <div class="settings-sec-title">👒 ตัวละครโมจิและสไตล์</div>
     <div class="settings-group">
-      <div class="settings-row" onclick="openWardrobeModal()">
+      <div class="settings-row" onclick="openWardrobeModal('hat')">
         <div class="settings-row-left">
           <div class="settings-icon-box" style="background:#FFF0E0; color:#B35C00;">👒</div>
           <div>
             <span class="settings-label-title">ห้องแต่งตัวและเครื่องประดับ</span>
-            <span class="settings-label-sub">หมวก โบว์ มงกุฎ และสีตัวละคร</span>
+            <span class="settings-label-sub">หมวก โบว์ ปีก ของถือ สีหน้า และสีตัวโมจิ</span>
           </div>
         </div>
         <div class="settings-row-right">
-          <span>${hatLabels[currentUser?.avatar_hat] || 'ต้นกล้า 🌱'}</span>
+          <span style="font-size:12px;">${hatLabels[currentUser?.avatar_hat] || 'ต้นกล้า 🌱'} · ${accLabels[currentUser?.avatar_accessory] || 'มือเปล่า'}</span>
           <span class="settings-chev">›</span>
         </div>
       </div>
 
-      <div class="settings-row" onclick="openWardrobeModal()">
+      <div class="settings-row" onclick="openWardrobeModal('personality')">
         <div class="settings-row-left">
           <div class="settings-icon-box" style="background:#EDE9FE; color:#6D28D9;">💬</div>
           <div>
@@ -5849,6 +6139,20 @@ async function renderSettings() {
           </div>
         </div>
         <div class="settings-row-right">
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="logoutThisDevice()" style="cursor:pointer; background:#FEF2F2; border-color:#FCA5A5;">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FEE2E2; color:#DC2626;">🚪</div>
+          <div>
+            <span class="settings-label-title" style="color:#DC2626; font-weight:700;">ออกจากระบบบนเครื่องนี้ (Log out)</span>
+            <span class="settings-label-sub">รีเซ็ตอุปกรณ์นี้เพื่อส่งต่อให้เพื่อนเล่น หรือเริ่มต้นสร้างตัวละครใหม่</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge" style="background:#FEE2E2; color:#DC2626;">รีเซ็ต</span>
           <span class="settings-chev">›</span>
         </div>
       </div>
@@ -6510,9 +6814,18 @@ function openProfileModal() {
         <button class="btn sm" style="width:100%; margin-bottom:8px;" onclick="openOnboardingModal({ isNewUser: true })">🎯 ทำแบบสอบถามเพิ่มเพื่อนใหม่ ➜</button>
       </div>
 
-      <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
+      <button class="btn g" style="width:100%;" onclick="closeSheet()">ปิดหน้าต่าง</button>
+      <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="logoutThisDevice()">🚪 ออกจากระบบบนเครื่องนี้ (รีเซ็ตเพื่อสร้างตัวละครใหม่)</button>
     </div>
   `;
+}
+
+function logoutThisDevice() {
+  if (confirm('ต้องการออกจากระบบบนเครื่องนี้ใช่หรือไม่?\n\n💡 ข้อมูลสถิติของแก๊งจะไม่สูญหาย คุณหรือเพื่อนสามารถสลับบัญชีกลับมาได้ตลอดเวลา')) {
+    localStorage.removeItem('mochi_user_id');
+    localStorage.removeItem('mochi_onboarded');
+    window.location.reload();
+  }
 }
 
 async function switchActiveUser(newUserId) {
@@ -6564,91 +6877,267 @@ async function addNewMemberFromModal() {
   }
 }
 
-// Sub-Modal: Wardrobe Customizer
-function openWardrobeModal() {
-  const el = $('#sheet');
-  el.hidden = false;
-  el.innerHTML = `
-    <div class="sh">
-      <div style="text-align:center; margin-bottom:12px;">
-        <h2 class="hd" style="font-size:18px;">ห้องแต่งตัวโมจิ 👒</h2>
-        <div id="wardrobeModalPreview" style="margin:8px auto; width:96px; height:96px;">
-          ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat)}
-        </div>
-      </div>
+// Sub-Modal: Wardrobe Customizer (ห้องแต่งตัวโมจิ)
+let currentWardrobeTab = 'hat';
 
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px; color:var(--mute);">เครื่องประดับบนหัว</label>
-        <div class="pill-group">
-          ${[
-            { id: 'none', label: 'ต้นกล้า 🌱' },
-            { id: 'flower', label: 'ซากุระ 🌸' },
-            { id: 'crown', label: 'มงกุฎทอง 👑' },
-            { id: 'bow', label: 'โบว์ชมพู 🎀' },
-            { id: 'chef', label: 'หมวกเชฟ 👨‍🍳' }
-          ].map(h => `
-            <div class="pill ${currentUser?.avatar_hat === h.id ? 'active' : ''}" onclick="applyHatPreview('${h.id}')">${h.label}</div>
-          `).join('')}
-        </div>
-      </div>
+const WARDROBE_CONFIG = {
+  hat: {
+    title: 'หมวก & ทรงผม',
+    icon: '👒',
+    items: [
+      { id: 'none', title: 'ต้นกล้า', icon: '🌱' },
+      { id: 'flower', title: 'ซากุระ', icon: '🌸' },
+      { id: 'crown', title: 'มงกุฎทอง', icon: '👑' },
+      { id: 'bow', title: 'โบว์ชมพู', icon: '🎀' },
+      { id: 'chef', title: 'หมวกเชฟ', icon: '👨‍🍳' },
+      { id: 'sprout', title: 'ใบไม้คู่', icon: '🌿' },
+      { id: 'cat_ears', title: 'หูแมวเหมียว', icon: '🐱' },
+      { id: 'cap', title: 'หมวกแก๊ป', icon: '🧢' },
+      { id: 'headphones', title: 'หูฟังเกมเมอร์', icon: '🎧' },
+      { id: 'party', title: 'ปาร์ตี้', icon: '🥳' },
+      { id: 'sunglasses', title: 'แว่นกันแดด', icon: '😎' },
+      { id: 'wizard', title: 'หมวกพ่อมด', icon: '🧙‍♂️' },
+      { id: 'angel', title: 'วงแหวนเทวดา', icon: '😇' }
+    ]
+  },
+  accessory: {
+    title: 'ของถือ & ปีก',
+    icon: '🧋',
+    items: [
+      { id: 'none', title: 'มือเปล่า', icon: '✋' },
+      { id: 'boba', title: 'ชานมไข่มุก', icon: '🧋' },
+      { id: 'dumbbell', title: 'ดัมเบลฟิตเนส', icon: '🏋️' },
+      { id: 'apple', title: 'แอปเปิ้ลเขียว', icon: '🍏' },
+      { id: 'water', title: 'ขวดน้ำดื่ม', icon: '💧' },
+      { id: 'spoon', title: 'ช้อนส้อม', icon: '🍴' },
+      { id: 'heart', title: 'หัวใจดวงโต', icon: '💖' },
+      { id: 'wings', title: 'ปีกนางฟ้า', icon: '🪽' },
+      { id: 'sparkles', title: 'ละอองวิเศษ', icon: '✨' }
+    ]
+  },
+  face: {
+    title: 'สีหน้า & แว่น',
+    icon: '👀',
+    items: [
+      { id: 'happy', title: 'ยิ้มแฉ่ง', icon: '😊' },
+      { id: 'ok', title: 'ยิ้มหวาน', icon: '🙂' },
+      { id: 'worry', title: 'เหงื่อตก', icon: '🥺' },
+      { id: 'alert', title: 'ตาโตตกใจ', icon: '😲' },
+      { id: 'wink', title: 'ส่งวิ้ง', icon: '😉' },
+      { id: 'love', title: 'ตาหัวใจ', icon: '😍' },
+      { id: 'smart', title: 'ฉลาดมั่นใจ', icon: '🧐' },
+      { id: 'sleepy', title: 'ง่วงนอน zZ', icon: '😴' },
+      { id: 'nom', title: 'เคี้ยวตุ่ย', icon: '😋' }
+    ]
+  },
+  color: {
+    title: 'สีตัวโมจิ',
+    icon: '🎨',
+    items: [
+      { id: '#FF9EB5', title: 'ชมพูพีช', hex: '#FF9EB5' },
+      { id: '#6FCBB0', title: 'มัทฉะมินต์', hex: '#6FCBB0' },
+      { id: '#FFB05C', title: 'ส้มพุดดิ้ง', hex: '#FFB05C' },
+      { id: '#A78BFA', title: 'ม่วงทาโร่', hex: '#A78BFA' },
+      { id: '#D4A373', title: 'ชานมไทย', hex: '#D4A373' },
+      { id: '#F4DEE4', title: 'นมสดวนิลา', hex: '#F4DEE4' },
+      { id: '#38BDF8', title: 'บลูเบอร์รี่', hex: '#38BDF8' },
+      { id: '#FCD34D', title: 'เนยน้ำผึ้ง', hex: '#FCD34D' },
+      { id: '#F43F5E', title: 'สตรอว์เบอร์รี่', hex: '#F43F5E' },
+      { id: '#34D399', title: 'เมลอนหวาน', hex: '#34D399' },
+      { id: '#E2E8F0', title: 'โมจิหิมะ', hex: '#E2E8F0' },
+      { id: '#334155', title: 'ช็อกโกแลต', hex: '#334155' }
+    ]
+  },
+  personality: {
+    title: 'บุคลิก AI',
+    icon: '💬',
+    items: [
+      { id: 'kind', title: 'ใจดี อบอุ่น 💖', desc: 'น้ำเสียงอ่อนโยน ให้กำลังใจเสมอ ไม่กดดันเวลาหลุดกินขนม', icon: '💖' },
+      { id: 'cheerful', title: 'ร่าเริง สดใส 🌟', desc: 'ไฮเปอร์ เฮฮา ตื่นเต้นกับทุกมื้ออาหาร คอยเชียร์สุดใจ', icon: '🌟' },
+      { id: 'disciplined', title: 'จริงจัง มีวินัย 📋', desc: 'เป๊ะตัวเลข ตรงไปตรงมา เตือนสติแคลและน้ำตาลอย่างเข้มงวด', icon: '📋' }
+    ]
+  }
+};
 
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px; color:var(--mute);">สีประจำตัวโมจิ</label>
-        <div class="pill-group">
-          ${[
-            { name: 'ชมพูพีช', col: '#FF9EB5' },
-            { name: 'มัทฉะมินต์', col: '#6FCBB0' },
-            { name: 'ส้มพุดดิ้ง', col: '#FFB05C' },
-            { name: 'ม่วงทาโร่', col: '#A78BFA' },
-            { name: 'ชานม', col: '#D4A373' },
-            { name: 'นมสด', col: '#F4DEE4' }
-          ].map(c => `
-            <div class="pill ${currentUser?.avatar_color === c.col ? 'active' : ''}" onclick="applyColorPreview('${c.col}')">
-              <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${c.col}; margin-right:4px;"></span>${c.name}
+function renderWardrobeItemsHtml(tab) {
+  const conf = WARDROBE_CONFIG[tab];
+  if (!conf) return '';
+
+  if (tab === 'color') {
+    return `<div class="wardrobe-grid">
+      ${conf.items.map(item => {
+        const isSel = (currentUser?.avatar_color || '#FF9EB5').toLowerCase() === item.hex.toLowerCase();
+        return `
+          <div class="wardrobe-item-card ${isSel ? 'active' : ''}" onclick="selectWardrobeItem('color', '${item.hex}')">
+            ${isSel ? '<span class="wardrobe-badge-equipped">✓</span>' : ''}
+            <div class="wardrobe-color-swatch" style="background:${item.hex};"></div>
+            <div class="wardrobe-item-title">${esc(item.title)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+  }
+
+  if (tab === 'personality') {
+    return `<div class="wardrobe-personality-list">
+      ${conf.items.map(item => {
+        const isSel = (currentUser?.personality || 'kind') === item.id;
+        return `
+          <div class="wardrobe-personality-card ${isSel ? 'active' : ''}" onclick="selectWardrobeItem('personality', '${item.id}')">
+            <div style="font-size:26px;">${item.icon}</div>
+            <div style="flex:1;">
+              <div style="font-weight:700; font-size:13px; color:var(--ink);">${esc(item.title)}</div>
+              <div style="font-size:11px; color:var(--mute); margin-top:2px; line-height:1.35;">${esc(item.desc)}</div>
             </div>
-          `).join('')}
-        </div>
-      </div>
+            ${isSel ? '<span style="color:var(--pink); font-size:16px; font-weight:bold;">✓</span>' : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+  }
 
-      <div style="margin-bottom:14px;">
-        <label style="font-size:12px; color:var(--mute);">บุคลิกในการตอบแชท</label>
-        <div class="pill-group">
-          ${[
-            { id: 'kind', label: 'ใจดี อบอุ่น 💖' },
-            { id: 'cheerful', label: 'ร่าเริง สดใส 🌟' },
-            { id: 'disciplined', label: 'จริงจัง มีวินัย 📋' }
-          ].map(p => `
-            <div class="pill ${currentUser?.personality === p.id ? 'active' : ''}" onclick="applyPersonalityPreview('${p.id}')">${p.label}</div>
-          `).join('')}
-        </div>
-      </div>
+  // Hat, Accessory, Face
+  let currentVal = 'none';
+  if (tab === 'hat') currentVal = currentUser?.avatar_hat || 'none';
+  else if (tab === 'accessory') currentVal = currentUser?.avatar_accessory || 'none';
+  else if (tab === 'face') currentVal = currentUser?.avatar_face || 'happy';
 
-      <button class="btn" onclick="saveWardrobeSettings()">เสร็จสิ้น</button>
-    </div>
+  return `<div class="wardrobe-grid">
+    ${conf.items.map(item => {
+      const isSel = currentVal === item.id;
+      return `
+        <div class="wardrobe-item-card ${isSel ? 'active' : ''}" onclick="selectWardrobeItem('${tab}', '${item.id}')">
+          ${isSel ? '<span class="wardrobe-badge-equipped">✓</span>' : ''}
+          <div class="wardrobe-item-icon">${item.icon}</div>
+          <div class="wardrobe-item-title">${esc(item.title)}</div>
+        </div>
+      `;
+    }).join('')}
+  </div>`;
+}
+
+function renderWardrobeTagsHtml() {
+  const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === (currentUser?.avatar_hat || 'none'));
+  const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === (currentUser?.avatar_accessory || 'none'));
+  const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === (currentUser?.avatar_face || 'happy'));
+  const colItem = WARDROBE_CONFIG.color.items.find(i => i.hex.toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase());
+
+  return `
+    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
+    <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
+    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
+    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? colItem.hex : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
   `;
 }
 
-function applyHatPreview(h) {
-  currentUser.avatar_hat = h;
-  $('#wardrobeModalPreview').innerHTML = mascotSVG(currentUser.avatar_face, currentUser.avatar_color, 96, h);
-  openWardrobeModal();
+function switchWardrobeCategory(tab) {
+  currentWardrobeTab = tab;
+  document.querySelectorAll('.wardrobe-cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  const content = $('#wardrobeContentBox');
+  if (content) {
+    content.innerHTML = renderWardrobeItemsHtml(tab);
+  }
 }
 
-function applyColorPreview(col) {
-  currentUser.avatar_color = col;
-  $('#wardrobeModalPreview').innerHTML = mascotSVG(currentUser.avatar_face, col, 96, currentUser.avatar_hat);
-  openWardrobeModal();
+function selectWardrobeItem(type, val) {
+  if (!currentUser) return;
+  if (type === 'hat') currentUser.avatar_hat = val;
+  else if (type === 'accessory') currentUser.avatar_accessory = val;
+  else if (type === 'face') currentUser.avatar_face = val;
+  else if (type === 'color') currentUser.avatar_color = val;
+  else if (type === 'personality') currentUser.personality = val;
+
+  // Refresh live preview with squash & stretch bounce
+  const prev = $('#wardrobeModalPreview');
+  if (prev) {
+    prev.innerHTML = mascotSVG(
+      currentUser.avatar_face,
+      currentUser.avatar_color,
+      104,
+      currentUser.avatar_hat,
+      currentUser.avatar_accessory
+    );
+    prev.classList.remove('bounce-once');
+    void prev.offsetWidth;
+    prev.classList.add('bounce-once');
+  }
+
+  // Update tags
+  const tags = $('#wardrobePreviewTags');
+  if (tags) {
+    tags.innerHTML = renderWardrobeTagsHtml();
+  }
+
+  // Re-render items in current tab
+  const content = $('#wardrobeContentBox');
+  if (content) {
+    content.innerHTML = renderWardrobeItemsHtml(currentWardrobeTab);
+  }
 }
 
-function applyPersonalityPreview(p) {
-  currentUser.personality = p;
-  openWardrobeModal();
+function openWardrobeModal(initialTab = 'hat') {
+  currentWardrobeTab = initialTab || 'hat';
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh" style="max-height:88vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 class="hd" style="font-size:18px; margin:0;">ห้องแต่งตัวโมจิ 👒✨</h2>
+        <button class="btn-icon" onclick="closeSheet()" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Live Stage Preview -->
+      <div class="wardrobe-stage">
+        <div id="wardrobeModalPreview" class="wardrobe-preview-box">
+          ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 104, currentUser?.avatar_hat, currentUser?.avatar_accessory)}
+        </div>
+        <div class="wardrobe-pedestal"></div>
+        <div id="wardrobePreviewTags" class="wardrobe-preview-tags">
+          ${renderWardrobeTagsHtml()}
+        </div>
+      </div>
+
+      <!-- Category Navigation Tabs -->
+      <div class="wardrobe-cat-nav">
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'hat' ? 'active' : ''}" data-tab="hat" onclick="switchWardrobeCategory('hat')">
+          👒 หมวก
+        </button>
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'accessory' ? 'active' : ''}" data-tab="accessory" onclick="switchWardrobeCategory('accessory')">
+          🧋 ของถือ & ปีก
+        </button>
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'face' ? 'active' : ''}" data-tab="face" onclick="switchWardrobeCategory('face')">
+          👀 สีหน้า
+        </button>
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'color' ? 'active' : ''}" data-tab="color" onclick="switchWardrobeCategory('color')">
+          🎨 สีตัวโมจิ
+        </button>
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'personality' ? 'active' : ''}" data-tab="personality" onclick="switchWardrobeCategory('personality')">
+          💬 บุคลิก AI
+        </button>
+      </div>
+
+      <!-- Items Grid / List Container -->
+      <div id="wardrobeContentBox" style="flex:1; min-height:180px; margin-bottom:12px;">
+        ${renderWardrobeItemsHtml(currentWardrobeTab)}
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn g" style="flex:1;" onclick="closeSheet()">ยกเลิก</button>
+        <button class="btn" style="flex:2;" onclick="saveWardrobeSettings()">บันทึกชุดนี้ ✨</button>
+      </div>
+    </div>
+  `;
 }
 
 async function saveWardrobeSettings() {
   await saveProfileChanges();
   closeSheet();
-  renderSettings();
+  toast('บันทึกชุดแต่งตัวและสไตล์เรียบร้อย! ✨🎉');
+  if (typeof renderSettings === 'function') {
+    renderSettings();
+  }
 }
 
 // Sub-Modal: Privacy Settings
@@ -6915,6 +7404,7 @@ async function saveProfileChanges() {
         avatar_color: currentUser.avatar_color,
         avatar_face: currentUser.avatar_face,
         avatar_hat: currentUser.avatar_hat,
+        avatar_accessory: currentUser.avatar_accessory || 'none',
         personality: currentUser.personality || 'cheerful',
         goal_type: currentUser.goal_type || 'weight_loss',
         calorie_goal: currentUser.calorie_goal,
@@ -7533,6 +8023,11 @@ const POPULAR_THAI_DISHES = [
 ];
 
 function openSheet() {
+  if (!currentUser) {
+    toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนบันทึกอาหารน้า 🍡');
+    openOnboardingModal({ isNewUser: true });
+    return;
+  }
   const now = new Date();
   const h = now.getHours();
   const isLateNight = h >= 0 && h < 4;
@@ -8059,6 +8554,11 @@ let cameraStream = null;
 let currentCameraFacing = 'environment'; // 'environment' (rear) | 'user' (front)
 
 function openCameraFromToday() {
+  if (!currentUser) {
+    toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนถ่ายรูปน้า 🍡');
+    openOnboardingModal({ isNewUser: true });
+    return;
+  }
   if (!draft) openSheet();
   openCameraModal();
 }
@@ -8822,8 +9322,7 @@ async function installPwaApp() {
 
   // If first-time visitor with no saved user or onboarding not yet completed
   const savedId = localStorage.getItem('mochi_user_id');
-  const hasOnboarded = localStorage.getItem('mochi_onboarded');
-  if (!savedId && !hasOnboarded) {
+  if (!savedId || !currentUser) {
     setTimeout(() => {
       openOnboardingModal({ isNewUser: true });
     }, 400);
