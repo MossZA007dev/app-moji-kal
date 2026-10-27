@@ -7,6 +7,9 @@
     "dev": "node dev.mjs",
     "start": "node dev.mjs"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"
