@@ -5411,6 +5411,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 // Mascot SVG Generator with Hats, Accessories & Expressions
 function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', accessory = null) {
+  if (color && (color.startsWith('skin_3d_') || color.includes('/data/skins/'))) {
+    const fileName = color.startsWith('/data/skins/') ? color : `/data/skins/${color}.png`;
+    return `<svg viewBox="0 0 120 112" width="${size}" height="${Math.round(size * 0.93)}" class="skin-3d-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+      <image href="${fileName}" xlink:href="${fileName}" x="4" y="0" width="112" height="112" preserveAspectRatio="xMidYMid meet"/>
+    </svg>`;
+  }
   const acc = accessory !== null ? accessory : (currentUser?.avatar_accessory || 'none');
   const E = {
     happy: '<path d="M38 58q5-8 10 0M72 58q5-8 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
@@ -13501,11 +13507,125 @@ async function addNewMemberFromModal() {
 }
 
 // Sub-Modal & Tab: Wardrobe & Fashion Shop (🛍️ ห้องเสื้อและร้านค้าแฟชั่นโมจิ)
-let currentWardrobeTab = 'hat';
-let activeFashionTab = 'hat';
+let currentWardrobeTab = 'skin3d';
+let activeFashionTab = 'skin3d';
 let fashionPreview = null;
 
 const WARDROBE_CONFIG = {
+  skin3d: {
+    title: 'สกิน 3D สุดพิเศษ',
+    icon: '✨',
+    items: [
+      {
+        id: 'skin_3d_strawberry',
+        cat: 'color',
+        image: '/data/skins/skin_3d_strawberry.png',
+        title: 'สตรอว์เบอร์รีเค้ก 🍓',
+        desc: 'โมจิเค้กสตรอว์เบอร์รีหวานฉ่ำ สไตล์ฟิกเกอร์ 3D (ของขวัญต้อนรับ)',
+        series: '🎁 WELCOME 3D',
+        free: true
+      },
+      {
+        id: 'skin_3d_matcha',
+        cat: 'color',
+        image: '/data/skins/skin_3d_matcha.png',
+        title: 'มัทฉะกรีนที 🍵',
+        desc: 'โมจิมัทฉะเขียวพาสเทล หอมกรุ่นกลิ่นชาเขียวแท้',
+        series: '✨ POP MART 3D',
+        price: 50
+      },
+      {
+        id: 'skin_3d_boba',
+        cat: 'color',
+        image: '/data/skins/skin_3d_boba.png',
+        title: 'ชานมไข่มุก 🧋',
+        desc: 'แก้วชานมไข่มุกหนึบหนับ หวานน้อยแต่น่ารักมาก',
+        series: '✨ POP MART 3D',
+        price: 70
+      },
+      {
+        id: 'skin_3d_cat',
+        cat: 'color',
+        image: '/data/skins/skin_3d_cat.png',
+        title: 'น้องแมวเหมียวคิตตี้ 🐱',
+        desc: 'น้องแมวหูตั้งแก้มชมพู ขนนุ่มฟู น่ารักเกินต้าน',
+        series: '🐾 CUTE PETS 3D',
+        price: 75
+      },
+      {
+        id: 'skin_3d_gamer',
+        cat: 'color',
+        image: '/data/skins/skin_3d_gamer.png',
+        title: 'เกมเมอร์คิตตี้ 🎮',
+        desc: 'สวมหูฟังเกมมิ่งสีชมพู พร้อมเล่นเกมลดน้ำหนัก',
+        series: '🎧 GAMER 3D',
+        price: 80
+      },
+      {
+        id: 'skin_3d_devil',
+        cat: 'color',
+        image: '/data/skins/skin_3d_devil.png',
+        title: 'เดวิลปีศาจน้อย 😈',
+        desc: 'ปีศาจตัวจิ๋วมีเขาและหางเดวิลสุดเท่ ขี้เล่นซุกซน',
+        series: '🔥 POPULAR 3D',
+        price: 80
+      },
+      {
+        id: 'skin_3d_wizard',
+        cat: 'color',
+        image: '/data/skins/skin_3d_wizard.png',
+        title: 'จอมเวทมนตร์ 🧙‍♂️',
+        desc: 'สวมหมวกเวทมนตร์และคทาวิเศษ เสกแคลอรี่ให้หายวับ',
+        series: '🔮 FANTASY 3D',
+        price: 90
+      },
+      {
+        id: 'skin_3d_rainbow',
+        cat: 'color',
+        image: '/data/skins/skin_3d_rainbow.png',
+        title: 'สายรุ้งโฮโลแกรม 🌈',
+        desc: 'โมจิประกายสายรุ้ง 7 สี สไตล์อาร์ตทอยระดับพรีเมียม',
+        series: '🌈 RAINBOW SPECIAL',
+        price: 120
+      },
+      {
+        id: 'skin_3d_angel',
+        cat: 'color',
+        image: '/data/skins/skin_3d_angel.png',
+        title: 'นางฟ้าเทวดาน้อย 👼',
+        desc: 'โมจินางฟ้ามีปีกและวงแหวนศักดิ์สิทธิ์ อวยพรสุขภาพ',
+        series: '✨ SPECIAL MISSION',
+        mission: { type: 'water', target: 5, label: 'ดื่มน้ำครบ 5 ครั้ง 💧' }
+      },
+      {
+        id: 'skin_3d_chef',
+        cat: 'color',
+        image: '/data/skins/skin_3d_chef.png',
+        title: 'มาสเตอร์เชฟขนม 👨‍🍳',
+        desc: 'เชฟโมจิสวมหมวกกุ๊ก เสิร์ฟเมนูคลีนแคลอรี่ต่ำ',
+        series: '🍳 MASTER CHEF',
+        mission: { type: 'logs', target: 5, label: 'บันทึกอาหารครบ 5 มื้อ 🥗' }
+      },
+      {
+        id: 'skin_3d_dark_knight',
+        cat: 'color',
+        image: '/data/skins/skin_3d_dark_knight.png',
+        title: 'อัศวินทมิฬแดงดำ ⚔️',
+        desc: 'อัศวินเกราะแดงดำ ดุดัน เท่สไตล์ Dark Fantasy',
+        series: '⚔️ LEGENDARY 3D',
+        mission: { type: 'streak', target: 5, label: 'Streak 5 วันติด 🔥' }
+      },
+      {
+        id: 'skin_3d_king',
+        cat: 'color',
+        image: '/data/skins/skin_3d_king.png',
+        title: 'ราชาโมจิทองคำ 👑',
+        desc: 'ราชาโมจิสวมมงกุฎทองคำเปล่งประกาย บารมีล้นหลาม',
+        series: '👑 ROYAL EDITION',
+        mission: { type: 'goal_score', target: 300, label: 'คะแนนวินัยครบ 300 pt 🎯' }
+      }
+    ]
+  },
   hat: {
     title: 'หมวก & ทรงผม',
     icon: '👒',
@@ -13703,20 +13823,23 @@ const WARDROBE_CONFIG = {
 
 function isItemUnlocked(category, itemId) {
   if (!currentUser) return false;
-  if (category === 'movie') {
-    const mItem = WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
+  if (category === 'movie' || category === 'skin3d') {
+    const mItem = (WARDROBE_CONFIG.movie?.items || []).concat(WARDROBE_CONFIG.skin3d?.items || []).find(i => (i.id || i.hex) === itemId);
     if (mItem && mItem.cat) category = mItem.cat;
+    else if (category === 'skin3d') category = 'color';
   }
   const conf = WARDROBE_CONFIG[category];
-  const item = conf?.items.find(i => (i.id || i.hex) === itemId);
+  const item = conf?.items.find(i => (i.id || i.hex) === itemId) ||
+               WARDROBE_CONFIG.skin3d?.items.find(i => (i.id || i.hex) === itemId) ||
+               WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
   if (item && item.free) return true;
-  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind') return true;
+  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind' || itemId === 'skin_3d_strawberry') return true;
 
   // If item is currently worn, user automatically owns it
   if (category === 'hat' && currentUser.avatar_hat === itemId) return true;
   if (category === 'accessory' && currentUser.avatar_accessory === itemId) return true;
   if (category === 'face' && currentUser.avatar_face === itemId) return true;
-  if (category === 'color' && (currentUser.avatar_color || '').toLowerCase() === (itemId || '').toLowerCase()) return true;
+  if ((category === 'color' || category === 'skin3d') && (currentUser.avatar_color || '').toLowerCase() === (itemId || '').toLowerCase()) return true;
   if (category === 'personality' && currentUser.personality === itemId) return true;
 
   let unlocked = [];
@@ -13726,7 +13849,7 @@ function isItemUnlocked(category, itemId) {
     unlocked = [];
   }
   const key = `${category}:${itemId}`;
-  return unlocked.includes(key);
+  return unlocked.includes(key) || unlocked.includes(`color:${itemId}`) || unlocked.includes(`skin3d:${itemId}`);
 }
 
 function checkMissionProgress(mission) {
@@ -13752,9 +13875,10 @@ function checkMissionProgress(mission) {
 
 async function buyFashionItem(category, itemId, price, itemName) {
   if (!currentUser) return;
-  if (category === 'movie') {
-    const mItem = WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
+  if (category === 'movie' || category === 'skin3d') {
+    const mItem = (WARDROBE_CONFIG.movie?.items || []).concat(WARDROBE_CONFIG.skin3d?.items || []).find(i => (i.id || i.hex) === itemId);
     if (mItem && mItem.cat) category = mItem.cat;
+    else if (category === 'skin3d') category = 'color';
   }
   const userCoins = Number(currentUser.coins) || 0;
   if (userCoins < price) {
@@ -13798,9 +13922,10 @@ async function buyFashionItem(category, itemId, price, itemName) {
 
 async function claimFashionMissionItem(category, itemId, itemName) {
   if (!currentUser) return;
-  if (category === 'movie') {
-    const mItem = WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
+  if (category === 'movie' || category === 'skin3d') {
+    const mItem = (WARDROBE_CONFIG.movie?.items || []).concat(WARDROBE_CONFIG.skin3d?.items || []).find(i => (i.id || i.hex) === itemId);
     if (mItem && mItem.cat) category = mItem.cat;
+    else if (category === 'skin3d') category = 'color';
   }
 
   try {
@@ -13834,9 +13959,13 @@ async function claimFashionMissionItem(category, itemId, itemName) {
 
 async function equipFashionItem(category, itemId, showToastMsg = true) {
   if (!currentUser) return;
-  if (category === 'movie') {
-    const mItem = WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
+  if (category === 'movie' || category === 'skin3d') {
+    const mItem = (WARDROBE_CONFIG.movie?.items || []).concat(WARDROBE_CONFIG.skin3d?.items || []).find(i => (i.id || i.hex) === itemId);
     if (mItem && mItem.cat) category = mItem.cat;
+    else if (category === 'skin3d') category = 'color';
+  }
+  if (currentUser.avatar_image) {
+    currentUser.avatar_image = null;
   }
   if (category === 'hat') currentUser.avatar_hat = itemId;
   else if (category === 'accessory') currentUser.avatar_accessory = itemId;
@@ -13874,9 +14003,10 @@ function initFashionPreview() {
 function selectFashionTryOn(category, itemId) {
   initFashionPreview();
   let targetCat = category;
-  if (category === 'movie') {
-    const mItem = WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
+  if (category === 'movie' || category === 'skin3d') {
+    const mItem = (WARDROBE_CONFIG.movie?.items || []).concat(WARDROBE_CONFIG.skin3d?.items || []).find(i => (i.id || i.hex) === itemId);
     if (mItem && mItem.cat) targetCat = mItem.cat;
+    else if (category === 'skin3d') targetCat = 'color';
   }
   if (targetCat === 'hat') fashionPreview.hat = itemId;
   else if (targetCat === 'accessory') fashionPreview.accessory = itemId;
@@ -13904,6 +14034,9 @@ function switchFashionTab(tabName) {
 
 async function applyFashionChanges() {
   if (!currentUser || !fashionPreview) return;
+  if (currentUser.avatar_image) {
+    currentUser.avatar_image = null;
+  }
   currentUser.avatar_hat = fashionPreview.hat;
   currentUser.avatar_accessory = fashionPreview.accessory;
   currentUser.avatar_face = fashionPreview.face;
@@ -13934,13 +14067,17 @@ function renderFashionStageTagsHtml() {
   const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === fashionPreview.hat);
   const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === fashionPreview.accessory);
   const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === fashionPreview.face);
-  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase());
+  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase()) ||
+                  WARDROBE_CONFIG.skin3d?.items.find(i => (i.hex || i.id || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase());
+
+  const is3D = Boolean(colItem?.image || fashionPreview.color?.startsWith('skin_3d_'));
+  const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
   return `
-    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
-    <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
-    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
-    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
+    <span class="wardrobe-preview-tag">สกิน/สี: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    ${!is3D ? `<span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>` : ''}
+    ${!is3D ? `<span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>` : ''}
+    ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
   `;
 }
 
@@ -13952,7 +14089,7 @@ function renderFashionItemsCardsHtml(cat) {
   const userCoins = Number(currentUser.coins) || 0;
 
   return conf.items.map(item => {
-    const realCat = item.cat || cat;
+    const realCat = item.cat || (cat === 'skin3d' ? 'color' : cat);
     const itemId = item.id || item.hex;
     const isUnlocked = isItemUnlocked(realCat, itemId);
 
@@ -13970,9 +14107,15 @@ function renderFashionItemsCardsHtml(cat) {
     else if (realCat === 'color') isPreviewing = (fashionPreview.color || '').toLowerCase() === (item.hex || item.id || '').toLowerCase();
     else if (realCat === 'personality') isPreviewing = fashionPreview.personality === itemId;
 
-    // Item preview visual (icon or color swatch)
+    // Item preview visual (icon or color swatch or 3D image)
     let visualHtml = '';
-    if (realCat === 'color') {
+    if (item.image) {
+      visualHtml = `
+        <div style="width:68px; height:68px; margin:2px auto 6px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, rgba(255,255,255,0.95), rgba(243,244,246,0.8)); border-radius:16px; border:1px solid rgba(0,0,0,0.06); box-shadow:0 3px 10px rgba(0,0,0,0.05); overflow:hidden;">
+          <img src="${item.image}" alt="${esc(item.title)}" style="max-width:60px; max-height:60px; object-fit:contain; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.18));">
+        </div>
+      `;
+    } else if (realCat === 'color') {
       visualHtml = `<div style="width:36px; height:36px; border-radius:50%; background:${item.gradient || item.hex}; margin:2px auto 6px; box-shadow:0 2px 8px rgba(0,0,0,0.15); border:2.5px solid white;"></div>`;
     } else {
       visualHtml = `<div class="fashion-card-icon">${item.icon}</div>`;
@@ -14116,6 +14259,9 @@ function renderFashionShop() {
 
     <!-- Category Tabs -->
     <div class="fashion-cat-nav">
+      <button class="fashion-cat-btn ${activeFashionTab === 'skin3d' ? 'active' : ''}" onclick="switchFashionTab('skin3d')" style="${activeFashionTab === 'skin3d' ? 'background:linear-gradient(135deg, #EC4899, #8B5CF6); color:#fff; border-color:#8B5CF6; font-weight:800; box-shadow:0 2px 8px rgba(236,72,153,0.3);' : ''}">
+        <span>🌟</span> <span>สกิน 3D สุดน่ารัก ✨</span>
+      </button>
       <button class="fashion-cat-btn ${activeFashionTab === 'movie' ? 'active' : ''}" onclick="switchFashionTab('movie')" style="${activeFashionTab === 'movie' ? 'background:linear-gradient(135deg, #FEF08A, #FDE047); color:#713F12; border-color:#FACC15; font-weight:800;' : ''}">
         <span>🎬</span> <span>หนัง & ซีรีส์ ⚔️</span>
       </button>
@@ -14153,6 +14299,27 @@ function promptGoShop(tab, title) {
 function renderWardrobeItemsHtml(tab) {
   const conf = WARDROBE_CONFIG[tab];
   if (!conf) return '';
+
+  if (tab === 'skin3d') {
+    return `<div class="wardrobe-grid">
+      ${conf.items.map(item => {
+        const itemVal = item.hex || item.id;
+        const isSel = (currentUser?.avatar_color || '#FF9EB5').toLowerCase() === itemVal.toLowerCase();
+        const unlocked = isItemUnlocked('color', itemVal);
+        return `
+          <div class="wardrobe-item-card ${isSel ? 'active' : ''} ${!unlocked ? 'locked' : ''}" 
+               onclick="${unlocked ? `selectWardrobeItem('color', '${itemVal}')` : `promptGoShop('skin3d', '${esc(item.title)}')`}">
+            ${isSel ? '<span class="wardrobe-badge-equipped">✓</span>' : ''}
+            ${!unlocked ? '<span style="position:absolute; top:4px; right:4px; font-size:11px; background:rgba(0,0,0,0.45); border-radius:50%; padding:2px 3px;">🔒</span>' : ''}
+            <div style="width:50px; height:50px; margin:2px auto 4px; display:flex; align-items:center; justify-content:center;">
+              <img src="${item.image}" alt="${esc(item.title)}" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));">
+            </div>
+            <div class="wardrobe-item-title">${esc(item.title)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>`;
+  }
 
   if (tab === 'color') {
     return `<div class="wardrobe-grid">
@@ -14218,13 +14385,17 @@ function renderWardrobeTagsHtml() {
   const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === (currentUser?.avatar_hat || 'none'));
   const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === (currentUser?.avatar_accessory || 'none'));
   const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === (currentUser?.avatar_face || 'happy'));
-  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase());
+  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || i.id || '').toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase()) ||
+                  WARDROBE_CONFIG.skin3d?.items.find(i => (i.hex || i.id || '').toLowerCase() === (currentUser?.avatar_color || '#FF9EB5').toLowerCase());
+
+  const is3D = Boolean(colItem?.image || currentUser?.avatar_color?.startsWith('skin_3d_'));
+  const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
   return `
-    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
-    <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
-    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
-    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
+    <span class="wardrobe-preview-tag">สกิน/สี: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    ${!is3D ? `<span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>` : ''}
+    ${!is3D ? `<span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>` : ''}
+    ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
   `;
 }
 
@@ -14275,8 +14446,8 @@ function selectWardrobeItem(type, val) {
   }
 }
 
-function openWardrobeModal(initialTab = 'hat') {
-  currentWardrobeTab = initialTab || 'hat';
+function openWardrobeModal(initialTab = 'skin3d') {
+  currentWardrobeTab = initialTab || 'skin3d';
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = `
@@ -14299,20 +14470,23 @@ function openWardrobeModal(initialTab = 'hat') {
 
       <!-- Category Navigation Tabs -->
       <div class="wardrobe-cat-nav">
+        <button class="wardrobe-cat-btn ${currentWardrobeTab === 'skin3d' ? 'active' : ''}" data-tab="skin3d" onclick="switchWardrobeCategory('skin3d')" style="${currentWardrobeTab === 'skin3d' ? 'background:linear-gradient(135deg, #EC4899, #8B5CF6); color:#fff; border-color:#8B5CF6;' : ''}">
+          🌟 สกิน 3D
+        </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'hat' ? 'active' : ''}" data-tab="hat" onclick="switchWardrobeCategory('hat')">
           👒 หมวก
         </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'accessory' ? 'active' : ''}" data-tab="accessory" onclick="switchWardrobeCategory('accessory')">
-          🗡️ ของถือ & อาวุธ
+          🗡️ ของถือ
         </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'face' ? 'active' : ''}" data-tab="face" onclick="switchWardrobeCategory('face')">
           👀 สีหน้า
         </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'color' ? 'active' : ''}" data-tab="color" onclick="switchWardrobeCategory('color')">
-          🎨 สีตัวโมจิ
+          🎨 สีโมจิ
         </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'personality' ? 'active' : ''}" data-tab="personality" onclick="switchWardrobeCategory('personality')">
-          💬 บุคลิก AI
+          💬 บุคลิก
         </button>
       </div>
 
@@ -14330,6 +14504,9 @@ function openWardrobeModal(initialTab = 'hat') {
 }
 
 async function saveWardrobeSettings() {
+  if (currentUser?.avatar_image) {
+    currentUser.avatar_image = null;
+  }
   await saveProfileChanges();
   closeSheet();
   toast('บันทึกชุดแต่งตัวและสไตล์เรียบร้อย! ✨🎉');
