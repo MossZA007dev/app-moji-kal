@@ -578,29 +578,244 @@ nav button i { font-style: normal; font-size: 18px; }
   align-items: center;
   transition: all 0.2s ease;
 }
-.photo-preview-box {
+/* AR Food Scanner Stage & Floating Calorie Callout Pins */
+.ar-scanner-container {
   position: relative;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  margin: 10px 0;
-  border: 2px solid var(--line);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  margin: 12px 0;
+  border: 1.5px solid var(--line);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   background: var(--card);
 }
-.photo-preview-img {
+.ar-scanner-stage {
+  position: relative;
   width: 100%;
-  max-height: 220px;
+  height: 280px;
+  overflow: hidden;
+  background: #0B0F19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: pan-y;
+  user-select: none;
+}
+.ar-scanner-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
+.ar-scanner-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.05) 25%, rgba(15, 23, 42, 0.05) 70%, rgba(15, 23, 42, 0.55) 100%);
+  z-index: 2;
+}
+.ar-scanner-badge-wrap {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+}
+.ar-scanner-top-badge {
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: auto;
+}
+.ar-corner-frame {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  z-index: 4;
+}
+.ar-bracket {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #FFFFFF;
+  border-style: solid;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+.ar-bracket.tl { top: 0; left: 0; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 10px; }
+.ar-bracket.tr { top: 0; right: 0; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 10px; }
+.ar-bracket.bl { bottom: 0; left: 0; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 10px; }
+.ar-bracket.br { bottom: 0; right: 0; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 10px; }
+
+.ar-laser-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(110, 231, 183, 0.3) 15%, #6EE7B7 50%, rgba(110, 231, 183, 0.3) 85%, transparent 100%);
+  box-shadow: 0 0 16px 3px #34D399;
+  z-index: 6;
+  pointer-events: none;
+  animation: arLaserScan 2.4s ease-in-out infinite alternate;
+}
+@keyframes arLaserScan {
+  0% { top: 12%; opacity: 0.85; }
+  100% { top: 88%; opacity: 0.85; }
+}
+
+.ar-pins-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+.ar-food-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: arPinPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.2s ease;
+}
+.ar-food-pin:hover, .ar-food-pin.active {
+  transform: translate(-50%, -50%) scale(1.12);
+  z-index: 25;
+}
+.ar-pin-pill {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0F172A;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+.ar-food-pin.active .ar-pin-pill {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #6EE7B7;
+  box-shadow: 0 0 0 3px rgba(110, 231, 183, 0.55), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.ar-pin-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+.ar-pin-cal {
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.ar-pin-name {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.8;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  padding-left: 5px;
+  margin-left: 2px;
+}
+.ar-food-pin.active .ar-pin-name {
+  border-left-color: rgba(255, 255, 255, 0.25);
+  opacity: 0.95;
+}
+.ar-pin-anchor {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2.5px rgba(0, 0, 0, 0.35), 0 0 8px #6EE7B7;
+  margin-top: 3px;
+  transition: all 0.2s ease;
+}
+.ar-food-pin.active .ar-pin-anchor {
+  background: #6EE7B7;
+  box-shadow: 0 0 0 3px #FFFFFF, 0 0 12px #34D399;
+}
+@keyframes arPinPop {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  70% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
 .photo-preview-actions {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: var(--card);
   border-top: 1px solid var(--line);
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Meal Thumbnail & AR Scan Badge in Lists */
+.meal-thumb-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.15s ease;
+}
+.meal-thumb-btn:active {
+  transform: scale(0.92);
+}
+.meal-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.meal-thumb-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #34D399;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(2px);
+}
+.component-row.highlighted {
+  border-color: var(--mint) !important;
+  background: rgba(52, 211, 153, 0.12) !important;
+  box-shadow: 0 0 0 1.5px var(--mint);
 }
 
 input, textarea, select {
@@ -1682,6 +1897,21 @@ textarea { resize: none; margin-bottom: 8px; }
   </div>
 </div>
 
+<!-- AR Food Scanner Photo Inspection Lightbox Modal -->
+<div id="arPhotoModal" class="camera-modal" hidden>
+  <div class="camera-backdrop" onclick="closeArPhotoModal()"></div>
+  <div class="camera-container" style="max-height: 94vh;">
+    <div class="camera-top-bar">
+      <span class="camera-title-badge">✨ AR Food Scanner</span>
+      <button class="camera-icon-btn" onclick="closeArPhotoModal()" title="ปิด">✕</button>
+    </div>
+    
+    <div id="arPhotoModalBody" style="display:flex; flex-direction:column; gap:12px; height:100%; overflow-y:auto; padding-bottom:8px;">
+      <!-- Content populated dynamically -->
+    </div>
+  </div>
+</div>
+
 <!-- Bottom Tab Navigation -->
 <nav>
   <button data-t="today" onclick="go('today')"><i>🍡</i>วันนี้</button>
@@ -2208,15 +2438,24 @@ function renderToday() {
         <h2 class="hd" style="font-size:16px;">วันนี้กินอะไรไปบ้าง (${currentLogs.length} มื้อ)</h2>
         <button class="btn s sm" onclick="openShareModal()">💌 แชร์การ์ดรูป</button>
       </div>
-      ${currentLogs.length ? currentLogs.map(l => `
-        <div class="row">
-          <div>
-            <b>${esc(l.name)}</b> ${l.is_private ? '<span style="font-size:11px; color:var(--mute);">🔒 ส่วนตัว</span>' : ''}
+      ${currentLogs.length ? currentLogs.map(l => {
+        const hasPhoto = Boolean(l.image_url);
+        return `
+        <div class="row" style="align-items:center;">
+          ${hasPhoto ? `
+            <div class="meal-thumb-btn" onclick="openArPhotoModal('${l.id}')" title="ดูรูปและหมุดแคลอรี AR">
+              <img src="${l.image_url}" alt="${esc(l.name)}" class="meal-thumb-img">
+              <span class="meal-thumb-badge">AR</span>
+            </div>
+          ` : ''}
+          <div style="flex:1; min-width:0; ${hasPhoto ? 'cursor:pointer;' : ''}" ${hasPhoto ? `onclick="openArPhotoModal('${l.id}')"` : ''}>
+            <b style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(l.name)}</b>
             <small>${fmt(l.calorie)} kcal · <span class="${l.sugar >= (currentUser?.sugar_goal * 0.4) ? 'sug' : ''}">น้ำตาล ${fmt(l.sugar)} g</span> ${l.sweetness_level !== 'normal' ? '· ' + esc(l.sweetness_level) : ''}</small>
           </div>
           <button class="x" onclick="deleteMeal('${l.id}')">×</button>
         </div>
-      `).join('') : '<p style="color:var(--mute); margin: 6px 0;">ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย</p>'}
+      `;
+      }).join('') : '<p style="color:var(--mute); margin: 6px 0;">ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย</p>'}
     </div>
   `;
 }
@@ -2767,9 +3006,17 @@ function renderFeed() {
             ` : item.meals.length ? `
               <div class="friend-meals">
                 ${item.meals.map(m => `
-                  <div class="meal-item">
-                    <span>${esc(m.name)}</span>
-                    <span style="color:var(--mute);">${fmt(m.calorie)} kcal · <span class="${m.sugar >= 12 ? 'sug' : ''}">${fmt(m.sugar)}g</span></span>
+                  <div class="meal-item" style="align-items:center;">
+                    ${m.image_url ? `
+                      <div class="meal-thumb-btn" onclick="openArPhotoModal('${m.id}')" title="ดูรูปและหมุดแคลอรี AR">
+                        <img src="${m.image_url}" alt="${esc(m.name)}" class="meal-thumb-img">
+                        <span class="meal-thumb-badge">AR</span>
+                      </div>
+                    ` : ''}
+                    <div style="flex:1; min-width:0; ${m.image_url ? 'cursor:pointer;' : ''}" ${m.image_url ? `onclick="openArPhotoModal('${m.id}')"` : ''}>
+                      <span style="display:block; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(m.name)}</span>
+                      <span style="color:var(--mute); font-size:11px;">${fmt(m.calorie)} kcal · <span class="${m.sugar >= 12 ? 'sug' : ''}">${fmt(m.sugar)}g</span></span>
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -4598,7 +4845,10 @@ function openSheet() {
     saveAsFav: false,
     imageBase64: null,
     clarification: null,
-    components: null
+    components: null,
+    showArPins: true,
+    activePinIdx: null,
+    isScanning: false
   };
   const initialEst = getSugarEstimate('standard', 'normal', []);
   draft.sugar = initialEst.sugarGrams;
@@ -4668,24 +4918,76 @@ function renderSheet() {
       <!-- Direct Camera Fallback (Hidden) -->
       <input id="directCameraInput" type="file" accept="image/*" capture="environment" hidden onchange="pickImage(this.files[0])">
 
-      <!-- Photo Picker / In-App Live Camera Section -->
+      <!-- AR Food Scanner Stage / Photo Section -->
       ${draft.imageBase64 ? `
-        <div class="photo-preview-box">
-          <img src="${draft.imageBase64}" alt="รูปอาหาร" class="photo-preview-img">
+        <div class="ar-scanner-container">
+          <div class="ar-scanner-stage" id="arScannerStage">
+            <img src="${draft.imageBase64}" alt="รูปอาหาร" class="ar-scanner-img">
+            <div class="ar-scanner-vignette"></div>
+
+            <!-- Top Pill Badge: EASY • QUICK • ACCURATE -->
+            <div class="ar-scanner-badge-wrap">
+              <div class="ar-scanner-top-badge">
+                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#34D399; box-shadow:0 0 6px #34D399;"></span>
+                <span>EASY • QUICK • ACCURATE</span>
+              </div>
+            </div>
+
+            <!-- Viewfinder Corner Brackets -->
+            <div class="ar-corner-frame">
+              <div class="ar-bracket tl"></div>
+              <div class="ar-bracket tr"></div>
+              <div class="ar-bracket bl"></div>
+              <div class="ar-bracket br"></div>
+            </div>
+
+            <!-- AR Laser Scanning Beam (when scanning) -->
+            ${draft.isScanning ? `<div class="ar-laser-beam"></div>` : ''}
+
+            <!-- Floating AR Food Calorie Pins -->
+            ${(draft.showArPins && draft.components && draft.components.length) ? `
+              <div class="ar-pins-layer">
+                ${draft.components.map((c, idx) => `
+                  <div class="ar-food-pin ${draft.activePinIdx === idx ? 'active' : ''}" 
+                       style="left: ${c.x || 50}%; top: ${c.y || 50}%;" 
+                       onclick="selectArPin(${idx})" 
+                       title="${esc(c.name)}: ${fmt(c.kcal)} cal">
+                    <div class="ar-pin-pill">
+                      <span class="ar-pin-icon">${c.icon || '🍽️'}</span>
+                      <span class="ar-pin-cal">${fmt(c.kcal)} cal</span>
+                      <span class="ar-pin-name">${esc(c.name)}</span>
+                    </div>
+                    <div class="ar-pin-anchor"></div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${(!draft.components || !draft.components.length) ? `
+              <div style="position:absolute; bottom:12px; background:rgba(0,0,0,0.68); color:#fff; font-size:11px; padding:4px 12px; border-radius:12px; backdrop-filter:blur(4px); z-index:6;">
+                🔍 ${draft.isScanning ? 'โมจิกำลังสแกนจานอาหาร...' : 'แตะ "วิเคราะห์อาหาร" เพื่อปักหมุด AR'}
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Actions toolbar -->
           <div class="photo-preview-actions">
-            <button class="btn s sm" style="font-size:11.5px; padding:5px 12px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
-            <label class="btn s sm" style="font-size:11.5px; padding:5px 12px; cursor:pointer;">
+            <button class="btn s sm" style="font-size:11.5px; padding:5px 10px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
+            <label class="btn s sm" style="font-size:11.5px; padding:5px 10px; cursor:pointer;">
               <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
               🖼️ เปลี่ยนรูป
             </label>
-            <button class="btn g sm" style="font-size:11.5px; padding:5px 12px; color:#DC2626;" onclick="draft.imageBase64=null; renderSheet();">🗑️ ลบรูป</button>
+            <button class="btn s sm" style="font-size:11.5px; padding:5px 10px;" onclick="toggleArPins()" title="ซ่อน/แสดงหมุด AR">
+              ${draft.showArPins ? '👁️ ซ่อนหมุด' : '📍 แสดงหมุด'}
+            </button>
+            <button class="btn g sm" style="font-size:11.5px; padding:5px 10px; color:#DC2626;" onclick="clearDraftPhoto()">🗑️ ลบรูป</button>
           </div>
         </div>
       ` : `
         <div class="photo-cta-card">
           <div style="font-size:32px; margin-bottom:4px;">📸</div>
           <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">ถ่ายรูปอาหาร & เครื่องดื่ม</b>
-          <span style="font-size:11.5px; color:var(--mute); margin-bottom:10px; display:block;">เปิดกล้องถ่ายสดในแอพ หรือเลือกรูปเพื่อประเมินแคลอรีและน้ำตาล</span>
+          <span style="font-size:11.5px; color:var(--mute); margin-bottom:10px; display:block;">เปิดกล้องถ่ายสดในแอพ พร้อมระบบตรวจจับอาหารและปักหมุด AR Calorie Pins</span>
           
           <div style="display:flex; gap:8px; width:100%; max-width:320px;">
             <button class="btn sm" style="flex:1.2; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="openCameraModal()">
@@ -4811,16 +5113,36 @@ function renderSheet() {
         </div>
       ` : ''}
 
-      <!-- Component Breakdown in Dish (Phase 3) -->
+      <!-- Component Breakdown in Dish (Phase 3 & AR Scanner) -->
       ${draft.components && draft.components.length ? `
-        <div class="component-box">
-          <small style="color:var(--mint); font-weight:600; display:block; margin-bottom:4px;">🍱 แจกแจงรายการในจาน:</small>
-          ${draft.components.map(c => `
-            <div class="component-item">
-              <span>• ${esc(c.name)}</span>
-              <span>${fmt(c.kcal)} kcal (${fmt(c.sugar)}g น้ำตาล)</span>
-            </div>
-          `).join('')}
+        <div class="component-box" style="background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:12px; margin:10px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <small style="color:var(--mint); font-weight:700; font-size:12px; display:flex; align-items:center; gap:5px;">
+              <span>🍱</span> <span>แจกแจงรายการในจาน (AR Calorie Pins):</span>
+            </small>
+            <button class="btn s sm" style="font-size:10.5px; padding:3px 8px;" onclick="addDraftComponent()">+ เพิ่มรายการ</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${draft.components.map((c, idx) => `
+              <div class="component-row ${draft.activePinIdx === idx ? 'highlighted' : ''}" 
+                   onclick="selectArPin(${idx})" 
+                   style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:12px; background:var(--bg); border:1px solid ${draft.activePinIdx === idx ? 'var(--mint)' : 'var(--line)'}; transition:all 0.2s ease; cursor:pointer;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                  <span style="font-size:18px;">${c.icon || '🍽️'}</span>
+                  <div style="min-width:0; flex:1;">
+                    <b style="font-size:12.5px; color:var(--ink); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(c.name)}</b>
+                    <small style="color:var(--mute); font-size:11px;">น้ำตาล ${fmt(c.sugar)}g · พิกัดหมุด AR (${c.x || 50}%, ${c.y || 50}%)</small>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-weight:700; font-size:12.5px; color:var(--ink); background:var(--card); padding:3px 8px; border-radius:8px; border:1px solid var(--line);">
+                    ${fmt(c.kcal)} <small style="font-size:10px; font-weight:normal; color:var(--mute);">cal</small>
+                  </span>
+                  <button class="x" style="font-size:16px; padding:2px 6px; color:var(--mute);" onclick="event.stopPropagation(); removeDraftComponent(${idx})" title="ลบรายการนี้">×</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 
@@ -5042,7 +5364,7 @@ function pickImage(file) {
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      const maxDim = 960;
+      const maxDim = 800;
       const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(img.width * scale);
@@ -5050,8 +5372,10 @@ function pickImage(file) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       if (!draft) openSheet();
-      draft.imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
-      draft.status = 'เลือกรูปแล้ว โมจิพร้อมประเมินโภชนาการ 🍡';
+      draft.imageBase64 = canvas.toDataURL('image/jpeg', 0.82);
+      draft.showArPins = true;
+      draft.activePinIdx = null;
+      draft.status = 'เลือกรูปแล้ว โมจิกำลังวิเคราะห์อาหาร... 🍡';
       renderSheet();
       if (!draft.txt.trim()) {
         analyzeMeal();
@@ -5069,7 +5393,8 @@ async function analyzeMeal() {
     return;
   }
 
-  draft.status = 'โมจิกำลังคำนวณและประเมินโภชนาการให้... 🍡';
+  draft.isScanning = true;
+  draft.status = 'โมจิกำลังสแกนอาหารและวิเคราะห์แคลอรี... 🍡';
   renderSheet();
 
   try {
@@ -5103,6 +5428,8 @@ async function analyzeMeal() {
     draft.sugar = result.sugar;
     draft.sugarFromPreset = false;
     draft.components = result.components || null;
+    draft.showArPins = true;
+    draft.activePinIdx = null;
     draft.status = `✨ ${result.note}`;
 
     if (result.needs_clarification && result.clarification_question) {
@@ -5115,8 +5442,12 @@ async function analyzeMeal() {
     }
   } catch (err) {
     draft.status = 'เกิดข้อผิดพลาดในการวิเคราะห์ ลองกรอกตัวเลขเองได้นะ';
+  } finally {
+    if (draft) {
+      draft.isScanning = false;
+      renderSheet();
+    }
   }
-  renderSheet();
 }
 
 async function saveMeal() {
@@ -5142,7 +5473,9 @@ async function saveMeal() {
         sugar,
         portion_size: draft.portion,
         sweetness_level: draft.sweetness,
-        is_private: draft.isPrivate ? 1 : 0
+        is_private: draft.isPrivate ? 1 : 0,
+        image_url: draft.imageBase64 || null,
+        components_json: draft.components && draft.components.length ? JSON.stringify(draft.components) : null
       })
     });
 
@@ -5220,6 +5553,216 @@ async function deleteMeal(id) {
   } catch (e) {
     toast('ลบไม่สำเร็จ');
   }
+}
+
+// AR Food Scanner & Floating Calorie Pins Helpers
+function selectArPin(idx) {
+  if (!draft) return;
+  draft.activePinIdx = draft.activePinIdx === idx ? null : idx;
+  renderSheet();
+}
+
+function toggleArPins() {
+  if (!draft) return;
+  draft.showArPins = !draft.showArPins;
+  renderSheet();
+}
+
+function clearDraftPhoto() {
+  if (!draft) return;
+  draft.imageBase64 = null;
+  draft.components = null;
+  draft.activePinIdx = null;
+  renderSheet();
+}
+
+function addDraftComponent() {
+  if (!draft) return;
+  const name = prompt('ระบุชื่อวัตถุดิบ/อาหารเพิ่มเติม (เช่น "ไข่ดาว", "หมูสับ", "เห็ด"):');
+  if (!name || !name.trim()) return;
+  const calStr = prompt(`ระบุแคลอรีสำหรับ "${name.trim()}" (kcal):`, '100');
+  const kcal = Math.max(0, Number(calStr) || 0);
+  const sugarStr = prompt(`ระบุน้ำตาลสำหรับ "${name.trim()}" (g):`, '0');
+  const sugar = Math.max(0, Number(sugarStr) || 0);
+
+  if (!draft.components) draft.components = [];
+  const nextX = Math.round(20 + Math.random() * 60);
+  const nextY = Math.round(25 + Math.random() * 50);
+  draft.components.push({
+    name: name.trim(),
+    kcal,
+    sugar,
+    icon: getComponentIcon(name.trim()),
+    x: nextX,
+    y: nextY
+  });
+
+  recalcDraftFromComponents();
+  draft.showArPins = true;
+  renderSheet();
+  toast(`เพิ่ม "${name.trim()}" แล้ว 🍡`);
+}
+
+function removeDraftComponent(idx) {
+  if (!draft || !draft.components) return;
+  draft.components.splice(idx, 1);
+  recalcDraftFromComponents();
+  renderSheet();
+}
+
+function recalcDraftFromComponents() {
+  if (!draft || !draft.components || !draft.components.length) return;
+  const totalKcal = draft.components.reduce((sum, c) => sum + (Number(c.kcal) || 0), 0);
+  const totalSugar = draft.components.reduce((sum, c) => sum + (Number(c.sugar) || 0), 0);
+  draft.kcal = Math.round(totalKcal);
+  draft.sugar = Math.round(totalSugar * 10) / 10;
+}
+
+function getComponentIcon(name = '') {
+  const n = String(name).toLowerCase();
+  if (n.includes('ข้าว')) return '🍚';
+  if (n.includes('ไข่')) return '🍳';
+  if (n.includes('ไก่')) return '🍗';
+  if (n.includes('หมู') || n.includes('เนื้อ') || n.includes('สเต็ก')) return '🥩';
+  if (n.includes('กุ้ง') || n.includes('ปลา') || n.includes('ซีฟู้ด')) return '🦐';
+  if (n.includes('เส้น') || n.includes('ก๋วยเตี๋ยว') || n.includes('ผัดไทย')) return '🍜';
+  if (n.includes('ผัก') || n.includes('ส้มตำ') || n.includes('สลัด')) return '🥗';
+  if (n.includes('ชา') || n.includes('มุก') || n.includes('นม') || n.includes('กาแฟ')) return '🧋';
+  if (n.includes('ซุป') || n.includes('น้ำซุป') || n.includes('น้ำจิ้ม')) return '🥣';
+  if (n.includes('เห็ด')) return '🍄';
+  if (n.includes('อโวคาโด') || n.includes('avocado')) return '🥑';
+  if (n.includes('ขนมปัง') || n.includes('โทสต์')) return '🍞';
+  return '🍽️';
+}
+
+// Lightbox Modal for inspecting saved meal photos with AR Calorie Pins
+let activeArModalLog = null;
+let arModalActivePin = null;
+
+function openArPhotoModal(logId) {
+  let log = currentLogs.find(l => l.id === logId);
+  if (!log) {
+    for (const item of feedData) {
+      if (item.meals) {
+        const found = item.meals.find(m => m.id === logId);
+        if (found) { log = found; break; }
+      }
+    }
+  }
+
+  if (!log || !log.image_url) {
+    toast('ไม่มีรูปภาพสำหรับมื้อนี้');
+    return;
+  }
+
+  let components = [];
+  try {
+    if (typeof log.components_json === 'string') {
+      components = JSON.parse(log.components_json);
+    } else if (Array.isArray(log.components_json)) {
+      components = log.components_json;
+    }
+  } catch (e) {
+    components = [];
+  }
+
+  activeArModalLog = { ...log, components };
+  arModalActivePin = null;
+  renderArPhotoModal();
+  $('#arPhotoModal').hidden = false;
+}
+
+function closeArPhotoModal() {
+  $('#arPhotoModal').hidden = true;
+  activeArModalLog = null;
+  arModalActivePin = null;
+}
+
+function selectArModalPin(idx) {
+  arModalActivePin = arModalActivePin === idx ? null : idx;
+  renderArPhotoModal();
+}
+
+function renderArPhotoModal() {
+  if (!activeArModalLog) return;
+  const log = activeArModalLog;
+  const comps = log.components || [];
+
+  const body = $('#arPhotoModalBody');
+  if (!body) return;
+
+  body.innerHTML = `
+    <!-- AR Scanner Viewport -->
+    <div class="ar-scanner-stage" style="min-height: 280px; max-height: 52vh; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <img src="${log.image_url}" alt="${esc(log.name)}" class="ar-scanner-img">
+      <div class="ar-scanner-vignette"></div>
+
+      <!-- Top Pill Badge: EASY • QUICK • ACCURATE -->
+      <div class="ar-scanner-badge-wrap">
+        <div class="ar-scanner-top-badge">
+          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#34D399; box-shadow:0 0 6px #34D399;"></span>
+          <span>EASY • QUICK • ACCURATE</span>
+        </div>
+      </div>
+
+      <!-- Viewfinder 4 Corner Brackets -->
+      <div class="ar-corner-frame">
+        <div class="ar-bracket tl"></div>
+        <div class="ar-bracket tr"></div>
+        <div class="ar-bracket bl"></div>
+        <div class="ar-bracket br"></div>
+      </div>
+
+      <!-- Floating AR Calorie Callout Pins -->
+      <div class="ar-pins-layer">
+        ${comps.map((c, idx) => `
+          <div class="ar-food-pin ${arModalActivePin === idx ? 'active' : ''}" 
+               style="left: ${c.x || 50}%; top: ${c.y || 50}%;" 
+               onclick="selectArModalPin(${idx})">
+            <div class="ar-pin-pill">
+              <span class="ar-pin-icon">${c.icon || '🍽️'}</span>
+              <span class="ar-pin-cal">${fmt(c.kcal)} cal</span>
+              <span class="ar-pin-name">${esc(c.name)}</span>
+            </div>
+            <div class="ar-pin-anchor"></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Dish Overview & Ingredient List -->
+    <div style="background:var(--card); border-radius:20px; padding:14px; border:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div>
+          <h3 style="font-size:16px; margin:0 0 4px; color:var(--ink); font-family:'Mali',sans-serif;">${esc(log.name)}</h3>
+          <span style="font-size:12px; color:var(--mute);">บันทึกเมื่อ: ${new Date(log.created_at || Date.now()).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+        </div>
+        <div style="text-align:right;">
+          <b style="font-size:17px; color:var(--pink); display:block;">${fmt(log.calorie)} <small style="font-size:11px; color:var(--mute);">kcal</small></b>
+          <span style="font-size:12px; color:var(--mint); font-weight:600;">น้ำตาล ${fmt(log.sugar)} g</span>
+        </div>
+      </div>
+
+      ${comps.length ? `
+        <div style="margin-top:10px; border-top:1px solid var(--line); padding-top:8px;">
+          <small style="color:var(--mute); font-size:11px; display:block; margin-bottom:6px; font-weight:600;">🍱 แจกแจงรายการในจาน (${comps.length} รายการ):</small>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            ${comps.map((c, idx) => `
+              <div class="component-row ${arModalActivePin === idx ? 'highlighted' : ''}" 
+                   onclick="selectArModalPin(${idx})"
+                   style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:10px; background:var(--bg); border:1px solid ${arModalActivePin === idx ? 'var(--mint)' : 'var(--line)'}; cursor:pointer;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span>${c.icon || '🍽️'}</span>
+                  <span style="font-size:12px; font-weight:600; color:var(--ink);">${esc(c.name)}</span>
+                </div>
+                <span style="font-size:11.5px; font-weight:700; color:var(--ink);">${fmt(c.kcal)} <small style="font-size:9.5px; color:var(--mute);">cal</small></span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
 }
 
 function showUndoToast(msg, onUndo) {

@@ -165,6 +165,19 @@ for (const col of neededCols) {
   }
 }
 
+// Idempotent column migrations for logs table
+const logCols = db.prepare("PRAGMA table_info(logs)").all().map(c => c.name);
+const neededLogCols = [
+  { name: 'image_url', type: 'TEXT' },
+  { name: 'components_json', type: 'TEXT' }
+];
+
+for (const col of neededLogCols) {
+  if (!logCols.includes(col.name)) {
+    db.exec(`ALTER TABLE logs ADD COLUMN ${col.name} ${col.type};`);
+  }
+}
+
 // Seed default users if empty (Prevents FOREIGN KEY constraint error on fresh deploy)
 try {
   const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
@@ -424,12 +437,18 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ userId, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url }) {
+export function addLog({ userId, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const compStr = typeof components_json === 'string'
+    ? components_json
+    : (Array.isArray(components) || (typeof components === 'object' && components !== null))
+    ? JSON.stringify(components)
+    : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
+
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     id,
@@ -442,6 +461,7 @@ export function addLog({ userId, date, name, calorie, sugar, portion_size, sweet
     sweetness_level || 'normal',
     is_private ? 1 : 0,
     image_url || null,
+    compStr,
     Date.now()
   );
 
@@ -483,8 +503,8 @@ export function deleteLog(id, userId) {
 export function restoreDeletedLog(log) {
   if (!log || !log.id) return null;
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     log.id,
@@ -496,7 +516,8 @@ export function restoreDeletedLog(log) {
     log.portion_size,
     log.sweetness_level,
     log.is_private,
-    log.image_url,
+    log.image_url || null,
+    log.components_json || null,
     log.created_at
   );
   try {
@@ -899,7 +920,9 @@ export function getGroupFeed(date, currentUserId) {
         calorie: l.calorie,
         sugar: l.sugar,
         created_at: l.created_at,
-        is_private: l.is_private
+        is_private: l.is_private,
+        image_url: (!isMe && l.is_private) ? null : l.image_url,
+        components_json: (!isMe && l.is_private) ? null : l.components_json
       }));
     } else if (user.privacy_level === 'summary') {
       visibleMeals = [];
