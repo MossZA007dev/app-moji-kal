@@ -500,7 +500,16 @@ const server = http.createServer(async (req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      filePath = path.join(__dirname, 'index.html');
+      if (pathname === '/favicon.ico' && fs.existsSync(path.join(__dirname, 'favicon.svg'))) {
+        filePath = path.join(__dirname, 'favicon.svg');
+      } else if (!path.extname(pathname)) {
+        // SPA navigation route fallback
+        filePath = path.join(__dirname, 'index.html');
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('404 Not Found');
+        return;
+      }
     }
 
     fs.readFile(filePath, (readErr, content) => {

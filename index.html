@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>โมจิ · นับแคลและน้ำตาลกับเพื่อน</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="alternate icon" type="image/png" href="/data/icon-192.png">
+<link rel="apple-touch-icon" href="/data/icon-192.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FF9EB5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -4643,48 +4646,29 @@ async function triggerBackup() {
   }
 }
 
-function changeAvatarHat(hat) {
-  currentUser.avatar_hat = hat;
-  $('#settingsAvatarPreview').innerHTML = mascotSVG(currentUser.avatar_face, currentUser.avatar_color, 96, hat);
-  saveProfileChanges();
-}
-
-function changePersonality(p) {
-  currentUser.personality = p;
-  saveProfileChanges();
-}
-
-function changeAvatarColor(col) {
-  currentUser.avatar_color = col;
-  $('#settingsAvatarPreview').innerHTML = mascotSVG(currentUser.avatar_face, col, 96, currentUser.avatar_hat);
-  renderSettings();
-}
-
 async function saveProfileChanges() {
-  const nickname = $('#setNickname')?.value.trim() || currentUser.nickname;
-  let cal = Math.max(1200, Number($('#setCal')?.value) || currentUser.calorie_goal);
-  let sugar = Math.max(10, Math.min(60, Number($('#setSugar')?.value) || currentUser.sugar_goal));
-  const privacy = $('#setPrivacy')?.value || currentUser.privacy_level;
-
+  if (!currentUser) return;
   try {
     const res = await fetch(`/api/users/${currentUser.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nickname,
+        nickname: currentUser.nickname,
         avatar_color: currentUser.avatar_color,
         avatar_face: currentUser.avatar_face,
         avatar_hat: currentUser.avatar_hat,
-        personality: currentUser.personality,
-        calorie_goal: cal,
-        sugar_goal: sugar,
-        privacy_level: privacy
+        personality: currentUser.personality || 'cheerful',
+        goal_type: currentUser.goal_type || 'weight_loss',
+        calorie_goal: currentUser.calorie_goal,
+        sugar_goal: currentUser.sugar_goal,
+        privacy_level: currentUser.privacy_level || 'full'
       })
     });
     const data = await res.json();
-    currentUser = data.user;
-    updateUserHeader();
-    toast('บันทึกเรียบร้อยแล้ว 🍡');
+    if (data.user) {
+      currentUser = data.user;
+      updateUserHeader();
+    }
   } catch (e) {
     toast('เกิดข้อผิดพลาดในการบันทึก');
   }
@@ -5139,6 +5123,7 @@ function openSheet() {
 }
 
 function closeSheet() {
+  stopCameraStream();
   draft = null;
   const el = $('#sheet');
   el.hidden = true;
@@ -6138,6 +6123,23 @@ function toast(msg) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2400);
 }
+
+// Window Safety Handlers for Hardware Resources & Dialogs
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeCameraModal();
+    closeSheet();
+  }
+});
+window.addEventListener('beforeunload', () => {
+  stopCameraStream();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    stopCameraStream();
+    closeCameraModal();
+  }
+});
 
 // Initial Boot
 (async () => {
