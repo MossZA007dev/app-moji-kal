@@ -13516,7 +13516,7 @@ let fashionPreview = null;
 
 const WARDROBE_CONFIG = {
   skin3d: {
-    title: 'สกิน 3D สุดพิเศษ',
+    title: 'สกินพรีเมียม',
     icon: '✨',
     items: [
       // 🌟 โมเดล 3D ร่างเปล่า (Customizable 3D Base Models - แต่งตัว ใส่หมวก อาวุธหนังซีรีส์ได้ 100%)
@@ -14154,7 +14154,7 @@ function renderFashionStageTagsHtml() {
 
   if (is3D) {
     return `
-      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 ฟิกเกอร์ 3D: ${colThumb}${colItem ? colItem.title : 'สกิน 3D'}</span>
+      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 สกินพรีเมียม: ${colThumb}${colItem ? colItem.title : 'สกินพรีเมียม'}</span>
       <span class="wardrobe-preview-tag" style="color:var(--mute);">ฟิกเกอร์ Art Toy แบบสำเร็จรูป (Full Set)</span>
     `;
   }
@@ -14346,7 +14346,7 @@ function renderFashionShop() {
     <!-- Category Tabs -->
     <div class="fashion-cat-nav">
       <button class="fashion-cat-btn ${activeFashionTab === 'skin3d' ? 'active' : ''}" onclick="switchFashionTab('skin3d')" style="${activeFashionTab === 'skin3d' ? 'background:linear-gradient(135deg, #EC4899, #8B5CF6); color:#fff; border-color:#8B5CF6; font-weight:800; box-shadow:0 2px 8px rgba(236,72,153,0.3);' : ''}">
-        <span>🌟</span> <span>สกิน 3D สุดน่ารัก ✨</span>
+        <span>🌟</span> <span>สกินพรีเมียม ✨</span>
       </button>
       <button class="fashion-cat-btn ${activeFashionTab === 'movie' ? 'active' : ''}" onclick="switchFashionTab('movie')" style="${activeFashionTab === 'movie' ? 'background:linear-gradient(135deg, #FEF08A, #FDE047); color:#713F12; border-color:#FACC15; font-weight:800;' : ''}">
         <span>🎬</span> <span>หนัง & ซีรีส์ ⚔️</span>
@@ -14479,7 +14479,7 @@ function renderWardrobeTagsHtml() {
 
   if (is3D) {
     return `
-      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 ฟิกเกอร์ 3D: ${colThumb}${colItem ? colItem.title : 'สกิน 3D'}</span>
+      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 สกินพรีเมียม: ${colThumb}${colItem ? colItem.title : 'สกินพรีเมียม'}</span>
       <span class="wardrobe-preview-tag" style="color:var(--mute);">ฟิกเกอร์ Art Toy แบบสำเร็จรูป</span>
     `;
   }
@@ -14573,7 +14573,7 @@ function openWardrobeModal(initialTab = 'skin3d') {
       <!-- Category Navigation Tabs -->
       <div class="wardrobe-cat-nav">
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'skin3d' ? 'active' : ''}" data-tab="skin3d" onclick="switchWardrobeCategory('skin3d')" style="${currentWardrobeTab === 'skin3d' ? 'background:linear-gradient(135deg, #EC4899, #8B5CF6); color:#fff; border-color:#8B5CF6;' : ''}">
-          🌟 สกิน 3D
+          🌟 สกินพรีเมียม
         </button>
         <button class="wardrobe-cat-btn ${currentWardrobeTab === 'hat' ? 'active' : ''}" data-tab="hat" onclick="switchWardrobeCategory('hat')">
           👒 หมวก
