@@ -113,6 +113,22 @@ const BRAND_BASELINES = {
 };
 
 function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = []) {
+  if (!text.trim()) {
+    return {
+      name: '',
+      kcal: 0,
+      sugar: 0,
+      is_food: false,
+      confidence: 'low',
+      needs_clarification: false,
+      clarification_question: null,
+      options: null,
+      components: [],
+      note: '💡 ยังไม่ได้เชื่อมต่อ Gemini API Key สำหรับสแกนรูปภาพ กรุณาพิมพ์ชื่ออาหารด้านบน หรือใส่ API Key ในหน้าตั้งค่า 🍡',
+      is_fallback: true
+    };
+  }
+
   const lower = text.toLowerCase();
   let matched = THAI_FOOD_DB.find(item => item.keywords.some(k => lower.includes(k)));
 
@@ -207,6 +223,21 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
   const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
+    if (!text.trim()) {
+      return {
+        name: '',
+        kcal: 0,
+        sugar: 0,
+        is_food: false,
+        confidence: 'low',
+        needs_clarification: false,
+        clarification_question: null,
+        options: null,
+        components: [],
+        note: '💡 ยังไม่ได้เชื่อมต่อ Gemini API Key ในการดูรูปภาพ กรุณาพิมพ์ชื่อเมนูอาหาร หรือใส่ API Key ในหน้าตั้งค่า 🍡',
+        is_fallback: true
+      };
+    }
     const res = fallbackAnalyze(text, sweetness, portion, brand, toppings);
     res.note += ' 💡 (ใส่ Gemini API Key ในเมนูตั้งค่าเพื่อเปิดระบบวิเคราะห์รูปภาพด้วย AI)';
     return res;
@@ -240,9 +271,10 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
 ข้อกำหนดสำคัญ:
 1. ตอบเป็น JSON object ตัวเดียวเท่านั้น ห้ามมี markdown หรือ backticks
 2. ต้องประเมิน:
-   - "name": ชื่อเมนูสั้นๆ ภาษาไทย (เช่น "ชาเขียวเย็น Cafe Amazon หวาน 50%", "ข้าวมันไก่ต้ม")
-   - "kcal": แคลอรีรวมทั้งหมด (ตัวเลขจำนวนเต็ม ห้ามเป็น null)
-   - "sugar": น้ำตาลรวมทั้งหมดเป็นกรัม (ตัวเลขทศนิยม 1 ตำแหน่ง ห้ามเป็น null)
+   - "is_food": boolean (ต้องเป็น true เฉพาะเมื่อรูปภาพหรือคำอธิบายเป็นอาหาร เครื่องดื่ม ขนม ของกิน หรือวัตถุดิบจริงเท่านั้น! หากเป็นรูปเอกสาร ข้อความ คน สัตว์ สิ่งของ รถยนต์ หรือวิวทิวทัศน์ ให้ตอบ false ทันที)
+   - "name": ชื่อเมนูสั้นๆ ภาษาไทย (หากไม่ใช่ของกิน ให้ใส่ "ไม่ใช่รูปอาหาร")
+   - "kcal": แคลอรีรวมทั้งหมด (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "sugar": น้ำตาลรวมทั้งหมดเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "confidence": "high" | "medium" | "low"
    - "needs_clarification": true ถ้าเป็นเครื่องดื่มหรือของหวานที่ข้อมูลความหวานหรือไซส์ไม่ชัดเจน
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
@@ -303,6 +335,23 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     }
 
     const parsed = JSON.parse(candidateText);
+
+    if (parsed.is_food === false) {
+      return {
+        name: 'ไม่ใช่รูปอาหาร',
+        kcal: 0,
+        sugar: 0,
+        is_food: false,
+        confidence: 'high',
+        needs_clarification: false,
+        clarification_question: null,
+        options: null,
+        components: [],
+        note: '⚠️ ภาพนี้ดูเหมือนจะไม่ใช่อาหารหรือเครื่องดื่ม กรุณาถ่ายภาพจานอาหารใหม่อีกครั้งนะ 🍽️',
+        is_fallback: false
+      };
+    }
+
     const parsedKcal = Math.round(Number(parsed.kcal) || 0);
     const parsedSugar = Math.round((Number(parsed.sugar) || 0) * 10) / 10;
     const parsedName = String(parsed.name || text || 'มื้ออาหาร');
@@ -311,6 +360,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
       name: parsedName,
       kcal: parsedKcal,
       sugar: parsedSugar,
+      is_food: true,
       confidence: parsed.confidence || 'medium',
       needs_clarification: Boolean(parsed.needs_clarification),
       clarification_question: parsed.clarification_question || null,

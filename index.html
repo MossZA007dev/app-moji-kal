@@ -5386,7 +5386,7 @@ function renderSheet() {
     ))
   );
 
-  const hasContent = Boolean(draft.name || draft.txt || draft.imageBase64 || draft.kcal);
+  const hasContent = Boolean(draft.name || draft.txt || (draft.kcal && Number(draft.kcal) > 0));
 
   el.innerHTML = `
     <div class="sh" style="padding-top:16px;">
@@ -5928,6 +5928,17 @@ async function analyzeMeal() {
     }
 
     const result = await res.json();
+    if (result.is_food === false) {
+      draft.name = '';
+      draft.kcal = '';
+      draft.sugar = '';
+      draft.components = null;
+      draft.status = result.note;
+      toast(result.note);
+      renderSheet();
+      return;
+    }
+
     draft.name = result.name || draft.name || 'มื้ออาหาร';
     draft.kcal = result.kcal;
     draft.sugar = result.sugar;
