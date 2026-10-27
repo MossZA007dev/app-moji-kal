@@ -198,8 +198,7 @@ const server = http.createServer(async (req, res) => {
 
       // 6. Challenges
       if (pathname === '/api/challenges' && req.method === 'GET') {
-        const userId = parsedUrl.searchParams.get('userId');
-        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const userId = parsedUrl.searchParams.get('userId') || req.headers['x-user-id'] || '';
         const challenges = db.getChallenges(userId);
         return sendJson(res, 200, { challenges });
       }
