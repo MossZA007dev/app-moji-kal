@@ -5411,12 +5411,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 // Mascot SVG Generator with Hats, Accessories & Expressions
 function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', accessory = null) {
-  if (color && (color.startsWith('skin_3d_') || color.includes('/data/skins/'))) {
-    const fileName = color.startsWith('/data/skins/') ? color : `/data/skins/${color}.png`;
-    return `<svg viewBox="0 0 120 112" width="${size}" height="${Math.round(size * 0.93)}" class="skin-3d-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
-      <image href="${fileName}" xlink:href="${fileName}" x="4" y="0" width="112" height="112" preserveAspectRatio="xMidYMid meet"/>
-    </svg>`;
-  }
   const acc = accessory !== null ? accessory : (currentUser?.avatar_accessory || 'none');
   const E = {
     happy: '<path d="M38 58q5-8 10 0M72 58q5-8 10 0" fill="none" stroke="#4A3F44" stroke-width="3" stroke-linecap="round"/>',
@@ -5508,17 +5502,29 @@ function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', a
     one_ring: '<g transform="translate(86,64)"><circle cx="10" cy="10" r="10" fill="none" stroke="#F59E0B" stroke-width="4"/><circle cx="10" cy="10" r="8" fill="none" stroke="#FEF08A" stroke-width="1.5"/><text x="6" y="13" font-size="7" fill="#EF4444" font-family="serif">🔥</text></g>'
   };
 
-  const isDarkSkin = color === 'skin_red_black' || color === 'red_black' || color === '#334155' || color === '#000000' || color === '#1E293B';
+  const isDarkSkin = color === 'skin_red_black' || color === 'red_black' || color === '#334155' || color === '#000000' || color === '#1E293B' || color === 'skin_3d_dark_knight';
   let f = E[face] || E.happy;
   let m = M[face] || M.happy;
   if (isDarkSkin) {
     f = f.replaceAll('#4A3F44', '#FFFFFF');
     m = m.replaceAll('#4A3F44', '#FFFFFF');
   }
-  const h = HATS[hat] || HATS.none;
-  const a = ACCESSORIES[acc] || '';
+
+  const is3DModel = Boolean(color && (color.startsWith('skin_3d_') || color.includes('/data/skins/')));
+  const h = (hat === 'none' || !hat) ? (is3DModel ? '' : HATS.none) : (HATS[hat] || '');
+  const a = (acc === 'none' || !acc) ? '' : (ACCESSORIES[acc] || '');
   const isBackAccessory = acc === 'wings';
   const cheekColor = isDarkSkin ? '#EF4444' : '#FF8AA6';
+
+  if (is3DModel) {
+    const fileName = color.startsWith('/data/skins/') ? color : `/data/skins/${color}.png`;
+    return `<svg viewBox="0 0 120 112" width="${size}" height="${Math.round(size * 0.93)}" class="skin-3d-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+      ${isBackAccessory ? a : ''}
+      <image href="${fileName}" xlink:href="${fileName}" x="12" y="10" width="96" height="92" preserveAspectRatio="xMidYMid meet"/>
+      ${h}
+      ${!isBackAccessory ? a : ''}
+    </svg>`;
+  }
 
   let fillTarget = color;
   let defs = '';
@@ -13516,6 +13522,62 @@ const WARDROBE_CONFIG = {
     title: 'สกิน 3D สุดพิเศษ',
     icon: '✨',
     items: [
+      // 🌟 โมเดล 3D ร่างเปล่า (Customizable 3D Base Models - แต่งตัว ใส่หมวก อาวุธหนังซีรีส์ได้ 100%)
+      {
+        id: 'skin_3d_base_pink',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_pink.png',
+        title: 'โมเดล 3D ซากุระพาสเทล 🌸',
+        desc: 'โมเดล 3D ร่างเปล่า สไตล์ Pop Mart พร้อมแต่งตัวใส่หมวก/ถืออาวุธหนังซีรีส์ได้ตามใจ',
+        series: '✨ 3D BASE MODEL (FREE)',
+        free: true
+      },
+      {
+        id: 'skin_3d_base_mint',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_mint.png',
+        title: 'โมเดล 3D มัทฉะมินต์ 🍵',
+        desc: 'โมเดล 3D ร่างเปล่าสีเขียวมัทฉะพาสเทล พร้อมใส่หมวกและถือไอเทม',
+        series: '✨ 3D BASE MODEL',
+        price: 40
+      },
+      {
+        id: 'skin_3d_base_white',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_white.png',
+        title: 'โมเดล 3D นมสดวนิลา 🥛',
+        desc: 'โมเดล 3D ร่างเปล่าสีขาวละมุน คลาสสิก แมตช์กับชุดและอาวุธได้ทุกสไตล์',
+        series: '✨ 3D BASE MODEL',
+        price: 40
+      },
+      {
+        id: 'skin_3d_base_purple',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_purple.png',
+        title: 'โมเดล 3D ลาเวนเดอร์ทาโร่ 🍠',
+        desc: 'โมเดล 3D ร่างเปล่าสีม่วงพาสเทล หรูหราแฟนตาซี',
+        series: '✨ 3D BASE MODEL',
+        price: 40
+      },
+      {
+        id: 'skin_3d_base_peach',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_peach.png',
+        title: 'โมเดล 3D พีชคอรัล 🍑',
+        desc: 'โมเดล 3D ร่างเปล่าสีส้มพีช สดใส มีพลัง อบอุ่น',
+        series: '✨ 3D BASE MODEL',
+        price: 40
+      },
+      {
+        id: 'skin_3d_base_yellow',
+        cat: 'color',
+        image: '/data/skins/skin_3d_base_yellow.png',
+        title: 'โมเดล 3D เนยน้ำผึ้ง 🍯',
+        desc: 'โมเดล 3D ร่างเปล่าสีเหลืองเนยสดใส สบายตา',
+        series: '✨ 3D BASE MODEL',
+        price: 40
+      },
+      // 🌟 สกิน 3D ซีรีส์พิเศษ (3D Themed Collectibles)
       {
         id: 'skin_3d_strawberry',
         cat: 'color',
@@ -13833,7 +13895,7 @@ function isItemUnlocked(category, itemId) {
                WARDROBE_CONFIG.skin3d?.items.find(i => (i.id || i.hex) === itemId) ||
                WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
   if (item && item.free) return true;
-  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind' || itemId === 'skin_3d_strawberry') return true;
+  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind' || itemId === 'skin_3d_strawberry' || itemId === 'skin_3d_base_pink') return true;
 
   // If item is currently worn, user automatically owns it
   if (category === 'hat' && currentUser.avatar_hat === itemId) return true;
@@ -14074,9 +14136,9 @@ function renderFashionStageTagsHtml() {
   const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
   return `
-    <span class="wardrobe-preview-tag">สกิน/สี: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
-    ${!is3D ? `<span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>` : ''}
-    ${!is3D ? `<span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>` : ''}
+    <span class="wardrobe-preview-tag">โมเดล/สกิน: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
+    <span class="wardrobe-preview-tag">ของถือ/อาวุธ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
     ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
   `;
 }
@@ -14392,9 +14454,9 @@ function renderWardrobeTagsHtml() {
   const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
   return `
-    <span class="wardrobe-preview-tag">สกิน/สี: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
-    ${!is3D ? `<span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>` : ''}
-    ${!is3D ? `<span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>` : ''}
+    <span class="wardrobe-preview-tag">โมเดล/สกิน: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
+    <span class="wardrobe-preview-tag">ของถือ/อาวุธ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
     ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
   `;
 }
