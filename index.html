@@ -932,6 +932,183 @@ textarea { resize: none; margin-bottom: 8px; }
   gap: 3px;
 }
 
+/* Goal System & Sort Toggle */
+.lb-sort-toggle {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 4px;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.lb-sort-btn {
+  flex: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.lb-sort-btn.active {
+  background: var(--pinkS);
+  color: var(--pink-ink);
+  font-weight: 700;
+  border-color: var(--pink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.lb-info-callout {
+  background: var(--mintS);
+  border: 1px solid var(--mint);
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 11.5px;
+  color: var(--mint-ink);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-goal-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  margin-top: 3px;
+  display: inline-block;
+  max-width: 95px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-pill-done {
+  font-size: 9.5px;
+  color: #047857;
+  background: #D1FAE5;
+  border: 1px solid #10B981;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.lb-pill-progress {
+  font-size: 9.5px;
+  color: #B45309;
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.friend-goal-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin: 8px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.friend-goal-box.goal-achieved {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(111, 203, 176, 0.15));
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+}
+.friend-goal-title {
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.friend-goal-title b {
+  color: var(--ink);
+}
+.goal-chip-achieved {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  background: #D1FAE5;
+  border: 1px solid #10B981;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 3px;
+}
+.goal-chip-progress {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mute);
+  margin-top: 3px;
+}
+.goal-score-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--warnS);
+  color: var(--warn-ink);
+  border: 1px solid var(--warn);
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.goal-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+.goal-select-card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+.goal-select-card:hover {
+  border-color: var(--pink);
+  transform: translateY(-2px);
+}
+.goal-select-card.active {
+  border-color: var(--pink);
+  background: var(--pinkS);
+  box-shadow: 0 4px 12px rgba(255, 158, 181, 0.25);
+}
+.goal-select-card .goal-icon {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 4px;
+}
+.goal-select-card .goal-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+}
+.goal-select-card .goal-desc {
+  font-size: 10.5px;
+  color: var(--mute);
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
 /* Member List Grid */
 .member-grid {
   display: grid;
@@ -1351,6 +1528,7 @@ let tab = 'today';
 let feedSubTab = 'activities'; // 'activities' | 'leaderboard' | 'members'
 let activitiesData = [];
 let leaderboardData = [];
+let leaderboardSort = 'goal'; // 'goal' | 'coins'
 let draft = null;
 let appSettings = {};
 let isListeningVoice = false;
@@ -1491,14 +1669,23 @@ async function fetchActivities() {
   }
 }
 
-async function fetchLeaderboard() {
+async function fetchLeaderboard(sort = leaderboardSort) {
   try {
-    const res = await fetch('/api/leaderboard');
+    const res = await fetch(`/api/leaderboard?sort=${sort}`);
     const data = await res.json();
     leaderboardData = data.leaderboard || [];
   } catch (err) {
     console.error('Fetch leaderboard error:', err);
   }
+}
+
+function setLeaderboardSort(sort) {
+  leaderboardSort = sort;
+  fetchLeaderboard(sort).then(() => {
+    if (tab === 'feed' && feedSubTab === 'leaderboard') {
+      renderFeed();
+    }
+  });
 }
 
 async function fetchFavorites() {
@@ -1902,7 +2089,13 @@ async function sendChatMessage() {
 // 3. GROUP FEED VIEW, LEADERBOARD, ACTIVITIES & MEMBERS
 function setFeedSubTab(subTab) {
   feedSubTab = subTab;
-  renderFeed();
+  if (subTab === 'leaderboard') {
+    fetchLeaderboard(leaderboardSort).then(renderFeed);
+  } else if (subTab === 'activities') {
+    Promise.all([fetchFeed(), fetchActivities()]).then(renderFeed);
+  } else {
+    fetchUsers().then(renderFeed);
+  }
 }
 
 function formatTimeAgo(ts) {
@@ -2033,7 +2226,7 @@ function get3DPodiumSVG(top1, top2, top3) {
   `;
 }
 
-// Modal explaining Leaderboard Coin Rules
+// Modal explaining Leaderboard Rules & Scoring
 function openLeaderboardInfoModal() {
   const el = $('#sheet');
   el.hidden = false;
@@ -2041,10 +2234,47 @@ function openLeaderboardInfoModal() {
     <div class="sh">
       <div style="text-align:center; margin-bottom:14px;">
         <span style="font-size:36px; display:block; margin-bottom:4px;">🏆</span>
-        <h2 class="hd" style="font-size:19px;">กติกาสะสมคอยน์แก๊งโมจิ</h2>
-        <span style="font-size:12px; color:var(--mute);">ทำกิจกรรมสุขภาพรับคอยน์เพื่อชิงอันดับ 1 ของแก๊ง!</span>
+        <h2 class="hd" style="font-size:19px;">กติกาการจัดอันดับแก๊งโมจิ</h2>
+        <span style="font-size:12px; color:var(--mute);">แข่งกันที่วินัยความสำเร็จตามเป้าหมายส่วนตัวอย่างยุติธรรม!</span>
       </div>
 
+      <div style="background:var(--mintS); border:1px solid var(--mint); border-radius:14px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:var(--mint-ink); line-height:1.4;">
+        💡 <b>Fair-Play Discipline (เป้าหมายใครเป้าหมายมัน):</b><br>
+        เพื่อนคนที่น้ำหนัก 100 kg มีเป้าหมาย 🏃‍♂️ <b>ลดน้ำหนัก (&lt; 1,800 kcal)</b><br>
+        เพื่อนคนที่ชอบดื่มชานม มีเป้าหมาย 🧋 <b>ลดน้ำตาล (&lt; 20g)</b><br>
+        เมื่อใครทำตามเป้าหมายของตัวเองสำเร็จในแต่ละวัน จะได้รับคะแนนวินัยเท่าเทียมกัน!
+      </div>
+
+      <h3 style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink); margin:10px 0 6px;">🎯 คะแนนวินัยตามเป้าหมาย (Goal Score)</h3>
+      <div class="settings-group" style="margin-bottom:14px;">
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">🎯</div>
+            <div>
+              <span class="settings-label-title">ทำเป้าหมายประจำวันสำเร็จ</span>
+              <span class="settings-label-sub">คุมแคลอรีหรือคุมน้ำตาลตามที่ตนเองตั้งเป้าไว้</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill" style="background:#D1FAE5; color:#047857; border-color:#10B981;">+50 pt</span>
+          </div>
+        </div>
+
+        <div class="settings-row" style="cursor:default;">
+          <div class="settings-row-left">
+            <div class="settings-icon-box" style="background:#FEF3C7; color:#B45309;">🌟</div>
+            <div>
+              <span class="settings-label-title">โบนัสเหรียญโมจิเมื่อพิชิตเป้า</span>
+              <span class="settings-label-sub">ได้รับโมจิคอยน์พิเศษพร้อมคะแนนวินัย</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            <span class="coin-pill">+10 🪙</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink); margin:10px 0 6px;">🪙 เหรียญโมจิคอยน์ (Coins)</h3>
       <div class="settings-group" style="margin-bottom:16px;">
         <div class="settings-row" style="cursor:default;">
           <div class="settings-row-left">
@@ -2055,7 +2285,7 @@ function openLeaderboardInfoModal() {
             </div>
           </div>
           <div class="settings-row-right">
-            <span class="coin-pill">+10 🪙</span>
+            <span class="coin-pill">+5 🪙</span>
           </div>
         </div>
 
@@ -2068,13 +2298,13 @@ function openLeaderboardInfoModal() {
             </div>
           </div>
           <div class="settings-row-right">
-            <span class="coin-pill">+5 🪙</span>
+            <span class="coin-pill">+2 🪙</span>
           </div>
         </div>
 
         <div class="settings-row" style="cursor:default;">
           <div class="settings-row-left">
-            <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">🎯</div>
+            <div class="settings-icon-box" style="background:#DCF6EE; color:#1E6B56;">🏆</div>
             <div>
               <span class="settings-label-title">พิชิตชาเลนจ์สุขภาพ</span>
               <span class="settings-label-sub">ลดหวาน ดื่มน้ำ หรือบันทึกครบ 3 มื้อ</span>
@@ -2110,8 +2340,10 @@ function renderFeed() {
   const yearAd = new Date().getFullYear();
   const periodLabel = `${monthName} ${yearAd}`;
 
-  // Sort leaderboard for podium
-  const sortedRank = [...leaderboardData].sort((a, b) => (b.coins || 0) - (a.coins || 0));
+  // Sort leaderboard for podium based on active sort (Goal Score vs Coins)
+  const sortedRank = leaderboardSort === 'coins'
+    ? [...leaderboardData].sort((a, b) => (b.coins || 0) - (a.coins || 0))
+    : [...leaderboardData].sort((a, b) => (b.goal_score || 0) - (a.goal_score || 0));
   const top1 = sortedRank[0] || null;
   const top2 = sortedRank[1] || null;
   const top3 = sortedRank[2] || null;
@@ -2133,7 +2365,7 @@ function renderFeed() {
         <span>⚡ กิจกรรม & มื้อ</span>
       </button>
       <button class="feed-tab-btn ${feedSubTab === 'leaderboard' ? 'active' : ''}" onclick="setFeedSubTab('leaderboard')">
-        <span>🏆 อันดับคอยน์</span>
+        <span>🏆 อันดับลีดเดอร์บอร์ด</span>
       </button>
       <button class="feed-tab-btn ${feedSubTab === 'members' ? 'active' : ''}" onclick="setFeedSubTab('members')">
         <span>👥 สมาชิก (${users.length})</span>
@@ -2208,12 +2440,32 @@ function renderFeed() {
                 </div>
                 <div>
                   <b>${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
-                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🪙 ${u.coins || 120}</div>
+                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <span class="badge ${sugarStatus}">${statusLabel}</span>
                 <button class="btn s sm" style="font-size:11px; padding:4px 8px;" onclick="openMemberDetailModal('${u.id}')">โปรไฟล์ 👤</button>
+              </div>
+            </div>
+
+            <!-- Personalized Goal Card in Friend Feed -->
+            <div class="friend-goal-box ${item.today_goal?.achieved ? 'goal-achieved' : ''}">
+              <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                <span style="font-size:20px; flex-shrink:0;">${item.today_goal?.badge_icon || '🎯'}</span>
+                <div style="flex:1;">
+                  <div class="friend-goal-title">
+                    <b>เป้าหมายเฉพาะบุคคล:</b> ${esc(item.today_goal?.goal_label || 'ลดน้ำหนัก')}
+                  </div>
+                  <div>
+                    ${item.today_goal?.achieved
+                      ? `<span class="goal-chip-achieved">🎉 วันนี้ทำตามเป้าหมายสำเร็จ! (+50 pt)</span>`
+                      : `<span class="goal-chip-progress">⏳ ${esc(item.today_goal?.status_text || 'กำลังคุมเป้าหมาย')}</span>`}
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:right; flex-shrink:0;">
+                <span class="goal-score-tag">🎯 ${fmt(u.goal_score || 150)} pt</span>
               </div>
             </div>
 
@@ -2269,6 +2521,25 @@ function renderFeed() {
         </button>
       </div>
 
+      <!-- Toggle Filter: Goal Discipline Score vs Mochi Coins -->
+      <div class="lb-sort-toggle">
+        <button class="lb-sort-btn ${leaderboardSort === 'goal' ? 'active' : ''}" onclick="setLeaderboardSort('goal')">
+          🎯 อันดับคะแนนวินัย (Goal Score)
+        </button>
+        <button class="lb-sort-btn ${leaderboardSort === 'coins' ? 'active' : ''}" onclick="setLeaderboardSort('coins')">
+          🪙 อันดับเหรียญโมจิ (Coins)
+        </button>
+      </div>
+
+      <div class="lb-info-callout">
+        <span style="font-size:18px;">${leaderboardSort === 'goal' ? '🎯' : '🪙'}</span>
+        <div>
+          ${leaderboardSort === 'goal'
+            ? '<b>แข่งกันที่วินัยเป้าหมายตนเอง!</b> ไม่ว่าจะลดน้ำหนัก คุมแคล หรือลดน้ำตาล ทำสำเร็จในแต่ละวันรับทันที <b>+50 pt</b>'
+            : '<b>แข่งกันสะสมเหรียญโมจิคอยน์!</b> บันทึกมื้ออาหาร (+5 🪙), ดื่มน้ำ (+2 🪙), ชาเลนจ์ (+15 🪙)'}
+        </div>
+      </div>
+
       <!-- 3D Isometric Podium Stage -->
       <div class="lb-stage">
         <!-- Radial Sunburst Rays Background -->
@@ -2316,7 +2587,22 @@ function renderFeed() {
               </div>
             </div>
             <div class="lb-player-name">${top2 ? esc(top2.nickname) : 'รอผู้ท้าชิง'}</div>
-            <div class="lb-player-score">💎 ${top2 ? fmt(top2.coins) : '0'}</div>
+            ${leaderboardSort === 'goal' ? `
+              <div class="lb-player-score">🎯 ${top2 ? fmt(top2.goal_score || 150) : '0'} pt</div>
+              ${top2?.todayGoal ? `
+                <div style="margin-top:2px;">
+                  <span class="lb-goal-pill" title="${esc(top2.todayGoal.goal_label)}">${top2.todayGoal.badge_icon || '🎯'} ${top2.todayGoal.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : top2.todayGoal.goal_type === 'healthy_balance' ? 'สมดุล' : top2.todayGoal.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดแคล'}</span>
+                </div>
+                <div style="margin-top:2px;">
+                  ${top2.todayGoal.achieved ? '<span class="lb-pill-done">✅ สำเร็จ</span>' : '<span class="lb-pill-progress">⏳ คุมเป้า</span>'}
+                </div>
+              ` : ''}
+            ` : `
+              <div class="lb-player-score">💎 ${top2 ? fmt(top2.coins) : '0'}</div>
+              <div style="margin-top:2px;">
+                <span style="font-size:10.5px; color:var(--mute);">🔥 ${top2?.streak || 0} วันติด</span>
+              </div>
+            `}
           </div>
 
           <!-- Rank 1 Avatar (Center - Gold Winner) -->
@@ -2328,7 +2614,22 @@ function renderFeed() {
               </div>
             </div>
             <div class="lb-player-name gold">${top1 ? esc(top1.nickname) : 'รอผู้ท้าชิง'}</div>
-            <div class="lb-player-score gold">💎 ${top1 ? fmt(top1.coins) : '0'}</div>
+            ${leaderboardSort === 'goal' ? `
+              <div class="lb-player-score gold">🎯 ${top1 ? fmt(top1.goal_score || 150) : '0'} pt</div>
+              ${top1?.todayGoal ? `
+                <div style="margin-top:2px;">
+                  <span class="lb-goal-pill" style="border-color:#FCD34D;" title="${esc(top1.todayGoal.goal_label)}">${top1.todayGoal.badge_icon || '🎯'} ${top1.todayGoal.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : top1.todayGoal.goal_type === 'healthy_balance' ? 'สมดุล' : top1.todayGoal.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดแคล'}</span>
+                </div>
+                <div style="margin-top:2px;">
+                  ${top1.todayGoal.achieved ? '<span class="lb-pill-done">✅ สำเร็จ</span>' : '<span class="lb-pill-progress">⏳ คุมเป้า</span>'}
+                </div>
+              ` : ''}
+            ` : `
+              <div class="lb-player-score gold">💎 ${top1 ? fmt(top1.coins) : '0'}</div>
+              <div style="margin-top:2px;">
+                <span style="font-size:10.5px; color:var(--mute);">🔥 ${top1?.streak || 0} วันติด</span>
+              </div>
+            `}
           </div>
 
           <!-- Rank 3 Avatar (Right - Peach) -->
@@ -2339,7 +2640,22 @@ function renderFeed() {
               </div>
             </div>
             <div class="lb-player-name">${top3 ? esc(top3.nickname) : 'รอผู้ท้าชิง'}</div>
-            <div class="lb-player-score">💎 ${top3 ? fmt(top3.coins) : '0'}</div>
+            ${leaderboardSort === 'goal' ? `
+              <div class="lb-player-score">🎯 ${top3 ? fmt(top3.goal_score || 150) : '0'} pt</div>
+              ${top3?.todayGoal ? `
+                <div style="margin-top:2px;">
+                  <span class="lb-goal-pill" title="${esc(top3.todayGoal.goal_label)}">${top3.todayGoal.badge_icon || '🎯'} ${top3.todayGoal.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : top3.todayGoal.goal_type === 'healthy_balance' ? 'สมดุล' : top3.todayGoal.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดแคล'}</span>
+                </div>
+                <div style="margin-top:2px;">
+                  ${top3.todayGoal.achieved ? '<span class="lb-pill-done">✅ สำเร็จ</span>' : '<span class="lb-pill-progress">⏳ คุมเป้า</span>'}
+                </div>
+              ` : ''}
+            ` : `
+              <div class="lb-player-score">💎 ${top3 ? fmt(top3.coins) : '0'}</div>
+              <div style="margin-top:2px;">
+                <span style="font-size:10.5px; color:var(--mute);">🔥 ${top3?.streak || 0} วันติด</span>
+              </div>
+            `}
           </div>
         </div>
 
@@ -2375,11 +2691,19 @@ function renderFeed() {
                     <b class="lb-row-name">
                       ${esc(u.nickname)} ${u.id === currentUser?.id ? '<span class="lb-me-tag">(ฉัน)</span>' : ''}
                     </b>
-                    <span class="lb-row-sub">@${esc(handle)} · 🔥 ${u.streak || 0} วันติด</span>
+                    <span class="lb-row-sub">
+                      ${leaderboardSort === 'goal'
+                        ? `${u.todayGoal?.badge_icon || '🎯'} ${esc(u.todayGoal?.goal_label || 'เป้าหมาย')} · ${u.todayGoal?.achieved ? '✅ วันนี้สำเร็จ' : '⏳ กำลังคุม'}`
+                        : `@${esc(handle)} · 🔥 ${u.streak || 0} วันติด`}
+                    </span>
                   </div>
                 </div>
                 <div class="lb-user-row-right">
-                  <span class="lb-row-score">💎 <b>${fmt(u.coins || 120)}</b></span>
+                  ${leaderboardSort === 'goal' ? `
+                    <span class="lb-row-score">🎯 <b>${fmt(u.goal_score || 150)}</b> <small style="font-size:11px; opacity:0.8;">pt</small></span>
+                  ` : `
+                    <span class="lb-row-score">💎 <b>${fmt(u.coins || 120)}</b></span>
+                  `}
                   <span class="settings-chev">›</span>
                 </div>
               </div>
@@ -2439,6 +2763,7 @@ async function openMemberDetailModal(userId) {
     const stats = data.stats;
     const badges = data.badges || [];
     const meals = data.todayMeals || [];
+    const todayGoal = data.todayGoal || null;
 
     const personalityText = u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส พลังบวกสูง'
       : u.personality === 'disciplined' ? '📋 มีวินัย มีแบบแผน ชัดเจน'
@@ -2455,25 +2780,48 @@ async function openMemberDetailModal(userId) {
             ${esc(u.nickname)} ${u.is_me ? '<span style="font-size:12px; color:var(--pink);">(ฉัน)</span>' : ''}
           </b>
           <span style="font-size:12px; color:var(--mute); margin-top:2px;">${personalityText}</span>
-          <span class="coin-pill" style="margin-top:6px; font-size:12px; padding:4px 12px;">🪙 ${u.coins || 120} โมจิคอยน์</span>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <span class="coin-pill" style="font-size:12px; padding:4px 12px;">🪙 ${u.coins || 120} คอยน์</span>
+            <span class="goal-score-tag" style="font-size:12px; padding:4px 12px;">🎯 ${u.goal_score || 150} คะแนนวินัย</span>
+          </div>
         </div>
 
+        <!-- Personalized Health Goal Showcase -->
+        ${todayGoal ? `
+          <div style="background:var(--card); border:1.5px solid ${todayGoal.achieved ? 'var(--mint)' : 'var(--line)'}; border-radius:16px; padding:10px 14px; margin: 12px 0 8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:12.5px; font-weight:700; color:var(--ink);">
+                ${todayGoal.badge_icon || '🎯'} <b>เป้าหมายเฉพาะบุคคล:</b> ${esc(todayGoal.goal_label)}
+              </span>
+              <span class="goal-score-tag">🎯 ${fmt(u.goal_score || 150)} pt</span>
+            </div>
+            <div style="font-size:11.5px; margin-bottom:6px;">
+              ${todayGoal.achieved
+                ? `<span class="goal-chip-achieved">🎉 วันนี้ทำตามเป้าหมายสำเร็จ! (+50 pt)</span>`
+                : `<span class="goal-chip-progress">⏳ ${esc(todayGoal.status_text)}</span>`}
+            </div>
+            <div class="bar-track" style="height:8px;">
+              <div class="bar-fill" style="width:${Math.min(100, todayGoal.progress_percent || 0)}%; background:${todayGoal.achieved ? 'var(--mint)' : 'var(--pink)'};"></div>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- 4 Stat Boxes (Theme-Adaptive) -->
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin: 12px 0;">
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin: 10px 0 12px;">
+          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:13.5px; color:var(--warn-ink); display:block;">🎯 ${u.goal_score || 150}</b>
+            <small style="font-size:10.5px; color:var(--mute);">คะแนนวินัย</small>
+          </div>
           <div style="background:var(--pinkS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:14px; color:var(--pink-ink); display:block;">🔥 ${stats.streak}</b>
+            <b style="font-size:13.5px; color:var(--pink-ink); display:block;">🔥 ${stats.streak}</b>
             <small style="font-size:10.5px; color:var(--mute);">วันติด</small>
           </div>
-          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:14px; color:var(--warn-ink); display:block;">🪙 ${u.coins || 120}</b>
+          <div style="background:var(--mintS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
+            <b style="font-size:13.5px; color:var(--mint-ink); display:block;">🪙 ${u.coins || 120}</b>
             <small style="font-size:10.5px; color:var(--mute);">คอยน์</small>
           </div>
-          <div style="background:var(--mintS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:14px; color:var(--mint-ink); display:block;">🍱 ${stats.totalMeals}</b>
-            <small style="font-size:10.5px; color:var(--mute);">มื้อสะสม</small>
-          </div>
           <div style="background:var(--purpleS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:14px; color:var(--purple-ink); display:block;" id="modalCheersCount">💖 ${stats.cheersReceived}</b>
+            <b style="font-size:13.5px; color:var(--purple-ink); display:block;" id="modalCheersCount">💖 ${stats.cheersReceived}</b>
             <small style="font-size:10.5px; color:var(--mute);">กำลังใจ</small>
           </div>
         </div>
@@ -2793,34 +3141,34 @@ async function renderSettings() {
 
       <div class="settings-hero-stats">
         <div class="settings-hero-stat-box">
+          <b>🎯 ${currentUser?.goal_score || 150} pt</b>
+          <small>คะแนนวินัย</small>
+        </div>
+        <div class="settings-hero-stat-box">
           <b>🔥 ${userStreak.current} วัน</b>
           <small>ความสม่ำเสมอ</small>
         </div>
         <div class="settings-hero-stat-box">
-          <b>🎯 ${currentUser?.calorie_goal}</b>
-          <small>kcal ต่อวัน</small>
-        </div>
-        <div class="settings-hero-stat-box">
-          <b>🍬 ${currentUser?.sugar_goal} g</b>
-          <small>น้ำตาลเป้าหมาย</small>
+          <b>🪙 ${currentUser?.coins || 120}</b>
+          <small>เหรียญสะสม</small>
         </div>
       </div>
 
       <div style="margin-top:12px; display:flex; gap:8px;">
         <button class="btn s sm" style="flex:1;" onclick="openProfileModal()">👥 สลับเพื่อน / เพิ่มสมาชิก</button>
-        <button class="btn sm" style="flex:1;" onclick="openEditProfileModal()">✏️ แก้ไขข้อมูล</button>
+        <button class="btn sm" style="flex:1;" onclick="openEditProfileModal()">✏️ แก้ไขเป้าหมาย</button>
       </div>
     </div>
 
     <!-- Category 1: สุขภาพและเป้าหมาย -->
-    <div class="settings-sec-title">🎯 สุขภาพและเป้าหมายโภชนาการ</div>
+    <div class="settings-sec-title">🎯 สุขภาพและเป้าหมายเฉพาะบุคคล</div>
     <div class="settings-group">
       <div class="settings-row" onclick="openEditProfileModal()">
         <div class="settings-row-left">
           <div class="settings-icon-box" style="background:#FFE3EA; color:#D81B60;">🎯</div>
           <div>
-            <span class="settings-label-title">เป้าหมายแคลอรีและน้ำตาล</span>
-            <span class="settings-label-sub">ตั้งเป้าพลังงานและน้ำตาลรายวัน</span>
+            <span class="settings-label-title">เป้าหมายเฉพาะบุคคล (Fair-Play)</span>
+            <span class="settings-label-sub">${currentUser?.goal_type === 'sugar_cut' ? '🧋 ลดน้ำตาล (< ' + (currentUser?.sugar_goal || 20) + 'g)' : currentUser?.goal_type === 'healthy_balance' ? '🥗 สมดุลสุขภาพ (< ' + (currentUser?.calorie_goal || 1900) + ' kcal, < ' + (currentUser?.sugar_goal || 20) + 'g)' : currentUser?.goal_type === 'muscle_gain' ? '💪 สร้างกล้ามเนื้อ (≥ ' + (currentUser?.calorie_goal || 2400) + ' kcal)' : '🏃‍♂️ ลดน้ำหนัก (< ' + (currentUser?.calorie_goal || 1800) + ' kcal)'}</span>
           </div>
         </div>
         <div class="settings-row-right">
@@ -3051,23 +3399,77 @@ async function renderSettings() {
   `;
 }
 
-// Sub-Modal: Edit Profile Details
+// Sub-Modal: Edit Profile Details & Personalized Goal Selection
+let selectedProfileGoalType = 'weight_loss';
+
+function selectProfileGoalType(type) {
+  selectedProfileGoalType = type;
+  document.querySelectorAll('.goal-select-card').forEach(el => {
+    el.classList.toggle('active', el.dataset.goal === type);
+  });
+  const calInput = $('#editModalCal');
+  const sugInput = $('#editModalSugar');
+  if (type === 'weight_loss') {
+    if (calInput) calInput.value = 1800;
+    if (sugInput) sugInput.value = 25;
+  } else if (type === 'sugar_cut') {
+    if (calInput) calInput.value = 2000;
+    if (sugInput) sugInput.value = 20;
+  } else if (type === 'healthy_balance') {
+    if (calInput) calInput.value = 1900;
+    if (sugInput) sugInput.value = 20;
+  } else if (type === 'muscle_gain') {
+    if (calInput) calInput.value = 2400;
+    if (sugInput) sugInput.value = 30;
+  }
+}
+
 function openEditProfileModal() {
+  selectedProfileGoalType = currentUser?.goal_type || 'weight_loss';
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = `
     <div class="sh">
-      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แก้ไขข้อมูลส่วนตัว ✏️</h2>
+      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แก้ไขข้อมูล & เป้าหมายเฉพาะบุคคล ✏️</h2>
       <div style="margin-bottom:12px;">
         <label style="font-size:12px; color:var(--mute);">ชื่อเล่น</label>
         <input id="editModalNickname" value="${esc(currentUser?.nickname)}">
+      </div>
+
+      <div style="margin-bottom:6px;">
+        <label style="font-size:12px; color:var(--ink); font-weight:700;">🎯 เลือกเป้าหมายสุขภาพของฉัน (Fair-Play):</label>
+        <span style="font-size:11px; color:var(--mute); display:block; margin-bottom:6px;">
+          แต่ละคนสามารถมีเป้าหมายต่างกัน และนำความมีวินัยมาแข่งบนลีดเดอร์บอร์ดได้เท่าเทียมกัน
+        </span>
+        <div class="goal-select-grid">
+          <div class="goal-select-card ${selectedProfileGoalType === 'weight_loss' ? 'active' : ''}" data-goal="weight_loss" onclick="selectProfileGoalType('weight_loss')">
+            <span class="goal-icon">🏃‍♂️</span>
+            <div class="goal-name">ลดน้ำหนัก</div>
+            <div class="goal-desc">คุมแคลอรีไม่เกินเกณฑ์ เช่น &lt; 1,800 kcal/วัน</div>
+          </div>
+          <div class="goal-select-card ${selectedProfileGoalType === 'sugar_cut' ? 'active' : ''}" data-goal="sugar_cut" onclick="selectProfileGoalType('sugar_cut')">
+            <span class="goal-icon">🧋</span>
+            <div class="goal-name">ลดน้ำตาล</div>
+            <div class="goal-desc">คุมหวานไม่เกินเกณฑ์ เช่น &lt; 20g/วัน</div>
+          </div>
+          <div class="goal-select-card ${selectedProfileGoalType === 'healthy_balance' ? 'active' : ''}" data-goal="healthy_balance" onclick="selectProfileGoalType('healthy_balance')">
+            <span class="goal-icon">🥗</span>
+            <div class="goal-name">สมดุลสุขภาพ</div>
+            <div class="goal-desc">คุมทั้งแคลอรีและน้ำตาลให้อยู่ในกรอบ</div>
+          </div>
+          <div class="goal-select-card ${selectedProfileGoalType === 'muscle_gain' ? 'active' : ''}" data-goal="muscle_gain" onclick="selectProfileGoalType('muscle_gain')">
+            <span class="goal-icon">💪</span>
+            <div class="goal-name">สร้างกล้ามเนื้อ</div>
+            <div class="goal-desc">กินพลังงานถึงเกณฑ์ (≥ 2,400 kcal) คุมหวาน</div>
+          </div>
+        </div>
       </div>
 
       <div class="g2">
         <div>
           <label>เป้าแคลอรีต่อวัน (kcal)</label>
           <input type="number" id="editModalCal" value="${currentUser?.calorie_goal}" min="1200" max="4000">
-          <small style="font-size:11px; color:var(--mute);">ขั้นต่ำ 1,200 เพื่อสุขภาพ</small>
+          <small style="font-size:11px; color:var(--mute);">ปรับแต่งได้ตามความต้องการ</small>
         </div>
         <div>
           <label>เป้าน้ำตาลต่อวัน (g)</label>
@@ -3088,6 +3490,7 @@ async function saveProfileFromModal() {
   const nickname = $('#editModalNickname')?.value.trim() || currentUser.nickname;
   let cal = Math.max(1200, Number($('#editModalCal')?.value) || currentUser.calorie_goal);
   let sugar = Math.max(10, Math.min(60, Number($('#editModalSugar')?.value) || currentUser.sugar_goal));
+  const goalType = selectedProfileGoalType || currentUser.goal_type || 'weight_loss';
 
   try {
     const res = await fetch(`/api/users/${currentUser.id}`, {
@@ -3095,6 +3498,7 @@ async function saveProfileFromModal() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nickname,
+        goal_type: goalType,
         calorie_goal: cal,
         sugar_goal: sugar
       })
@@ -3103,10 +3507,135 @@ async function saveProfileFromModal() {
     currentUser = data.user;
     closeSheet();
     updateUserHeader();
-    renderSettings();
-    toast('บันทึกข้อมูลเรียบร้อยแล้ว 🍡');
+    await Promise.all([fetchUsers(), fetchFeed(), fetchLeaderboard()]);
+    render();
+    toast('บันทึกเป้าหมายสุขภาพเรียบร้อยแล้ว 🍡');
   } catch (e) {
     toast('เกิดข้อผิดพลาดในการบันทึก');
+  }
+}
+
+// Main Account Switcher & Member Management Modal
+function openProfileModal() {
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:34px; display:block; margin-bottom:4px;">👥</span>
+        <h2 class="hd" style="font-size:18.5px;">สลับบัญชีเพื่อน & สมาชิก</h2>
+        <span style="font-size:12px; color:var(--mute);">เลือกเล่นเป็นเพื่อนคนไหน หรือเพิ่มสมาชิกใหม่ในแก๊ง</span>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+        ${users.map(u => {
+          const isCurrent = u.id === currentUser?.id;
+          const goalIcon = u.goal_type === 'sugar_cut' ? '🧋' : u.goal_type === 'healthy_balance' ? '🥗' : u.goal_type === 'muscle_gain' ? '💪' : '🏃‍♂️';
+          const goalName = u.goal_type === 'sugar_cut' ? 'ลดน้ำตาล' : u.goal_type === 'healthy_balance' ? 'สมดุลสุขภาพ' : u.goal_type === 'muscle_gain' ? 'สร้างกล้ามเนื้อ' : 'ลดน้ำหนัก';
+          return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--card); border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; border-radius:16px;">
+              <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
+                <div class="mini-avatar" style="width:40px; height:40px;">
+                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}">` : mascotSVG(u.avatar_face, u.avatar_color, 40, u.avatar_hat)}
+                </div>
+                <div>
+                  <b style="font-size:13.5px; color:var(--ink);">${esc(u.nickname)} ${isCurrent ? '<span style="font-size:11px; color:var(--pink);">(กำลังใช้งาน)</span>' : ''}</b>
+                  <div style="font-size:11px; color:var(--mute);">${goalIcon} ${goalName} · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
+                </div>
+              </div>
+              <div>
+                ${isCurrent ? `
+                  <span class="badge ok">ใช้งานอยู่</span>
+                ` : `
+                  <button class="btn s sm" style="font-size:11.5px; padding:4px 10px;" onclick="switchActiveUser('${u.id}')">สลับใช้</button>
+                `}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Add New Member Section -->
+      <div style="background:var(--pinkS); border:1px dashed var(--pink); border-radius:18px; padding:12px 14px; margin-bottom:14px;">
+        <b style="font-size:13px; color:var(--pink-ink); display:block; margin-bottom:6px;">+ ชวน / เพิ่มสมาชิกใหม่ในแก๊ง:</b>
+        <div style="margin-bottom:8px;">
+          <input id="newMemberNick" placeholder="ชื่อเล่นเพื่อนใหม่ เช่น น้องมายด์, คุณแบงค์" style="background:var(--card);">
+        </div>
+        <div class="g2" style="margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px; color:var(--mute);">เป้าหมายหลัก</label>
+            <select id="newMemberGoalType" style="background:var(--card); width:100%; padding:8px; border-radius:10px; border:1px solid var(--line); font-size:12px; color:var(--ink);">
+              <option value="weight_loss">🏃‍♂️ ลดน้ำหนัก (&lt; 1,800 kcal)</option>
+              <option value="sugar_cut">🧋 ลดน้ำตาล (&lt; 20g)</option>
+              <option value="healthy_balance">🥗 สมดุล (&lt; 2,000 kcal, &lt; 25g)</option>
+              <option value="muscle_gain">💪 สร้างกล้าม (≥ 2,400 kcal)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--mute);">สีโมจิประจำตัว</label>
+            <select id="newMemberColor" style="background:var(--card); width:100%; padding:8px; border-radius:10px; border:1px solid var(--line); font-size:12px; color:var(--ink);">
+              <option value="#FF9EB5">🌸 ชมพูซากุระ</option>
+              <option value="#6FCBB0">🍃 เขียวมัทฉะ</option>
+              <option value="#FFB05C">🍊 ส้มยุซุ</option>
+              <option value="#A78BFA">🍇 ม่วงเผือก</option>
+              <option value="#D4A373">🧋 ชานม</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn sm" onclick="addNewMemberFromModal()">เพิ่มเพื่อนเข้าแก๊งโมจิ 🍡</button>
+      </div>
+
+      <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
+    </div>
+  `;
+}
+
+async function switchActiveUser(newUserId) {
+  const target = users.find(u => u.id === newUserId);
+  if (!target) return;
+  currentUser = target;
+  localStorage.setItem('mochi_user_id', currentUser.id);
+  closeSheet();
+  updateUserHeader();
+  await Promise.all([fetchLogs(), fetchFeed(), fetchLeaderboard()]);
+  render();
+  toast(`สลับผู้ใช้เป็น "${currentUser.nickname}" แล้ว 🍡`);
+}
+
+async function addNewMemberFromModal() {
+  const nick = $('#newMemberNick')?.value.trim();
+  if (!nick) return toast('กรุณาใส่ชื่อเล่นเพื่อนใหม่');
+  const goalType = $('#newMemberGoalType')?.value || 'weight_loss';
+  const color = $('#newMemberColor')?.value || '#FF9EB5';
+  
+  let calGoal = 2000;
+  let sugGoal = 25;
+  if (goalType === 'weight_loss') { calGoal = 1800; sugGoal = 25; }
+  else if (goalType === 'sugar_cut') { calGoal = 2000; sugGoal = 20; }
+  else if (goalType === 'muscle_gain') { calGoal = 2400; sugGoal = 30; }
+
+  try {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nickname: nick,
+        avatar_color: color,
+        avatar_face: 'happy',
+        goal_type: goalType,
+        goal_score: 150,
+        calorie_goal: calGoal,
+        sugar_goal: sugGoal,
+        privacy_level: 'full'
+      })
+    });
+    const data = await res.json();
+    await fetchUsers();
+    await fetchLeaderboard();
+    switchActiveUser(data.user.id);
+    toast(`ยินดีต้อนรับ ${nick} สู่แก๊งโมจิ! 🎉`);
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการสร้างสมาชิก');
   }
 }
 

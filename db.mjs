@@ -123,6 +123,18 @@ db.exec(`
     last_verified INTEGER NOT NULL
   );
 
+  -- Daily Goal Achievements Tracker
+  CREATE TABLE IF NOT EXISTS daily_goals (
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    achieved INTEGER NOT NULL DEFAULT 0,
+    score_awarded INTEGER NOT NULL DEFAULT 0,
+    goal_type TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, date),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE INDEX IF NOT EXISTS idx_logs_user_date ON logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
 `);
@@ -142,7 +154,9 @@ const neededCols = [
   { name: 'activity_level', type: 'TEXT DEFAULT "moderate"' },
   { name: 'avatar_hat', type: 'TEXT DEFAULT "none"' },
   { name: 'personality', type: 'TEXT DEFAULT "kind"' },
-  { name: 'coins', type: 'INTEGER DEFAULT 120' }
+  { name: 'coins', type: 'INTEGER DEFAULT 120' },
+  { name: 'goal_type', type: 'TEXT DEFAULT "weight_loss"' },
+  { name: 'goal_score', type: 'INTEGER DEFAULT 150' }
 ];
 
 for (const col of neededCols) {
@@ -156,13 +170,20 @@ try {
   const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
   if (userCount === 0) {
     const insertUser = db.prepare(`
-      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, goal_type, goal_score, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const now = Date.now();
-    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 2000, 25, 'full', 'crown', 'cheerful', 353, now - 86400000 * 3);
-    insertUser.run('u2', 'เพื่อนปังปอนด์', '#6FCBB0', 'ok', 2200, 30, 'full', 'none', 'kind', 282, now - 86400000 * 2);
-    insertUser.run('u3', 'คุณนัท', '#FFC285', 'worry', 1800, 20, 'summary', 'none', 'kind', 190, now - 86400000 * 1);
+    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 1800, 25, 'full', 'crown', 'cheerful', 353, 'weight_loss', 450, now - 86400000 * 3);
+    insertUser.run('u2', 'เพื่อนปังปอนด์', '#6FCBB0', 'ok', 2200, 20, 'full', 'none', 'kind', 282, 'sugar_cut', 380, now - 86400000 * 2);
+    insertUser.run('u3', 'คุณนัท', '#FFC285', 'worry', 1900, 20, 'summary', 'none', 'kind', 190, 'healthy_balance', 310, now - 86400000 * 1);
+  } else {
+    // Ensure default users have rich goal presets if empty/default
+    try {
+      db.prepare("UPDATE users SET goal_type = 'weight_loss', goal_score = 450 WHERE id = 'u1' AND (goal_score IS NULL OR goal_score = 150)").run();
+      db.prepare("UPDATE users SET goal_type = 'sugar_cut', goal_score = 380, sugar_goal = 20 WHERE id = 'u2' AND (goal_score IS NULL OR goal_score = 150)").run();
+      db.prepare("UPDATE users SET goal_type = 'healthy_balance', goal_score = 310, calorie_goal = 1900, sugar_goal = 20 WHERE id = 'u3' AND (goal_score IS NULL OR goal_score = 150)").run();
+    } catch (_) {}
   }
 } catch (e) {
   console.warn('Initial users seed warning:', e.message);
@@ -203,7 +224,7 @@ try {
 }
 
 export function getAllUsers() {
-  const stmt = db.prepare('SELECT id, nickname, avatar_color, avatar_face, avatar_hat, personality, COALESCE(coins, 120) as coins, calorie_goal, sugar_goal, privacy_level, consent_pdpa, created_at FROM users ORDER BY created_at ASC');
+  const stmt = db.prepare("SELECT id, nickname, avatar_color, avatar_face, avatar_hat, avatar_image, personality, COALESCE(coins, 120) as coins, COALESCE(goal_score, 150) as goal_score, COALESCE(goal_type, 'weight_loss') as goal_type, calorie_goal, sugar_goal, privacy_level, consent_pdpa, created_at FROM users ORDER BY created_at ASC");
   return stmt.all();
 }
 
@@ -222,11 +243,11 @@ export function getUserByEmail(email) {
   return stmt.get(email);
 }
 
-export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa }) {
+export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score }) {
   const newId = id || `u_${Date.now()}`;
   const stmt = db.prepare(`
-    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, personality, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, personality, goal_type, goal_score, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     newId,
@@ -243,6 +264,8 @@ export function createUser({ id, nickname, avatar_color, avatar_face, calorie_go
     consent_pdpa ? Date.now() : null,
     'none',
     'kind',
+    goal_type || 'weight_loss',
+    goal_score !== undefined ? Number(goal_score) : 150,
     Date.now()
   );
   return getUser(newId);
@@ -294,13 +317,16 @@ export function updateUser(id, data) {
   const weight = Number(data.weight ?? current.weight);
   const activity_level = data.activity_level ?? current.activity_level;
   const consent_pdpa = data.consent_pdpa !== undefined ? (data.consent_pdpa ? 1 : 0) : current.consent_pdpa;
+  const goal_type = data.goal_type ?? current.goal_type ?? 'weight_loss';
+  const goal_score = data.goal_score !== undefined ? Number(data.goal_score) : (current.goal_score ?? 150);
 
   const stmt = db.prepare(`
     UPDATE users
     SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, personality = ?,
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
         gender = ?, age = ?, height = ?, weight = ?, activity_level = ?,
-        consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END
+        consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
+        goal_type = ?, goal_score = ?
     WHERE id = ?
   `);
 
@@ -309,6 +335,7 @@ export function updateUser(id, data) {
     calorie_goal, sugar_goal, privacy_level,
     gender, age, height, weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),
+    goal_type, goal_score,
     id
   );
   return getUser(id);
@@ -398,6 +425,7 @@ export function getLogsSecure(targetUserId, requesterId, date) {
 }
 
 export function addLog({ userId, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url }) {
+  const targetDate = date || new Date().toISOString().slice(0, 10);
   const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const stmt = db.prepare(`
     INSERT INTO logs (id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, image_url, created_at)
@@ -406,7 +434,7 @@ export function addLog({ userId, date, name, calorie, sugar, portion_size, sweet
   stmt.run(
     id,
     userId,
-    date || new Date().toISOString().slice(0, 10),
+    targetDate,
     name,
     Math.max(0, Number(calorie) || 0),
     Math.max(0, Number(sugar) || 0),
@@ -430,6 +458,13 @@ export function addLog({ userId, date, name, calorie, sugar, portion_size, sweet
   const actText = is_private ? 'บันทึกมื้ออาหาร 🔒 (+5 🪙)' : `บันทึกมื้ออาหาร "${name}" (+5 🪙)`;
   recordActivity(userId, 'meal', actText, 5);
 
+  // Sync daily goal score
+  try {
+    syncDailyGoalScore(userId, targetDate);
+  } catch (err) {
+    console.error('Goal sync error on addLog:', err);
+  }
+
   return db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
 }
 
@@ -437,6 +472,11 @@ export function deleteLog(id, userId) {
   const log = db.prepare('SELECT * FROM logs WHERE id = ? AND user_id = ?').get(id, userId);
   if (!log) return null;
   db.prepare('DELETE FROM logs WHERE id = ? AND user_id = ?').run(id, userId);
+  try {
+    syncDailyGoalScore(userId, log.date);
+  } catch (err) {
+    console.error('Goal sync error on deleteLog:', err);
+  }
   return log; // Return deleted log data for Undo functionality
 }
 
@@ -459,6 +499,11 @@ export function restoreDeletedLog(log) {
     log.image_url,
     log.created_at
   );
+  try {
+    syncDailyGoalScore(log.user_id, log.date);
+  } catch (err) {
+    console.error('Goal sync error on restoreDeletedLog:', err);
+  }
   return log;
 }
 
@@ -674,6 +719,163 @@ export function saveChatMessage({ userId, role, content }) {
   return { id, role, content };
 }
 
+// ----------------------------------------------------
+// Personalized Goal Achievement & Score System
+// ----------------------------------------------------
+
+export function evaluateUserGoalToday(user, targetDate) {
+  const date = targetDate || new Date().toISOString().slice(0, 10);
+  const logs = db.prepare('SELECT calorie, sugar FROM logs WHERE user_id = ? AND date = ?').all(user.id, date);
+  const mealCount = logs.length;
+  const totalCal = logs.reduce((sum, l) => sum + (Number(l.calorie) || 0), 0);
+  const totalSugar = logs.reduce((sum, l) => sum + (Number(l.sugar) || 0), 0);
+
+  const goalType = user.goal_type || 'weight_loss';
+  const calGoal = Number(user.calorie_goal) || 2000;
+  const sugGoal = Number(user.sugar_goal) || 25;
+
+  let achieved = false;
+  let statusText = '';
+  let goalLabel = '';
+  let badgeIcon = '🎯';
+  let targetVal = 0;
+  let currentVal = 0;
+  let unit = '';
+  let progressPercent = 0;
+
+  switch (goalType) {
+    case 'sugar_cut':
+      badgeIcon = '🧋';
+      goalLabel = `ลดน้ำตาล (< ${sugGoal}g/วัน)`;
+      targetVal = sugGoal;
+      currentVal = Math.round(totalSugar * 10) / 10;
+      unit = 'g';
+      progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
+      if (mealCount === 0) {
+        statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (totalSugar <= sugGoal) {
+        achieved = true;
+        const left = Math.max(0, Math.round((sugGoal - totalSugar) * 10) / 10);
+        statusText = `คุมหวานเป๊ะ! (${currentVal}/${targetVal}g เหลืออีก ${left}g)`;
+      } else {
+        const over = Math.round((totalSugar - sugGoal) * 10) / 10;
+        statusText = `เกินเป้าน้ำตาล +${over}g`;
+      }
+      break;
+
+    case 'healthy_balance':
+      badgeIcon = '🥗';
+      goalLabel = `สมดุล (< ${calGoal} kcal, < ${sugGoal}g)`;
+      targetVal = calGoal;
+      currentVal = Math.round(totalCal);
+      unit = 'kcal';
+      progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
+      if (mealCount === 0) {
+        statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (totalCal <= calGoal && totalSugar <= sugGoal) {
+        achieved = true;
+        statusText = `สมดุลเป๊ะทั้งแคล & น้ำตาล! 🎉`;
+      } else if (totalCal > calGoal && totalSugar > sugGoal) {
+        statusText = `เกินทั้งแคลและน้ำตาล`;
+      } else if (totalCal > calGoal) {
+        statusText = `เกินเป้าแคล +${Math.round(totalCal - calGoal)} kcal`;
+      } else {
+        statusText = `เกินเป้าน้ำตาล +${Math.round((totalSugar - sugGoal) * 10) / 10}g`;
+      }
+      break;
+
+    case 'muscle_gain':
+      badgeIcon = '💪';
+      goalLabel = `สร้างกล้าม (≥ ${calGoal} kcal, < ${sugGoal}g)`;
+      targetVal = calGoal;
+      currentVal = Math.round(totalCal);
+      unit = 'kcal';
+      progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
+      if (mealCount === 0) {
+        statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (totalCal >= calGoal && totalSugar <= sugGoal) {
+        achieved = true;
+        statusText = `กินถึงเป้าพลังงานลีน! 💪`;
+      } else if (totalCal < calGoal) {
+        statusText = `ขาดพลังงานอีก ${Math.round(calGoal - totalCal)} kcal`;
+      } else {
+        statusText = `น้ำตาลเกินเกณฑ์`;
+      }
+      break;
+
+    case 'weight_loss':
+    default:
+      badgeIcon = '🏃‍♂️';
+      goalLabel = `ลดน้ำหนัก (< ${calGoal} kcal/วัน)`;
+      targetVal = calGoal;
+      currentVal = Math.round(totalCal);
+      unit = 'kcal';
+      progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
+      if (mealCount === 0) {
+        statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (totalCal <= calGoal) {
+        achieved = true;
+        const left = calGoal - Math.round(totalCal);
+        statusText = `คุมแคลสำเร็จ! (${currentVal}/${targetVal} เหลือ ${left} kcal)`;
+      } else {
+        const over = Math.round(totalCal - calGoal);
+        statusText = `เกินเป้าแคล +${over} kcal`;
+      }
+      break;
+  }
+
+  return {
+    achieved,
+    meal_count: mealCount,
+    goal_type: goalType,
+    goal_label: goalLabel,
+    badge_icon: badgeIcon,
+    target_val: targetVal,
+    current_val: currentVal,
+    unit,
+    progress_percent: progressPercent,
+    status_text: statusText,
+    total_cal: Math.round(totalCal),
+    total_sugar: Math.round(totalSugar * 10) / 10
+  };
+}
+
+export function syncDailyGoalScore(userId, targetDate) {
+  const user = getUser(userId);
+  if (!user) return;
+  const date = targetDate || new Date().toISOString().slice(0, 10);
+  const evalResult = evaluateUserGoalToday(user, date);
+
+  const existing = db.prepare('SELECT * FROM daily_goals WHERE user_id = ? AND date = ?').get(userId, date);
+
+  if (evalResult.achieved) {
+    if (!existing || existing.achieved === 0) {
+      // Award 50 points and 10 coins
+      const bonusPoints = 50;
+      const bonusCoins = 10;
+      db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ?, coins = COALESCE(coins, 120) + ? WHERE id = ?')
+        .run(bonusPoints, bonusCoins, userId);
+
+      db.prepare(`
+        INSERT INTO daily_goals (user_id, date, achieved, score_awarded, goal_type, updated_at)
+        VALUES (?, ?, 1, ?, ?, ?)
+        ON CONFLICT(user_id, date) DO UPDATE SET achieved = 1, score_awarded = ?, goal_type = ?, updated_at = ?
+      `).run(userId, date, bonusPoints, evalResult.goal_type, Date.now(), bonusPoints, evalResult.goal_type, Date.now());
+
+      recordActivity(userId, 'goal', `🎯 พิชิตเป้าหมาย "${evalResult.goal_label}" สำเร็จวันนี้! (+${bonusPoints} คะแนนวินัย, +${bonusCoins} 🪙)`, 0);
+    }
+  } else {
+    // If it was previously marked achieved, but now exceeded
+    if (existing && existing.achieved === 1) {
+      const revoked = existing.score_awarded || 50;
+      db.prepare('UPDATE users SET goal_score = MAX(0, COALESCE(goal_score, 150) - ?) WHERE id = ?').run(revoked, userId);
+      db.prepare('UPDATE daily_goals SET achieved = 0, score_awarded = 0, updated_at = ? WHERE user_id = ? AND date = ?').run(Date.now(), userId, date);
+    }
+  }
+
+  return evalResult;
+}
+
 export function getGroupFeed(date, currentUserId) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const users = getAllUsers();
@@ -687,6 +889,7 @@ export function getGroupFeed(date, currentUserId) {
     const totalSugar = userLogs.reduce((acc, l) => acc + l.sugar, 0);
     const isMe = user.id === currentUserId;
     const streak = calculateUserStreak(user.id);
+    const todayGoal = evaluateUserGoalToday(user, targetDate);
 
     let visibleMeals = [];
     if (isMe || user.privacy_level === 'full') {
@@ -715,6 +918,8 @@ export function getGroupFeed(date, currentUserId) {
         avatar_image: user.avatar_image,
         calorie_goal: user.calorie_goal,
         sugar_goal: user.sugar_goal,
+        goal_type: user.goal_type || 'weight_loss',
+        goal_score: user.goal_score ?? 150,
         privacy_level: user.privacy_level,
         is_me: isMe,
         streak: streak.current
@@ -726,6 +931,7 @@ export function getGroupFeed(date, currentUserId) {
         calorie_percent: Math.round((totalCal / user.calorie_goal) * 100),
         sugar_percent: Math.round((totalSugar / user.sugar_goal) * 100),
       },
+      today_goal: todayGoal,
       meals: visibleMeals
     };
   }).filter(Boolean);
@@ -790,23 +996,30 @@ export function getRecentActivities(limit = 20) {
   return stmt.all(limit);
 }
 
-export function getLeaderboard() {
+export function getLeaderboard(sortBy = 'goal') {
+  const isCoins = sortBy === 'coins';
+  const orderCol = isCoins ? 'coins DESC' : 'COALESCE(goal_score, 150) DESC, coins DESC';
   const users = db.prepare(`
     SELECT id, nickname, avatar_color, avatar_face, avatar_hat, avatar_image, personality,
-           COALESCE(coins, 120) as coins, calorie_goal, sugar_goal, privacy_level, created_at
+           COALESCE(coins, 120) as coins,
+           COALESCE(goal_score, 150) as goal_score,
+           COALESCE(goal_type, 'weight_loss') as goal_type,
+           calorie_goal, sugar_goal, privacy_level, created_at
     FROM users
-    ORDER BY coins DESC
+    ORDER BY ${orderCol}
   `).all();
 
   const todayDate = new Date().toISOString().slice(0, 10);
   return users.map((u, idx) => {
     const streak = calculateUserStreak(u.id);
     const mealsToday = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ?').get(u.id, todayDate)?.c || 0;
+    const todayGoal = evaluateUserGoalToday(u, todayDate);
     return {
       rank: idx + 1,
       ...u,
       streak: streak.current,
-      mealsToday
+      mealsToday,
+      todayGoal
     };
   });
 }
@@ -820,9 +1033,19 @@ export function getMemberDetail(targetUserId, requesterId) {
   const logs = getLogsSecure(targetUserId, requesterId, todayDate);
   const totalMeals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ?').get(targetUserId)?.c || 0;
   const cheersReceived = db.prepare('SELECT COUNT(*) as c FROM cheers WHERE to_user_id = ?').get(targetUserId)?.c || 0;
+  const todayGoal = evaluateUserGoalToday(user, todayDate);
+
+  const goalTypeNames = {
+    weight_loss: 'ลดน้ำหนัก',
+    sugar_cut: 'ลดน้ำตาล',
+    healthy_balance: 'สมดุลสุขภาพ',
+    muscle_gain: 'สร้างกล้ามเนื้อ'
+  };
 
   const badges = [
     { id: 'b_join', title: 'สมาชิกแก๊งโมจิ 🍡', desc: 'ร่วมเดินทางสร้างนิสัยสุขภาพดี', unlocked: true },
+    { id: 'b_goal', title: `เป้าหมาย: ${goalTypeNames[user.goal_type] || 'ลดน้ำหนัก'} 🎯`, desc: todayGoal.goal_label, unlocked: true },
+    { id: 'b_score', title: 'วินัยยอดเยี่ยม 🌟', desc: 'สะสมคะแนนวินัยเป้าหมาย 300 คะแนนขึ้นไป', unlocked: (user.goal_score || 0) >= 300 },
     { id: 'b_coins', title: 'เศรษฐีคอยน์ 🪙', desc: 'สะสมโมจิคอยน์ครบ 150 เหรียญ', unlocked: (user.coins || 0) >= 150 },
     { id: 'b_streak3', title: 'ไฟแรง 3 วันติด 🔥', desc: 'บันทึกต่อเนื่องไม่ขาดตอน 3 วัน', unlocked: streak.current >= 3 },
     { id: 'b_streak7', title: 'แชมป์ความสม่ำเสมอ 🏆', desc: 'บันทึกต่อเนื่อง 7 วันขึ้นไป', unlocked: streak.current >= 7 },
@@ -840,12 +1063,15 @@ export function getMemberDetail(targetUserId, requesterId) {
       avatar_image: user.avatar_image,
       personality: user.personality,
       coins: user.coins || 120,
+      goal_score: user.goal_score || 150,
+      goal_type: user.goal_type || 'weight_loss',
       calorie_goal: user.calorie_goal,
       sugar_goal: user.sugar_goal,
       privacy_level: user.privacy_level,
       created_at: user.created_at,
       is_me: targetUserId === requesterId
     },
+    todayGoal,
     stats: {
       streak: streak.current,
       bestStreak: streak.best,

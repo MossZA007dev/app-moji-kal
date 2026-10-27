@@ -318,10 +318,11 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { activities });
       }
 
-      // 10.2 Leaderboard (Coins & Streaks)
+      // 10.2 Leaderboard (Goal Score & Coins)
       if (pathname === '/api/leaderboard' && req.method === 'GET') {
-        const leaderboard = db.getLeaderboard();
-        return sendJson(res, 200, { leaderboard });
+        const sort = parsedUrl.searchParams.get('sort') || 'goal';
+        const leaderboard = db.getLeaderboard(sort);
+        return sendJson(res, 200, { leaderboard, sortBy: sort });
       }
 
       // 10.3 Member Profile Details
