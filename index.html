@@ -4484,15 +4484,21 @@ async function renderStats() {
 async function showDayDetail(dateStr) {
   const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${dateStr}`);
   const { logs } = await res.json();
-  const totalCal = logs.reduce((a, b) => a + b.calorie, 0);
-  const totalSugar = logs.reduce((a, b) => a + b.sugar, 0);
+  const totalCal = logs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
+  const totalSugar = logs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+  const totalCarbs = Math.round(logs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
+  const totalSodium = Math.round(logs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
+  const totalProtein = Math.round(logs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
+  const totalFat = Math.round(logs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
 
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = `
     <div class="sh">
       <h2 class="hd" style="font-size:17px; margin-bottom:6px;">สรุปวันที่ ${dateStr} 🍡</h2>
-      <div style="display:flex; justify-content:space-around; background:var(--card); border-radius:16px; padding:12px; margin-bottom:12px;">
+      
+      <!-- Calorie & Sugar Overview -->
+      <div style="display:flex; justify-content:space-around; background:var(--card); border-radius:16px; padding:12px; margin-bottom:8px;">
         <div style="text-align:center;">
           <small style="color:var(--mute);">แคลอรีรวม</small>
           <b style="display:block; font-size:18px;">${Math.round(totalCal)} kcal</b>
@@ -4502,11 +4508,40 @@ async function showDayDetail(dateStr) {
           <b style="display:block; font-size:18px; color:${totalSugar > currentUser.sugar_goal ? 'var(--red)' : 'var(--mint)'};">${fmt(totalSugar)} g</b>
         </div>
       </div>
-      <div style="max-height:200px; overflow-y:auto; margin-bottom:12px;">
+
+      <!-- Macro & Micronutrient 4-Pill Grid -->
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:12px;">
+        <div style="background:#FFFBF5; border:1px solid rgba(255,176,92,0.3); border-radius:10px; padding:6px 2px; text-align:center;">
+          <small style="font-size:10px; color:#D97706; display:block;">🍞 คาร์บ</small>
+          <b style="font-size:12.5px; color:var(--ink);">${fmt(totalCarbs)}g</b>
+        </div>
+        <div style="background:#EFF6FF; border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:6px 2px; text-align:center;">
+          <small style="font-size:10px; color:#2563EB; display:block;">🧂 โซเดียม</small>
+          <b style="font-size:12.5px; color:${totalSodium > 2000 ? '#EF4444' : 'var(--ink)'};">${fmt(totalSodium)}mg</b>
+        </div>
+        <div style="background:#F8F6FE; border:1px solid rgba(167,139,250,0.3); border-radius:10px; padding:6px 2px; text-align:center;">
+          <small style="font-size:10px; color:#7C3AED; display:block;">🥩 โปรตีน</small>
+          <b style="font-size:12.5px; color:var(--ink);">${fmt(totalProtein)}g</b>
+        </div>
+        <div style="background:#FEFBF3; border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:6px 2px; text-align:center;">
+          <small style="font-size:10px; color:#059669; display:block;">🥑 ไขมัน</small>
+          <b style="font-size:12.5px; color:var(--ink);">${fmt(totalFat)}g</b>
+        </div>
+      </div>
+
+      <div style="max-height:220px; overflow-y:auto; margin-bottom:12px;">
         ${logs.length ? logs.map(l => `
-          <div class="row">
-            <span>${esc(l.name)}</span>
-            <span style="color:var(--mute); font-size:12px;">${fmt(l.calorie)} kcal · ${fmt(l.sugar)} g</span>
+          <div class="row" style="flex-direction:column; align-items:flex-start; gap:4px; padding:8px 0;">
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+              <b style="font-size:13.5px;">${esc(l.name)}</b>
+              <span style="color:var(--mute); font-size:12px;">${fmt(l.calorie)} kcal · ${fmt(l.sugar)} g</span>
+            </div>
+            <div class="meal-macro-chips-wrap">
+              ${l.carbs ? `<span class="m-pill carb">🍞 ${fmt(l.carbs)}g</span>` : ''}
+              ${l.sodium ? `<span class="m-pill sodium ${l.sodium >= 800 ? 'warn' : ''}">🧂 ${fmt(l.sodium)}mg</span>` : ''}
+              ${l.protein ? `<span class="m-pill prot">🥩 ${fmt(l.protein)}g</span>` : ''}
+              ${l.fat ? `<span class="m-pill fat">🥑 ${fmt(l.fat)}g</span>` : ''}
+            </div>
           </div>
         `).join('') : '<p style="text-align:center; color:var(--mute);">ไม่มีรายการบันทึกในวันนี้</p>'}
       </div>

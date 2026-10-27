@@ -979,10 +979,10 @@ export function getGroupFeed(date, currentUserId) {
 export function exportUserCsv(userId) {
   const user = getUser(userId);
   if (!user) return '';
-  const stmt = db.prepare('SELECT date, name, calorie, sugar, portion_size, sweetness_level, created_at FROM logs WHERE user_id = ? ORDER BY date DESC, created_at DESC');
+  const stmt = db.prepare('SELECT date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, created_at FROM logs WHERE user_id = ? ORDER BY date DESC, created_at DESC');
   const rows = stmt.all(userId);
 
-  const headers = ['วันที่', 'ชื่อเมนู', 'แคลอรี (kcal)', 'น้ำตาล (g)', 'ขนาด', 'ระดับความหวาน', 'เวลาบันทึก'];
+  const headers = ['วันที่', 'ชื่อเมนู', 'แคลอรี (kcal)', 'น้ำตาล (g)', 'คาร์บ (g)', 'โปรตีน (g)', 'ไขมัน (g)', 'โซเดียม (mg)', 'ขนาด', 'ระดับความหวาน', 'เวลาบันทึก'];
   const csvLines = [headers.join(',')];
 
   for (const r of rows) {
@@ -992,6 +992,10 @@ export function exportUserCsv(userId) {
       `"${(r.name || '').replace(/"/g, '""')}"`,
       r.calorie,
       r.sugar,
+      r.carbs || 0,
+      r.protein || 0,
+      r.fat || 0,
+      r.sodium || 0,
       `"${r.portion_size}"`,
       `"${r.sweetness_level}"`,
       `"${time}"`

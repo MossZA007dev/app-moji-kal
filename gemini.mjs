@@ -457,7 +457,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   const settings = getSettings();
   const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
 
-  const { nickname, personality, calorie_goal, sugar_goal, today_cal, today_sugar, today_meals, streak } = userContext;
+  const { nickname, personality, goal_type, calorie_goal, sugar_goal, today_cal, today_sugar, today_carbs, today_sodium, today_protein, today_fat, today_meals, streak } = userContext;
   const remCal = Math.max(0, calorie_goal - today_cal);
   const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
 
@@ -472,17 +472,23 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
 ข้อมูลผู้ใช้ปัจจุบัน:
 - ชื่อเล่น: ${nickname || 'เพื่อน'}
 - บุคลิกของคุณ: ${personalityDesc}
-- สถิติวันนี้: กินไปแล้ว ${Math.round(today_cal)} / ${calorie_goal} kcal (เหลืออีก ${Math.round(remCal)} kcal)
-- น้ำตาลวันนี้: กินไปแล้ว ${fmt(today_sugar)} / ${sugar_goal} g (เหลือโควตาอีก ${fmt(remSugar)} g)
+- เป้าหมายสุขภาพหลัก: ${goal_type || 'ควบคุมน้ำหนักและสุขภาพ'}
+- สถิติวันนี้:
+  • แคลอรี: ${Math.round(today_cal)} / ${calorie_goal} kcal (เหลืออีก ${Math.round(remCal)} kcal)
+  • น้ำตาล: ${fmt(today_sugar)} / ${sugar_goal} g (เหลือโควตาอีก ${fmt(remSugar)} g)
+  • แป้ง (คาร์บ): ${fmt(today_carbs || 0)} g
+  • โซเดียม: ${fmt(today_sodium || 0)} mg (เกณฑ์ WHO ไม่ควรเกิน 2,000 mg/วัน)
+  • โปรตีน: ${fmt(today_protein || 0)} g
+  • ไขมัน: ${fmt(today_fat || 0)} g
 - Streak ความสม่ำเสมอ: ${streak || 0} วันติด
-- มื้ออาหารที่กินไปแล้ววันนี้: ${today_meals && today_meals.length ? today_meals.map(m => m.name + ` (${m.sugar}g น้ำตาล)`).join(', ') : 'ยังไม่ได้บันทึกมื้อใด'}
+- มื้ออาหารที่กินไปแล้ววันนี้ (${today_meals?.length || 0} มื้อ):
+  ${today_meals && today_meals.length ? today_meals.map(m => `• ${m.name} (${Math.round(m.calorie)} kcal, น้ำตาล ${fmt(m.sugar)}g, แป้ง ${fmt(m.carbs||0)}g, โซเดียม ${fmt(m.sodium||0)}mg, โปรตีน ${fmt(m.protein||0)}g)`).join('\n  ') : 'ยังไม่ได้บันทึกมื้อใด'}
 
 แนวทางการตอบ:
 1. ตอบเป็นภาษาไทย น่ารัก อบอุ่น กระชับ ไม่เกิน 2-4 ประโยค
-2. ถ้าผู้ใช้ถามหาของกินหรือมื้อเย็น ให้แนะนำเมนูอาหารไทยที่อร่อยและสอดคล้องกับ "โควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g)"
-   - ถ้าน้ำตาลเหลือน้อย (<5g): แนะนำของไม่หวาน เช่น แกงจืดเต้าหู้หมูสับ, ต้มยำกุ้งน้ำใส, อกไก่ย่าง, ชาเขียวร้อนไม่หวาน
-   - ถ้าน้ำตาลเหลือเยอะ (>15g): แนะนำผลไม้สดหวานน้อย หรือของหวานชิ้นเล็กได้พอชื่นใจ
-3. ไม่ส่งเสริมการอดอาหารเด็ดขาด แนะนำให้กินโปรตีนและผักเพื่อความอิ่มท้อง
+2. ให้คำแนะนำโภชนาการที่ครอบคลุมทั้ง น้ำตาล, แคลอรี, แป้ง/คาร์บ, โปรตีน และ โซเดียม หากโซเดียมสูง (>1500mg) แนะนำให้ดื่มน้ำเปล่าเพิ่ม
+3. ถ้าผู้ใช้ถามหาของกินหรือมื้อเย็น ให้แนะนำเมนูอาหารไทยที่อร่อยและสอดคล้องกับ "โควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g)" และปริมาณสารอาหารที่ยังขาด
+4. ไม่ส่งเสริมการอดอาหารเด็ดขาด แนะนำให้กินโปรตีนและผักเพื่อความอิ่มท้อง
 `;
 
   if (!apiKey) {

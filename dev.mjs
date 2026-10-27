@@ -252,16 +252,25 @@ const server = http.createServer(async (req, res) => {
         const logs = db.getLogs(userId, todayDate);
         const streak = db.calculateUserStreak(userId);
 
-        const totalCal = logs.reduce((a, b) => a + b.calorie, 0);
-        const totalSugar = logs.reduce((a, b) => a + b.sugar, 0);
+        const totalCal = logs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
+        const totalSugar = logs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+        const totalCarbs = Math.round(logs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
+        const totalSodium = Math.round(logs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
+        const totalProtein = Math.round(logs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
+        const totalFat = Math.round(logs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
 
         const userContext = {
           nickname: user?.nickname || 'เพื่อน',
           personality: user?.personality || 'kind',
+          goal_type: user?.goal_type || 'weight_loss',
           calorie_goal: user?.calorie_goal || 2000,
           sugar_goal: user?.sugar_goal || 25,
           today_cal: totalCal,
           today_sugar: totalSugar,
+          today_carbs: totalCarbs,
+          today_sodium: totalSodium,
+          today_protein: totalProtein,
+          today_fat: totalFat,
           today_meals: logs,
           streak: streak.current
         };
