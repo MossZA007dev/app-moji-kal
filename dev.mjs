@@ -293,6 +293,23 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, result);
       }
 
+      // 8.2 Fashion Shop (Tap เสื้อผ้า & Shopping แฟชั่น)
+      if (pathname === '/api/shop/buy' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { userId, itemKey, price, itemName } = body;
+        if (!userId || !itemKey) return sendJson(res, 400, { error: 'userId and itemKey are required' });
+        const result = db.buyShopItem(userId, itemKey, Number(price) || 0, itemName);
+        return sendJson(res, result.success ? 200 : 400, result);
+      }
+
+      if (pathname === '/api/shop/claim' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { userId, itemKey, itemName } = body;
+        if (!userId || !itemKey) return sendJson(res, 400, { error: 'userId and itemKey are required' });
+        const result = db.claimMissionItem(userId, itemKey, itemName);
+        return sendJson(res, result.success ? 200 : 400, result);
+      }
+
       // 9. Users
       if (pathname === '/api/users' && req.method === 'GET') {
         return sendJson(res, 200, { users: db.getAllUsers() });

@@ -181,7 +181,8 @@ const neededCols = [
   { name: 'water_bottle_name', type: 'TEXT DEFAULT "ขวดน้ำพกพา 500 ml"' },
   { name: 'water_bottle_icon', type: 'TEXT DEFAULT "bottle_500"' },
   { name: 'water_daily_target_ml', type: 'INTEGER DEFAULT 2000' },
-  { name: 'water_bottle_setup', type: 'INTEGER DEFAULT 0' }
+  { name: 'water_bottle_setup', type: 'INTEGER DEFAULT 0' },
+  { name: 'unlocked_items', type: 'TEXT DEFAULT "[]"' }
 ];
 
 for (const col of neededCols) {
@@ -369,6 +370,8 @@ export function updateUser(id, data) {
   const water_bottle_icon = data.water_bottle_icon !== undefined ? data.water_bottle_icon : (current.water_bottle_icon ?? 'bottle_500');
   const water_daily_target_ml = data.water_daily_target_ml !== undefined ? (Number(data.water_daily_target_ml) || 2000) : (current.water_daily_target_ml ?? 2000);
   const water_bottle_setup = data.water_bottle_setup !== undefined ? (data.water_bottle_setup ? 1 : 0) : (current.water_bottle_setup ?? 0);
+  const coins = data.coins !== undefined ? Number(data.coins) : (current.coins ?? 120);
+  const unlocked_items = data.unlocked_items !== undefined ? (typeof data.unlocked_items === 'string' ? data.unlocked_items : JSON.stringify(data.unlocked_items)) : (current.unlocked_items ?? '[]');
 
   const stmt = db.prepare(`
     UPDATE users
@@ -376,7 +379,7 @@ export function updateUser(id, data) {
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
         gender = ?, age = ?, height = ?, weight = ?, target_weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
-        goal_type = ?, goal_score = ?,
+        goal_type = ?, goal_score = ?, coins = ?, unlocked_items = ?,
         carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?,
         water_bottle_ml = ?, water_bottle_name = ?, water_bottle_icon = ?, water_daily_target_ml = ?, water_bottle_setup = ?
     WHERE id = ?
@@ -387,12 +390,68 @@ export function updateUser(id, data) {
     calorie_goal, sugar_goal, privacy_level,
     gender, age, height, weight, target_weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),
-    goal_type, goal_score,
+    goal_type, goal_score, coins, unlocked_items,
     carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
     water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
     id
   );
   return getUser(id);
+}
+
+export function buyShopItem(userId, itemKey, price, itemName) {
+  const user = getUser(userId);
+  if (!user) return { success: false, error: 'User not found' };
+  const userCoins = Number(user.coins) || 0;
+  if (userCoins < price) {
+    return { success: false, error: `เหรียญไม่พอ (ต้องการ ${price} 🪙 แต่มี ${userCoins} 🪙)` };
+  }
+
+  let unlocked = [];
+  try {
+    unlocked = JSON.parse(user.unlocked_items || '[]');
+  } catch (_) {
+    unlocked = [];
+  }
+
+  if (!unlocked.includes(itemKey)) {
+    unlocked.push(itemKey);
+  }
+
+  const newCoins = Math.max(0, userCoins - price);
+  db.prepare('UPDATE users SET coins = ?, unlocked_items = ? WHERE id = ?').run(
+    newCoins,
+    JSON.stringify(unlocked),
+    userId
+  );
+
+  recordActivity(userId, 'shop', `ปลดล็อคแฟชั่น [${itemName || itemKey}] ในร้านค้า (-${price} 🪙) ✨`, -price);
+
+  return { success: true, user: getUser(userId), unlocked };
+}
+
+export function claimMissionItem(userId, itemKey, itemName) {
+  const user = getUser(userId);
+  if (!user) return { success: false, error: 'User not found' };
+
+  let unlocked = [];
+  try {
+    unlocked = JSON.parse(user.unlocked_items || '[]');
+  } catch (_) {
+    unlocked = [];
+  }
+
+  if (!unlocked.includes(itemKey)) {
+    unlocked.push(itemKey);
+  }
+
+  db.prepare('UPDATE users SET unlocked_items = ? WHERE id = ?').run(
+    JSON.stringify(unlocked),
+    userId
+  );
+
+  recordActivity(userId, 'shop', `สำเร็จภารกิจและปลดล็อคแฟชั่น [${itemName || itemKey}] ฟรี! 🎯🎉`, 0);
+
+  return { success: true, user: getUser(userId), unlocked };
 }
 
 export function deleteUserAndData(userId) {

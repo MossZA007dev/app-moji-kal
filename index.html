@@ -317,32 +317,200 @@ nav {
   border-top: 1px solid var(--line);
   display: flex;
   justify-content: space-around;
-  padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px));
   z-index: 10;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
 }
 nav button {
   flex: 1;
-  max-width: 80px;
+  max-width: 66px;
   border: 0;
   background: none;
   color: var(--mute);
   font: inherit;
-  font-size: 11px;
-  padding: 4px;
+  font-size: 10px;
+  padding: 4px 1px;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  white-space: nowrap;
 }
 nav button.on {
   background: var(--pinkS);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 700;
 }
-nav button i { font-style: normal; font-size: 18px; }
+nav button i { font-style: normal; font-size: 17px; line-height: 1.1; }
+
+/* Fashion Shop & Wardrobe Styles */
+.fashion-hero-stage {
+  position: relative;
+  background: radial-gradient(circle at 50% 30%, #FFF0F5 0%, #FDF2F8 50%, var(--card) 100%);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 18px 16px 14px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(255, 158, 181, 0.12);
+  overflow: hidden;
+}
+.fashion-hero-stage::before {
+  content: '✨';
+  position: absolute;
+  top: 14px; left: 18px;
+  font-size: 20px;
+  opacity: 0.6;
+}
+.fashion-hero-stage::after {
+  content: '🌟';
+  position: absolute;
+  top: 18px; right: 20px;
+  font-size: 18px;
+  opacity: 0.6;
+}
+.fashion-pedestal {
+  width: 140px;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(255, 158, 181, 0.5) 0%, rgba(255, 158, 181, 0.05) 70%, transparent 100%);
+  border-radius: 50%;
+  margin: -10px auto 10px;
+}
+.fashion-coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border: 1.5px solid #F59E0B;
+  color: #92400E;
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+.fashion-cat-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.fashion-cat-nav::-webkit-scrollbar { display: none; }
+.fashion-cat-btn {
+  white-space: nowrap;
+  padding: 7px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+.fashion-cat-btn.active {
+  background: var(--pinkS);
+  border-color: var(--pink);
+  color: var(--pink-ink);
+  box-shadow: 0 2px 8px rgba(255, 117, 140, 0.2);
+}
+.fashion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(102px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.fashion-card {
+  position: relative;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 6px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fashion-card:active { transform: scale(0.97); }
+.fashion-card.equipped {
+  border-color: #10B981;
+  background: #ECFDF5;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+.fashion-card.previewing {
+  border-color: var(--pink);
+  box-shadow: 0 4px 14px rgba(255, 117, 140, 0.25);
+}
+.fashion-card.locked {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+.fashion-card-icon {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 6px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fashion-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+.fashion-card-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 10px;
+  margin-top: auto;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+.fashion-card-status-pill.equipped {
+  background: #10B981;
+  color: white;
+}
+.fashion-card-status-pill.owned {
+  background: #EDE9FE;
+  color: #6D28D9;
+}
+.fashion-card-status-pill.coin {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+.fashion-card-status-pill.mission {
+  background: #E0F2FE;
+  color: #0369A1;
+  border: 1px solid #BAE6FD;
+}
+.fashion-lock-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  font-size: 12px;
+  line-height: 1;
+  background: rgba(241, 245, 249, 0.9);
+  padding: 2px 4px;
+  border-radius: 8px;
+}
 
 /* Modal Sheet */
 #sheet {
@@ -3198,6 +3366,7 @@ textarea { resize: none; margin-bottom: 8px; }
 <nav>
   <button data-t="today" onclick="go('today')"><i>🍡</i>วันนี้</button>
   <button data-t="chat" onclick="go('chat')"><i>💬</i>แชทโมจิ</button>
+  <button data-t="fashion" onclick="go('fashion')"><i>🛍️</i>เสื้อผ้า</button>
   <button data-t="feed" onclick="go('feed')"><i>👥</i>เพื่อน ๆ</button>
   <button data-t="stats" onclick="go('stats')"><i>📊</i>สถิติ</button>
   <button data-t="settings" onclick="go('settings')"><i>⚙️</i>ตั้งค่า</button>
@@ -3701,6 +3870,7 @@ function fireConfetti() {
 function render() {
   if (tab === 'today') renderToday();
   else if (tab === 'chat') renderChat();
+  else if (tab === 'fashion') renderFashionShop();
   else if (tab === 'feed') renderFeed();
   else if (tab === 'stats') renderStats();
   else if (tab === 'settings') renderSettings();
@@ -3714,6 +3884,7 @@ function go(t) {
   else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs()]).then(render);
   else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).then(render);
   else if (t === 'chat') fetchChatHistory().then(render);
+  else if (t === 'fashion') Promise.all([fetchUsers(), fetchStreak(), fetchLogs()]).then(render);
   else render();
   window.scrollTo(0, 0);
 }
@@ -6439,7 +6610,7 @@ async function renderSettings() {
   $('#main').innerHTML = `
     <!-- Hero Profile Header -->
     <div class="settings-hero">
-      <div class="settings-hero-avatar" onclick="openWardrobeModal('hat')">
+      <div class="settings-hero-avatar" onclick="go('fashion')" title="แตะเพื่อไปห้องเสื้อผ้า">
         ${mascotSVG(currentUser?.avatar_face, currentUser?.avatar_color, 96, currentUser?.avatar_hat, currentUser?.avatar_accessory)}
       </div>
       <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">
@@ -6533,16 +6704,16 @@ async function renderSettings() {
     <!-- Category 2: ปรับแต่งตัวละครโมจิ -->
     <div class="settings-sec-title">👒 ตัวละครโมจิและสไตล์</div>
     <div class="settings-group">
-      <div class="settings-row" onclick="openWardrobeModal('hat')">
+      <div class="settings-row" onclick="go('fashion')">
         <div class="settings-row-left">
-          <div class="settings-icon-box" style="background:#FFF0E0; color:#B35C00;">👒</div>
+          <div class="settings-icon-box" style="background:#FFF0E0; color:#B35C00;">🛍️</div>
           <div>
-            <span class="settings-label-title">ห้องแต่งตัวและเครื่องประดับ</span>
-            <span class="settings-label-sub">หมวก โบว์ ปีก ของถือ สีหน้า และสีตัวโมจิ</span>
+            <span class="settings-label-title">ห้องเสื้อ & ช้อปปิ้งแฟชั่นโมจิ</span>
+            <span class="settings-label-sub">เลือกซื้อและปลดล็อคหมวก ปีก ของถือ สีหน้า และสีตัว</span>
           </div>
         </div>
         <div class="settings-row-right">
-          <span style="font-size:12px;">${hatLabels[currentUser?.avatar_hat] || 'ต้นกล้า 🌱'} · ${accLabels[currentUser?.avatar_accessory] || 'มือเปล่า'}</span>
+          <span class="badge ok">🛍️ ช้อปปิ้ง</span>
           <span class="settings-chev">›</span>
         </div>
       </div>
@@ -7466,87 +7637,499 @@ async function addNewMemberFromModal() {
   }
 }
 
-// Sub-Modal: Wardrobe Customizer (ห้องแต่งตัวโมจิ)
+// Sub-Modal & Tab: Wardrobe & Fashion Shop (🛍️ ห้องเสื้อและร้านค้าแฟชั่นโมจิ)
 let currentWardrobeTab = 'hat';
+let activeFashionTab = 'hat';
+let fashionPreview = null;
 
 const WARDROBE_CONFIG = {
   hat: {
     title: 'หมวก & ทรงผม',
     icon: '👒',
     items: [
-      { id: 'none', title: 'ต้นกล้า', icon: '🌱' },
-      { id: 'flower', title: 'ซากุระ', icon: '🌸' },
-      { id: 'crown', title: 'มงกุฎทอง', icon: '👑' },
-      { id: 'bow', title: 'โบว์ชมพู', icon: '🎀' },
-      { id: 'chef', title: 'หมวกเชฟ', icon: '👨‍🍳' },
-      { id: 'sprout', title: 'ใบไม้คู่', icon: '🌿' },
-      { id: 'cat_ears', title: 'หูแมวเหมียว', icon: '🐱' },
-      { id: 'cap', title: 'หมวกแก๊ป', icon: '🧢' },
-      { id: 'headphones', title: 'หูฟังเกมเมอร์', icon: '🎧' },
-      { id: 'party', title: 'ปาร์ตี้', icon: '🥳' },
-      { id: 'sunglasses', title: 'แว่นกันแดด', icon: '😎' },
-      { id: 'wizard', title: 'หมวกพ่อมด', icon: '🧙‍♂️' },
-      { id: 'angel', title: 'วงแหวนเทวดา', icon: '😇' }
+      { id: 'none', title: 'ต้นกล้า', icon: '🌱', free: true },
+      { id: 'sprout', title: 'ใบไม้คู่', icon: '🌿', free: true },
+      { id: 'flower', title: 'ซากุระ', icon: '🌸', price: 40 },
+      { id: 'cap', title: 'หมวกแก๊ป', icon: '🧢', price: 60 },
+      { id: 'bow', title: 'โบว์ชมพู', icon: '🎀', price: 80 },
+      { id: 'chef', title: 'หมวกเชฟ', icon: '👨‍🍳', mission: { type: 'logs', target: 5, label: 'บันทึกอาหารครบ 5 มื้อ 🥗' } },
+      { id: 'sunglasses', title: 'แว่นกันแดด', icon: '😎', price: 90 },
+      { id: 'headphones', title: 'หูฟังเกมเมอร์', icon: '🎧', price: 120 },
+      { id: 'cat_ears', title: 'หูแมวเหมียว', icon: '🐱', price: 150 },
+      { id: 'party', title: 'ปาร์ตี้', icon: '🥳', mission: { type: 'streak', target: 3, label: 'Streak 3 วันติด 🔥' } },
+      { id: 'crown', title: 'มงกุฎทอง', icon: '👑', mission: { type: 'goal_score', target: 300, label: 'คะแนนวินัยครบ 300 pt 🎯' } },
+      { id: 'wizard', title: 'หมวกพ่อมด', icon: '🧙‍♂️', price: 200 },
+      { id: 'angel', title: 'วงแหวนเทวดา', icon: '😇', mission: { type: 'water', target: 5, label: 'ดื่มน้ำครบ 5 ครั้ง 💧' } }
     ]
   },
   accessory: {
     title: 'ของถือ & ปีก',
     icon: '🧋',
     items: [
-      { id: 'none', title: 'มือเปล่า', icon: '✋' },
-      { id: 'boba', title: 'ชานมไข่มุก', icon: '🧋' },
-      { id: 'dumbbell', title: 'ดัมเบลฟิตเนส', icon: '🏋️' },
-      { id: 'apple', title: 'แอปเปิ้ลเขียว', icon: '🍏' },
-      { id: 'water', title: 'ขวดน้ำดื่ม', icon: '💧' },
-      { id: 'spoon', title: 'ช้อนส้อม', icon: '🍴' },
-      { id: 'heart', title: 'หัวใจดวงโต', icon: '💖' },
-      { id: 'wings', title: 'ปีกนางฟ้า', icon: '🪽' },
-      { id: 'sparkles', title: 'ละอองวิเศษ', icon: '✨' }
+      { id: 'none', title: 'มือเปล่า', icon: '✋', free: true },
+      { id: 'water', title: 'ขวดน้ำดื่ม', icon: '💧', free: true },
+      { id: 'apple', title: 'แอปเปิ้ลเขียว', icon: '🍏', price: 40 },
+      { id: 'spoon', title: 'ช้อนส้อม', icon: '🍴', price: 60 },
+      { id: 'heart', title: 'หัวใจหวาน', icon: '💖', price: 80 },
+      { id: 'dumbbell', title: 'ดัมเบลฟิตเนส', icon: '🏋️', mission: { type: 'logs', target: 8, label: 'บันทึกอาหารครบ 8 มื้อ 🥩' } },
+      { id: 'boba', title: 'ชานมไข่มุก', icon: '🧋', price: 120 },
+      { id: 'sparkles', title: 'ละอองวิเศษ', icon: '✨', price: 160 },
+      { id: 'wings', title: 'ปีกนางฟ้า', icon: '🪽', mission: { type: 'streak', target: 5, label: 'Streak 5 วันติด 🔥' } }
     ]
   },
   face: {
     title: 'สีหน้า & แว่น',
     icon: '👀',
     items: [
-      { id: 'happy', title: 'ยิ้มแฉ่ง', icon: '😊' },
-      { id: 'ok', title: 'ยิ้มหวาน', icon: '🙂' },
-      { id: 'worry', title: 'เหงื่อตก', icon: '🥺' },
-      { id: 'alert', title: 'ตาโตตกใจ', icon: '😲' },
-      { id: 'wink', title: 'ส่งวิ้ง', icon: '😉' },
-      { id: 'love', title: 'ตาหัวใจ', icon: '😍' },
-      { id: 'smart', title: 'ฉลาดมั่นใจ', icon: '🧐' },
-      { id: 'sleepy', title: 'ง่วงนอน zZ', icon: '😴' },
-      { id: 'nom', title: 'เคี้ยวตุ่ย', icon: '😋' }
+      { id: 'happy', title: 'ยิ้มแฉ่ง', icon: '😊', free: true },
+      { id: 'ok', title: 'ยิ้มหวาน', icon: '🙂', free: true },
+      { id: 'worry', title: 'เหงื่อตก', icon: '🥺', free: true },
+      { id: 'alert', title: 'ตาโตตกใจ', icon: '😲', free: true },
+      { id: 'wink', title: 'ส่งวิ้ง', icon: '😉', free: true },
+      { id: 'sleepy', title: 'ง่วงนอน zZ', icon: '😴', free: true },
+      { id: 'nom', title: 'เคี้ยวตุ่ย', icon: '😋', free: true },
+      { id: 'smart', title: 'ฉลาดมั่นใจ', icon: '🧐', price: 60 },
+      { id: 'love', title: 'ตาหัวใจ', icon: '😍', price: 80 }
     ]
   },
   color: {
     title: 'สีตัวโมจิ',
     icon: '🎨',
     items: [
-      { id: '#FF9EB5', title: 'ชมพูพีช', hex: '#FF9EB5' },
-      { id: '#6FCBB0', title: 'มัทฉะมินต์', hex: '#6FCBB0' },
-      { id: '#FFB05C', title: 'ส้มพุดดิ้ง', hex: '#FFB05C' },
-      { id: '#A78BFA', title: 'ม่วงทาโร่', hex: '#A78BFA' },
-      { id: '#D4A373', title: 'ชานมไทย', hex: '#D4A373' },
-      { id: '#F4DEE4', title: 'นมสดวนิลา', hex: '#F4DEE4' },
-      { id: '#38BDF8', title: 'บลูเบอร์รี่', hex: '#38BDF8' },
-      { id: '#FCD34D', title: 'เนยน้ำผึ้ง', hex: '#FCD34D' },
-      { id: '#F43F5E', title: 'สตรอว์เบอร์รี่', hex: '#F43F5E' },
-      { id: '#34D399', title: 'เมลอนหวาน', hex: '#34D399' },
-      { id: '#E2E8F0', title: 'โมจิหิมะ', hex: '#E2E8F0' },
-      { id: '#334155', title: 'ช็อกโกแลต', hex: '#334155' }
+      { id: '#FF9EB5', title: 'ชมพูพีช', hex: '#FF9EB5', free: true },
+      { id: '#6FCBB0', title: 'มัทฉะมินต์', hex: '#6FCBB0', free: true },
+      { id: '#FFB05C', title: 'ส้มพุดดิ้ง', hex: '#FFB05C', free: true },
+      { id: '#D4A373', title: 'ชานมไทย', hex: '#D4A373', free: true },
+      { id: '#F4DEE4', title: 'นมสดวนิลา', hex: '#F4DEE4', price: 40 },
+      { id: '#A78BFA', title: 'ม่วงทาโร่', hex: '#A78BFA', price: 60 },
+      { id: '#38BDF8', title: 'บลูเบอร์รี่', hex: '#38BDF8', price: 80 },
+      { id: '#FCD34D', title: 'เนยน้ำผึ้ง', hex: '#FCD34D', price: 80 },
+      { id: '#34D399', title: 'เมลอนหวาน', hex: '#34D399', price: 100 },
+      { id: '#F43F5E', title: 'สตรอว์เบอร์รี่', hex: '#F43F5E', price: 100 },
+      { id: '#E2E8F0', title: 'โมจิหิมะ', hex: '#E2E8F0', mission: { type: 'streak', target: 3, label: 'Streak 3 วันติด ❄️' } },
+      { id: '#334155', title: 'ช็อกโกแลต', hex: '#334155', price: 150 }
     ]
   },
   personality: {
     title: 'บุคลิก AI',
     icon: '💬',
     items: [
-      { id: 'kind', title: 'ใจดี อบอุ่น 💖', desc: 'น้ำเสียงอ่อนโยน ให้กำลังใจเสมอ ไม่กดดันเวลาหลุดกินขนม', icon: '💖' },
-      { id: 'cheerful', title: 'ร่าเริง สดใส 🌟', desc: 'ไฮเปอร์ เฮฮา ตื่นเต้นกับทุกมื้ออาหาร คอยเชียร์สุดใจ', icon: '🌟' },
-      { id: 'disciplined', title: 'จริงจัง มีวินัย 📋', desc: 'เป๊ะตัวเลข ตรงไปตรงมา เตือนสติแคลและน้ำตาลอย่างเข้มงวด', icon: '📋' }
+      { id: 'kind', title: 'ใจดี อบอุ่น 💖', desc: 'น้ำเสียงอ่อนโยน ให้กำลังใจเสมอ ไม่กดดันเวลาหลุดกินขนม', icon: '💖', free: true },
+      { id: 'cheerful', title: 'ร่าเริง สดใส 🌟', desc: 'ไฮเปอร์ เฮฮา ตื่นเต้นกับทุกมื้ออาหาร คอยเชียร์สุดใจ', icon: '🌟', free: true },
+      { id: 'disciplined', title: 'จริงจัง มีวินัย 📋', desc: 'เป๊ะตัวเลข ตรงไปตรงมา เตือนสติแคลและน้ำตาลอย่างเข้มงวด', icon: '📋', free: true }
     ]
   }
 };
+
+function isItemUnlocked(category, itemId) {
+  if (!currentUser) return false;
+  const conf = WARDROBE_CONFIG[category];
+  const item = conf?.items.find(i => (i.id || i.hex) === itemId);
+  if (item && item.free) return true;
+  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind') return true;
+
+  // If item is currently worn, user automatically owns it
+  if (category === 'hat' && currentUser.avatar_hat === itemId) return true;
+  if (category === 'accessory' && currentUser.avatar_accessory === itemId) return true;
+  if (category === 'face' && currentUser.avatar_face === itemId) return true;
+  if (category === 'color' && (currentUser.avatar_color || '').toLowerCase() === (itemId || '').toLowerCase()) return true;
+  if (category === 'personality' && currentUser.personality === itemId) return true;
+
+  let unlocked = [];
+  try {
+    unlocked = JSON.parse(currentUser.unlocked_items || '[]');
+  } catch (_) {
+    unlocked = [];
+  }
+  const key = `${category}:${itemId}`;
+  return unlocked.includes(key);
+}
+
+function checkMissionProgress(mission) {
+  if (!mission) return { current: 0, target: 1, completed: true, pct: 100 };
+  const target = mission.target || 1;
+  let current = 0;
+
+  if (mission.type === 'streak') {
+    current = userStreak?.current || 0;
+  } else if (mission.type === 'logs') {
+    current = currentLogs?.length || 0;
+  } else if (mission.type === 'goal_score') {
+    current = Number(currentUser?.goal_score) || 150;
+  } else if (mission.type === 'water') {
+    const waterLogs = currentLogs?.filter(l => l.name && l.name.includes('น้ำเปล่า')) || [];
+    current = waterLogs.length;
+  }
+
+  const completed = current >= target;
+  const pct = Math.min(100, Math.round((current / target) * 100));
+  return { current, target, completed, pct };
+}
+
+async function buyFashionItem(category, itemId, price, itemName) {
+  if (!currentUser) return;
+  const userCoins = Number(currentUser.coins) || 0;
+  if (userCoins < price) {
+    toast(`เหรียญไม่พอจ้า! ขาดอีก ${price - userCoins} 🪙 สะสมเพิ่มจากการบันทึกอาหารและดื่มน้ำนะ ✨`);
+    return;
+  }
+
+  if (!confirm(`ต้องการใช้ ${price} 🪙 เพื่อปลดล็อค "${itemName}" ใช่ไหม?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/shop/buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        itemKey: `${category}:${itemId}`,
+        price: price,
+        itemName: itemName
+      })
+    });
+
+    const data = await res.json();
+    if (data.success && data.user) {
+      currentUser = data.user;
+      const idx = users.findIndex(u => u.id === data.user.id);
+      if (idx >= 0) users[idx] = data.user;
+
+      await equipFashionItem(category, itemId, false);
+      fireConfetti();
+      toast(`🎉 ปลดล็อค "${itemName}" สำเร็จ และสวมใส่ให้โมจิแล้ว! (-${price} 🪙)`);
+      render();
+    } else {
+      toast(data.error || 'การซื้อไม่สำเร็จ');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการซื้อไอเทม');
+  }
+}
+
+async function claimFashionMissionItem(category, itemId, itemName) {
+  if (!currentUser) return;
+
+  try {
+    const res = await fetch('/api/shop/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        itemKey: `${category}:${itemId}`,
+        itemName: itemName
+      })
+    });
+
+    const data = await res.json();
+    if (data.success && data.user) {
+      currentUser = data.user;
+      const idx = users.findIndex(u => u.id === data.user.id);
+      if (idx >= 0) users[idx] = data.user;
+
+      await equipFashionItem(category, itemId, false);
+      fireConfetti();
+      toast(`🏆 ยินดีด้วย! ปลดล็อค "${itemName}" จากภารกิจสำเร็จแล้ว 🎉`);
+      render();
+    } else {
+      toast(data.error || 'การรับไอเทมไม่สำเร็จ');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการรับไอเทม');
+  }
+}
+
+async function equipFashionItem(category, itemId, showToastMsg = true) {
+  if (!currentUser) return;
+  if (category === 'hat') currentUser.avatar_hat = itemId;
+  else if (category === 'accessory') currentUser.avatar_accessory = itemId;
+  else if (category === 'face') currentUser.avatar_face = itemId;
+  else if (category === 'color') currentUser.avatar_color = itemId;
+  else if (category === 'personality') currentUser.personality = itemId;
+
+  fashionPreview = {
+    hat: currentUser.avatar_hat || 'none',
+    accessory: currentUser.avatar_accessory || 'none',
+    face: currentUser.avatar_face || 'happy',
+    color: currentUser.avatar_color || '#FF9EB5',
+    personality: currentUser.personality || 'kind'
+  };
+
+  await saveProfileChanges();
+  if (showToastMsg) {
+    toast('สวมใส่ชุดเรียบร้อยแล้ว ✨');
+  }
+  render();
+}
+
+function initFashionPreview() {
+  if (!fashionPreview || !currentUser) {
+    fashionPreview = {
+      hat: currentUser?.avatar_hat || 'none',
+      accessory: currentUser?.avatar_accessory || 'none',
+      face: currentUser?.avatar_face || 'happy',
+      color: currentUser?.avatar_color || '#FF9EB5',
+      personality: currentUser?.personality || 'kind'
+    };
+  }
+}
+
+function selectFashionTryOn(category, itemId) {
+  initFashionPreview();
+  if (category === 'hat') fashionPreview.hat = itemId;
+  else if (category === 'accessory') fashionPreview.accessory = itemId;
+  else if (category === 'face') fashionPreview.face = itemId;
+  else if (category === 'color') fashionPreview.color = itemId;
+  else if (category === 'personality') fashionPreview.personality = itemId;
+
+  render();
+  fireStageBounce();
+}
+
+function fireStageBounce() {
+  const el = $('#fashionStageMascot');
+  if (el) {
+    el.classList.remove('bounce-once');
+    void el.offsetWidth;
+    el.classList.add('bounce-once');
+  }
+}
+
+function switchFashionTab(tabName) {
+  activeFashionTab = tabName;
+  render();
+}
+
+async function applyFashionChanges() {
+  if (!currentUser || !fashionPreview) return;
+  currentUser.avatar_hat = fashionPreview.hat;
+  currentUser.avatar_accessory = fashionPreview.accessory;
+  currentUser.avatar_face = fashionPreview.face;
+  currentUser.avatar_color = fashionPreview.color;
+  currentUser.personality = fashionPreview.personality;
+
+  await saveProfileChanges();
+  fireConfetti();
+  toast('บันทึกชุดแต่งตัวใหม่ของโมจิเรียบร้อย! น่ารักสุดๆ ✨🎉');
+  render();
+}
+
+function resetFashionPreview() {
+  if (!currentUser) return;
+  fashionPreview = {
+    hat: currentUser.avatar_hat || 'none',
+    accessory: currentUser.avatar_accessory || 'none',
+    face: currentUser.avatar_face || 'happy',
+    color: currentUser.avatar_color || '#FF9EB5',
+    personality: currentUser.personality || 'kind'
+  };
+  render();
+  toast('คืนค่าชุดเดิมแล้ว');
+}
+
+function renderFashionStageTagsHtml() {
+  if (!fashionPreview) initFashionPreview();
+  const hatItem = WARDROBE_CONFIG.hat.items.find(i => i.id === fashionPreview.hat);
+  const accItem = WARDROBE_CONFIG.accessory.items.find(i => i.id === fashionPreview.accessory);
+  const faceItem = WARDROBE_CONFIG.face.items.find(i => i.id === fashionPreview.face);
+  const colItem = WARDROBE_CONFIG.color.items.find(i => (i.hex || '').toLowerCase() === (fashionPreview.color || '#FF9EB5').toLowerCase());
+
+  return `
+    <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
+    <span class="wardrobe-preview-tag">ของถือ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
+    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
+    <span class="wardrobe-preview-tag"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? colItem.hex : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>${colItem ? colItem.title : 'ชมพู'}</span>
+  `;
+}
+
+function renderFashionItemsCardsHtml(cat) {
+  const conf = WARDROBE_CONFIG[cat];
+  if (!conf || !currentUser) return '';
+  initFashionPreview();
+
+  const userCoins = Number(currentUser.coins) || 0;
+
+  return conf.items.map(item => {
+    const itemId = item.id || item.hex;
+    const isUnlocked = isItemUnlocked(cat, itemId);
+
+    let isEquipped = false;
+    if (cat === 'hat') isEquipped = (currentUser.avatar_hat || 'none') === itemId;
+    else if (cat === 'accessory') isEquipped = (currentUser.avatar_accessory || 'none') === itemId;
+    else if (cat === 'face') isEquipped = (currentUser.avatar_face || 'happy') === itemId;
+    else if (cat === 'color') isEquipped = (currentUser.avatar_color || '#FF9EB5').toLowerCase() === (item.hex || '').toLowerCase();
+    else if (cat === 'personality') isEquipped = (currentUser.personality || 'kind') === itemId;
+
+    let isPreviewing = false;
+    if (cat === 'hat') isPreviewing = fashionPreview.hat === itemId;
+    else if (cat === 'accessory') isPreviewing = fashionPreview.accessory === itemId;
+    else if (cat === 'face') isPreviewing = fashionPreview.face === itemId;
+    else if (cat === 'color') isPreviewing = (fashionPreview.color || '').toLowerCase() === (item.hex || '').toLowerCase();
+    else if (cat === 'personality') isPreviewing = fashionPreview.personality === itemId;
+
+    // Item preview visual (icon or color swatch)
+    let visualHtml = '';
+    if (cat === 'color') {
+      visualHtml = `<div style="width:34px; height:34px; border-radius:50%; background:${item.hex}; margin:2px auto 6px; box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2.5px solid white;"></div>`;
+    } else {
+      visualHtml = `<div class="fashion-card-icon">${item.icon}</div>`;
+    }
+
+    // Card card status / action button
+    let footerHtml = '';
+    if (isUnlocked) {
+      if (isEquipped) {
+        footerHtml = `<div class="fashion-card-status-pill equipped">✓ สวมใส่อยู่</div>`;
+      } else if (isPreviewing) {
+        footerHtml = `<button class="btn sm" style="width:100%; font-size:10.5px; padding:3px 2px; background:var(--pink); color:#fff; border:none; font-weight:700;" onclick="event.stopPropagation(); equipFashionItem('${cat}', '${itemId}')">สวมใส่เลย</button>`;
+      } else {
+        footerHtml = `<div class="fashion-card-status-pill owned">มีแล้ว (แตะลอง)</div>`;
+      }
+    } else {
+      // Locked item
+      if (item.price) {
+        const canBuy = userCoins >= item.price;
+        footerHtml = `
+          <div style="font-size:10px; font-weight:700; color:#B45309; margin-bottom:2px;">🪙 ${item.price} เหรียญ</div>
+          <button class="btn sm" 
+                  style="width:100%; font-size:10px; padding:3px 2px; ${canBuy ? 'background:linear-gradient(135deg, #F59E0B, #D97706); color:#fff; font-weight:700; border:none;' : 'background:#E2E8F0; color:#64748B; border:none;'}"
+                  onclick="event.stopPropagation(); buyFashionItem('${cat}', '${itemId}', ${item.price}, '${esc(item.title)}')">
+            ${canBuy ? `ซื้อเลย (${item.price} 🪙)` : `ขาดอีก ${item.price - userCoins} 🪙`}
+          </button>
+        `;
+      } else if (item.mission) {
+        const prog = checkMissionProgress(item.mission);
+        if (prog.completed) {
+          footerHtml = `
+            <div style="font-size:10px; font-weight:700; color:#059669; margin-bottom:2px;">🎯 ภารกิจครบ!</div>
+            <button class="btn sm" style="width:100%; font-size:10.5px; padding:3px 2px; background:linear-gradient(135deg, #10B981, #059669); color:#fff; border:none; font-weight:700;"
+                    onclick="event.stopPropagation(); claimFashionMissionItem('${cat}', '${itemId}', '${esc(item.title)}')">
+              🎉 รับฟรี!
+            </button>
+          `;
+        } else {
+          footerHtml = `
+            <div class="fashion-card-status-pill mission" title="${esc(item.mission.label)}">
+              ${esc(item.mission.label)} (${prog.current}/${prog.target})
+            </div>
+          `;
+        }
+      }
+    }
+
+    return `
+      <div class="fashion-card ${isEquipped ? 'equipped' : ''} ${isPreviewing ? 'previewing' : ''} ${!isUnlocked ? 'locked' : ''}" onclick="selectFashionTryOn('${cat}', '${itemId}')">
+        ${!isUnlocked ? `<span class="fashion-lock-badge">🔒</span>` : ''}
+        ${visualHtml}
+        <div class="fashion-card-title">${esc(item.title)}</div>
+        ${footerHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFashionShop() {
+  if (!currentUser) {
+    $('#main').innerHTML = `
+      <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0;">
+        <div style="font-size:48px; margin-bottom:12px;">🛍️</div>
+        <h2 class="hd" style="font-size:18px; margin-bottom:8px;">ห้องเสื้อโมจิ (Fashion Shop)</h2>
+        <p style="font-size:12.5px; color:var(--mute); margin-bottom:18px;">กรุณาเลือกโปรไฟล์หรือสร้างตัวละครก่อนมาช้อปปิ้งแต่งตัวน้า</p>
+        <button class="btn" onclick="openOnboardingModal({ isNewUser: true })">✨ สร้างตัวละครใหม่</button>
+      </div>
+    `;
+    return;
+  }
+
+  initFashionPreview();
+
+  const userCoins = Number(currentUser.coins) || 0;
+
+  // Check if current preview differs from equipped
+  const hasChanges = (
+    fashionPreview.hat !== (currentUser.avatar_hat || 'none') ||
+    fashionPreview.accessory !== (currentUser.avatar_accessory || 'none') ||
+    fashionPreview.face !== (currentUser.avatar_face || 'happy') ||
+    (fashionPreview.color || '').toLowerCase() !== (currentUser.avatar_color || '#FF9EB5').toLowerCase() ||
+    fashionPreview.personality !== (currentUser.personality || 'kind')
+  );
+
+  $('#main').innerHTML = `
+    <!-- Top Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div>
+        <h1 style="font-size:20px; font-family:'Mali',sans-serif; margin:0 0 2px;">🛍️ เสื้อผ้า & แฟชั่น</h1>
+        <span style="font-size:12px; color:var(--mute);">ช้อปปิ้งไอเทมและแต่งตัวให้น้องโมจิ</span>
+      </div>
+      <div class="fashion-coin-pill" title="เหรียญสะสมของคุณ (ใช้ซื้อชุดและไอเทมในร้านค้า)">
+        <span>🪙</span>
+        <span>${fmt(userCoins)} เหรียญ</span>
+      </div>
+    </div>
+
+    <!-- Quick Earning Banner -->
+    <div style="background:linear-gradient(135deg, #FFFBEB, #FEF3C7); border:1px solid #FDE68A; border-radius:14px; padding:8px 12px; margin-bottom:12px; font-size:11.5px; color:#92400E; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:16px;">💡</span>
+        <span><b>วิธีสะสมเหรียญ:</b> บันทึกอาหาร (+5 🪙) · ดื่มน้ำ (+2 🪙) · ชั่งน้ำหนัก (+10 🪙) · Streak (+15 🪙)</span>
+      </div>
+    </div>
+
+    <!-- Hero Live Dressing Stage -->
+    <div class="fashion-hero-stage">
+      <div id="fashionStageMascot" style="cursor:pointer; display:inline-block;" onclick="fireStageBounce()" title="แตะน้องโมจิเพื่อดุ๊กดิ๊ก!">
+        ${mascotSVG(fashionPreview.face, fashionPreview.color, 120, fashionPreview.hat, fashionPreview.accessory)}
+      </div>
+      <div class="fashion-pedestal"></div>
+
+      <!-- Live Tags -->
+      <div id="fashionStageTags" style="display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-bottom:10px;">
+        ${renderFashionStageTagsHtml()}
+      </div>
+
+      <!-- Stage Buttons -->
+      <div style="display:flex; justify-content:center; gap:8px;">
+        ${hasChanges ? `
+          <button class="btn sm" style="background:linear-gradient(135deg, #EC4899, #F43F5E); color:#fff; border:none; padding:7px 18px; border-radius:14px; font-weight:700; box-shadow:0 4px 12px rgba(244,63,94,0.25);" onclick="applyFashionChanges()">
+            ✨ บันทึกการแต่งตัวนี้
+          </button>
+          <button class="btn g sm" style="padding:7px 12px; font-size:11px;" onclick="resetFashionPreview()">
+            คืนค่าเดิม
+          </button>
+        ` : `
+          <span style="font-size:11.5px; color:var(--mute); background:rgba(255,255,255,0.7); border:1px solid var(--line); padding:4px 12px; border-radius:14px;">
+            แตะไอเทมด้านล่างเพื่อลองสวมใส่หรือซื้อแฟชั่นใหม่ ✨
+          </span>
+        `}
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="fashion-cat-nav">
+      <button class="fashion-cat-btn ${activeFashionTab === 'hat' ? 'active' : ''}" onclick="switchFashionTab('hat')">
+        <span>👒</span> <span>หมวก & ทรงผม</span>
+      </button>
+      <button class="fashion-cat-btn ${activeFashionTab === 'accessory' ? 'active' : ''}" onclick="switchFashionTab('accessory')">
+        <span>🧋</span> <span>ของถือ & ปีก</span>
+      </button>
+      <button class="fashion-cat-btn ${activeFashionTab === 'face' ? 'active' : ''}" onclick="switchFashionTab('face')">
+        <span>👀</span> <span>สีหน้า & แว่น</span>
+      </button>
+      <button class="fashion-cat-btn ${activeFashionTab === 'color' ? 'active' : ''}" onclick="switchFashionTab('color')">
+        <span>🎨</span> <span>สีตัวโมจิ</span>
+      </button>
+      <button class="fashion-cat-btn ${activeFashionTab === 'personality' ? 'active' : ''}" onclick="switchFashionTab('personality')">
+        <span>💬</span> <span>บุคลิก AI</span>
+      </button>
+    </div>
+
+    <!-- Fashion Items Grid -->
+    <div class="fashion-grid">
+      ${renderFashionItemsCardsHtml(activeFashionTab)}
+    </div>
+  `;
+}
 
 function renderWardrobeItemsHtml(tab) {
   const conf = WARDROBE_CONFIG[tab];
@@ -8003,7 +8586,9 @@ async function saveProfileChanges() {
         water_bottle_name: currentUser.water_bottle_name || 'ขวดน้ำพกพา 500 ml',
         water_bottle_icon: currentUser.water_bottle_icon || 'bottle_500',
         water_daily_target_ml: currentUser.water_daily_target_ml || 2000,
-        water_bottle_setup: currentUser.water_bottle_setup || 0
+        water_bottle_setup: currentUser.water_bottle_setup || 0,
+        coins: currentUser.coins !== undefined ? currentUser.coins : 120,
+        unlocked_items: currentUser.unlocked_items || '[]'
       })
     });
     const data = await res.json();
