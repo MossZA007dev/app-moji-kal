@@ -7,6 +7,10 @@
 <script>
   (function() {
     try {
+      if (!localStorage.getItem('moji_theme_v2_migrated')) {
+        localStorage.setItem('moji_theme', 'light');
+        localStorage.setItem('moji_theme_v2_migrated', 'true');
+      }
       var t = localStorage.getItem('moji_theme') || 'light';
       document.documentElement.setAttribute('data-theme', t);
     } catch (_) {}
@@ -3383,6 +3387,10 @@ textarea { resize: none; margin-bottom: 8px; }
 <script>
 // Theme Initialization
 (function initTheme() {
+  if (!localStorage.getItem('moji_theme_v2_migrated')) {
+    localStorage.setItem('moji_theme', 'light');
+    localStorage.setItem('moji_theme_v2_migrated', 'true');
+  }
   const savedTheme = localStorage.getItem('moji_theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
 })();
@@ -3500,9 +3508,11 @@ function isCurrentUserDev(u = currentUser) {
          (u.email && u.email.toLowerCase().includes('moss'));
 }
 
-// Register Service Worker for PWA
+// Register Service Worker for PWA with auto-update
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW register failed:', e));
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    reg.update();
+  }).catch(e => console.log('SW register failed:', e));
 }
 
 // Capture BeforeInstallPrompt for Android / Desktop PWA

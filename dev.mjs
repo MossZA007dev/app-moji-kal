@@ -686,15 +686,22 @@ const server = http.createServer(async (req, res) => {
         contentType = 'application/manifest+json; charset=utf-8';
       }
 
+      const headers = { 'Content-Type': contentType };
+      if (ext === '.html' || filePath.endsWith('sw.js') || filePath.endsWith('manifest.json')) {
+        headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+        headers['Pragma'] = 'no-cache';
+        headers['Expires'] = '0';
+      }
+
       if (ext === '.html') {
         const html = content.toString('utf-8');
         const injected = html.includes('</body>')
           ? html.replace('</body>', `${liveReloadScript}</body>`)
           : html + liveReloadScript;
-        res.writeHead(200, { 'Content-Type': contentType });
+        res.writeHead(200, headers);
         res.end(injected);
       } else {
-        res.writeHead(200, { 'Content-Type': contentType });
+        res.writeHead(200, headers);
         res.end(content);
       }
     });

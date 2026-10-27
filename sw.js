@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moji-cache-v2';
+const CACHE_NAME = 'moji-cache-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -9,11 +9,6 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
   self.skipWaiting();
 });
 
@@ -21,7 +16,12 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Purging old cache:', key);
+            return caches.delete(key);
+          }
+        })
       );
     })
   );
@@ -34,10 +34,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-First for HTML navigation so users immediately get app updates when online
+  // Network-First (Fresh) for HTML navigation so users immediately get app updates when online
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(networkResponse => {
           if (networkResponse.status === 200) {
             const clone = networkResponse.clone();
@@ -45,7 +45,7 @@ self.addEventListener('fetch', event => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match('/index.html') || caches.match('/'))
     );
     return;
   }
