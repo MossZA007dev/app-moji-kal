@@ -68,12 +68,16 @@ export function enrichComponents(components, defaultName = 'มื้ออา�
 }
 
 export function getSettings() {
+  let fileData = {};
   try {
     if (fs.existsSync(settingsFile)) {
-      return JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
+      fileData = JSON.parse(fs.readFileSync(settingsFile, 'utf-8'));
     }
   } catch (_) {}
-  return { geminiApiKey: process.env.GEMINI_API_KEY || '' };
+  return {
+    geminiApiKey: fileData.geminiApiKey || process.env.GEMINI_API_KEY || '',
+    googleClientId: fileData.googleClientId || process.env.GOOGLE_CLIENT_ID || ''
+  };
 }
 
 export function saveSettings(settings) {

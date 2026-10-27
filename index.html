@@ -4657,6 +4657,127 @@ async function selectPrivacyLevel(lvl) {
   toast('อัปเดตการแชร์เรียบร้อยแล้ว 🔒');
 }
 
+// Sub-Modal: Google Account Connection
+function promptGoogleSignIn() {
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  const hasClientId = Boolean(appSettings.googleClientId && appSettings.googleClientId.includes('.apps.googleusercontent.com'));
+
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🔐</span>
+        <h2 class="hd" style="font-size:18px;">เชื่อมต่อบัญชี Google</h2>
+        <span style="font-size:12px; color:var(--mute);">
+          ${currentUser?.google_id ? `เชื่อมต่อกับ ${esc(currentUser.email || 'Google')} แล้ว` : 'ซิงก์ข้อมูลข้ามเครื่อง และใช้รูปโปรไฟล์จริง'}
+        </span>
+      </div>
+
+      ${hasClientId ? `
+        <div style="display:flex; justify-content:center; margin:16px 0;" id="gSignInBtnContainer">
+          <!-- Google SDK Button Injected Here -->
+        </div>
+      ` : `
+        <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:14px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; line-height:1.6; color:#166534;">
+          <b style="color:#15803D;">💡 ใช้งานได้ทันทีโดยไม่ต้องล็อกอิน Google!</b><br>
+          แอปโมจิเปิดให้คุณและเพื่อนๆ เข้ามาใช้งานได้เลยทันที โดยระบบจะจำโปรไฟล์ในเครื่องของคุณอัตโนมัติ<br><br>
+          <span style="font-size:11.5px; color:#14532D;">
+            * หากต้องการเปิดปุ่มล็อกอินด้วย Google อย่างเป็นทางการ ให้ใส่ <b>Google Client ID</b> ในเมนู <i>"🔑 คีย์เชื่อมต่อระบบ"</i> หรือตั้งค่าใน Environment Variable บน Render
+          </span>
+        </div>
+
+        <div style="background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:14px;">
+          <b style="font-size:12px; color:var(--ink); display:block; margin-bottom:6px;">🧪 ทดสอบล็อกอินบัญชีตัวอย่าง (Simulate):</b>
+          <div style="display:flex; gap:6px;">
+            <input id="devGoogleEmail" placeholder="เช่น user@gmail.com" value="${currentUser?.email || ''}" style="flex:1; font-size:12px; padding:6px 10px;">
+            <button class="btn sm" style="font-size:11px;" onclick="simulateGoogleLogin()">ทดสอบ</button>
+          </div>
+        </div>
+      `}
+
+      <button class="btn g" onclick="closeSheet()">ปิด</button>
+    </div>
+  `;
+
+  if (hasClientId && window.google?.accounts?.id) {
+    try {
+      google.accounts.id.initialize({
+        client_id: appSettings.googleClientId,
+        callback: handleGoogleAuthCallback
+      });
+      const container = document.getElementById('gSignInBtnContainer');
+      if (container) {
+        google.accounts.id.renderButton(container, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'pill'
+        });
+      }
+    } catch (e) {
+      console.warn('Google GSI render error:', e);
+    }
+  }
+}
+
+async function handleGoogleAuthCallback(response) {
+  if (!response?.credential) return;
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard()]);
+      render();
+      toast(`เข้าสู่ระบบ Google เรียบร้อย! ยินดีต้อนรับ ${currentUser.nickname} 🍡`);
+    }
+  } catch (err) {
+    toast('เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
+  }
+}
+
+async function simulateGoogleLogin() {
+  const email = $('#devGoogleEmail')?.value.trim();
+  if (!email || !email.includes('@')) {
+    toast('กรุณาระบุอีเมลที่ถูกต้อง');
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        devProfile: {
+          email,
+          name: email.split('@')[0],
+          picture: null
+        }
+      })
+    });
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard()]);
+      render();
+      toast(`เข้าสู่ระบบตัวอย่าง (${currentUser.nickname}) แล้ว 🍡`);
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+  }
+}
+
 // Sub-Modal: Developer API Keys
 function openIntegrationsModal() {
   const el = $('#sheet');
