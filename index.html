@@ -380,6 +380,229 @@ nav button i { font-style: normal; font-size: 18px; }
 }
 .photo img { width: 100%; height: 100%; object-fit: cover; }
 
+/* In-App Live Camera Modal Viewfinder */
+.camera-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.camera-modal[hidden] {
+  display: none !important;
+}
+.camera-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.camera-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.camera-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.camera-title-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Mali', sans-serif;
+  backdrop-filter: blur(4px);
+}
+.camera-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.camera-icon-btn:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.35);
+}
+.camera-viewfinder-box {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+.camera-viewfinder-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.camera-target-guide {
+  position: absolute;
+  inset: 24px;
+  border-radius: 20px;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+}
+.guide-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #FCD34D;
+  border-style: solid;
+}
+.guide-corner.tl { top: 0; left: 0; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 12px; }
+.guide-corner.tr { top: 0; right: 0; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 12px; }
+.guide-corner.bl { bottom: 0; left: 0; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 12px; }
+.guide-corner.br { bottom: 0; right: 0; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 12px; }
+.guide-text {
+  background: rgba(0, 0, 0, 0.65);
+  color: #FFFFFF;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 11.5px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+  text-align: center;
+}
+.camera-flash-fx {
+  position: absolute;
+  inset: 0;
+  background: #FFFFFF;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+.camera-flash-fx.flashing {
+  opacity: 0.85;
+}
+.camera-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px 8px 4px;
+}
+.camera-tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  padding: 8px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s ease, background 0.15s ease;
+  min-width: 72px;
+}
+.camera-tool-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.3);
+}
+.camera-tool-btn small {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.camera-shutter-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 4px solid #FFFFFF;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.camera-shutter-btn:active {
+  transform: scale(0.9);
+}
+.shutter-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #FFFFFF;
+  transition: background 0.15s ease;
+}
+.camera-shutter-btn:hover .shutter-circle {
+  background: #FEE2E2;
+}
+
+/* Photo CTA & Preview Components in Sheet */
+.photo-cta-card {
+  background: linear-gradient(135deg, var(--card), var(--pinkS));
+  border: 2px dashed var(--pink);
+  border-radius: 20px;
+  padding: 16px 14px;
+  margin: 10px 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.photo-preview-box {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 10px 0;
+  border: 2px solid var(--line);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  background: var(--card);
+}
+.photo-preview-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+.photo-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 12px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  gap: 8px;
+}
+
 input, textarea, select {
   width: 100%;
   font: inherit;
@@ -1390,7 +1613,10 @@ textarea { resize: none; margin-bottom: 8px; }
         <small id="uPrivacy">แตะเพื่อจัดการบัญชี / สลับเพื่อน ▾</small>
       </div>
     </div>
-    <button class="btn s sm" onclick="openSheet()">+ มื้ออาหาร</button>
+    <div style="display:flex; gap:6px;">
+      <button class="btn s sm" onclick="openCameraFromToday()" title="เปิดกล้องถ่ายอาหาร">📷 ถ่ายรูป</button>
+      <button class="btn sm" onclick="openSheet()">+ มื้อ</button>
+    </div>
   </div>
 
   <!-- Streak Banner -->
@@ -1410,6 +1636,51 @@ textarea { resize: none; margin-bottom: 8px; }
 
 <!-- Bottom Modal Sheet -->
 <div id="sheet" hidden></div>
+
+<!-- In-App Live Camera Modal Viewfinder -->
+<div id="cameraModal" class="camera-modal" hidden>
+  <div class="camera-backdrop" onclick="closeCameraModal()"></div>
+  <div class="camera-container">
+    <div class="camera-top-bar">
+      <span class="camera-title-badge">📸 สแกนอาหาร & เครื่องดื่ม</span>
+      <button class="camera-icon-btn" onclick="closeCameraModal()" title="ปิดกล้อง">✕</button>
+    </div>
+
+    <!-- Live Video Viewfinder Box -->
+    <div class="camera-viewfinder-box">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas" style="display:none;"></canvas>
+      
+      <!-- Frame Overlay Target Guide -->
+      <div class="camera-target-guide">
+        <div class="guide-corner tl"></div>
+        <div class="guide-corner tr"></div>
+        <div class="guide-corner bl"></div>
+        <div class="guide-corner br"></div>
+        <div class="guide-text">🍽️ วางจานอาหารหรือแก้วน้ำในกรอบ</div>
+      </div>
+      <div id="cameraFlash" class="camera-flash-fx"></div>
+    </div>
+
+    <!-- Camera Bottom Action Controls -->
+    <div class="camera-bottom-bar">
+      <button class="camera-tool-btn" onclick="switchCameraFacing()" title="สลับกล้องหน้า/หลัง">
+        <span style="font-size:20px;">🔄</span>
+        <small>สลับกล้อง</small>
+      </button>
+
+      <button class="camera-shutter-btn" onclick="captureCameraPhoto()" title="กดถ่ายภาพ">
+        <div class="shutter-circle"></div>
+      </button>
+
+      <label class="camera-tool-btn" title="เลือกจากคลังรูปภาพ">
+        <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0]); closeCameraModal();">
+        <span style="font-size:20px;">🖼️</span>
+        <small>คลังรูป</small>
+      </label>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom Tab Navigation -->
 <nav>
@@ -1925,8 +2196,11 @@ function renderToday() {
     ` : ''}
 
     <div style="display:flex; gap:8px; margin: 10px 0 12px;">
-      <button class="btn" style="flex:2;" onclick="openSheet()">+ เพิ่มมื้ออาหาร</button>
-      <button class="btn s sm" style="flex:1;" onclick="triggerWaterLog()">💧 ดื่มน้ำเปล่า</button>
+      <button class="btn" style="flex:2; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="openCameraFromToday()">
+        <span>📷</span> <span>ถ่ายรูปอาหาร</span>
+      </button>
+      <button class="btn s" style="flex:1.5;" onclick="openSheet()">+ พิมพ์บันทึก</button>
+      <button class="btn s sm" style="flex:1;" onclick="triggerWaterLog()">💧 ดื่มน้ำ</button>
     </div>
 
     <div class="card">
@@ -4391,11 +4665,39 @@ function renderSheet() {
         </div>
       ` : ''}
 
-      <!-- Photo Picker -->
-      <label class="photo">
-        <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
-        ${draft.imageBase64 ? `<img src="${draft.imageBase64}" alt="รูปอาหาร">` : '📷 ถ่ายรูปหรือแตะเพื่อเลือกรูปอาหาร'}
-      </label>
+      <!-- Direct Camera Fallback (Hidden) -->
+      <input id="directCameraInput" type="file" accept="image/*" capture="environment" hidden onchange="pickImage(this.files[0])">
+
+      <!-- Photo Picker / In-App Live Camera Section -->
+      ${draft.imageBase64 ? `
+        <div class="photo-preview-box">
+          <img src="${draft.imageBase64}" alt="รูปอาหาร" class="photo-preview-img">
+          <div class="photo-preview-actions">
+            <button class="btn s sm" style="font-size:11.5px; padding:5px 12px;" onclick="openCameraModal()">📸 ถ่ายใหม่</button>
+            <label class="btn s sm" style="font-size:11.5px; padding:5px 12px; cursor:pointer;">
+              <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
+              🖼️ เปลี่ยนรูป
+            </label>
+            <button class="btn g sm" style="font-size:11.5px; padding:5px 12px; color:#DC2626;" onclick="draft.imageBase64=null; renderSheet();">🗑️ ลบรูป</button>
+          </div>
+        </div>
+      ` : `
+        <div class="photo-cta-card">
+          <div style="font-size:32px; margin-bottom:4px;">📸</div>
+          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">ถ่ายรูปอาหาร & เครื่องดื่ม</b>
+          <span style="font-size:11.5px; color:var(--mute); margin-bottom:10px; display:block;">เปิดกล้องถ่ายสดในแอพ หรือเลือกรูปเพื่อประเมินแคลอรีและน้ำตาล</span>
+          
+          <div style="display:flex; gap:8px; width:100%; max-width:320px;">
+            <button class="btn sm" style="flex:1.2; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="openCameraModal()">
+              <span>📷</span> <span>เปิดกล้องถ่ายสด</span>
+            </button>
+            <label class="btn s sm" style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;">
+              <input type="file" accept="image/*" hidden onchange="pickImage(this.files[0])">
+              <span>🖼️</span> <span>คลังภาพ</span>
+            </label>
+          </div>
+        </div>
+      `}
 
       <!-- Description Input & Voice Button (Phase 3) -->
       <div style="position:relative;">
@@ -4602,22 +4904,158 @@ function applyClarification(optText) {
   analyzeMeal();
 }
 
+// ============================================================
+// In-App Live Camera Stream & Viewfinder Controller
+// ============================================================
+let cameraStream = null;
+let currentCameraFacing = 'environment'; // 'environment' (rear) | 'user' (front)
+
+function openCameraFromToday() {
+  if (!draft) openSheet();
+  openCameraModal();
+}
+
+async function openCameraModal() {
+  if (!draft) openSheet();
+  const modal = $('#cameraModal');
+  if (!modal) return;
+  modal.hidden = false;
+
+  // Check WebRTC camera support
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    modal.hidden = true;
+    const directInput = $('#directCameraInput');
+    if (directInput) {
+      directInput.click();
+    } else {
+      toast('อุปกรณ์นี้ไม่รองรับการเปิดกล้องสดในเบราว์เซอร์ กำลังเปิดกล้องระบบ...');
+    }
+    return;
+  }
+
+  await startCameraStream(currentCameraFacing);
+}
+
+async function startCameraStream(facing) {
+  const video = $('#cameraVideo');
+  if (!video) return;
+
+  stopCameraStream();
+
+  try {
+    const constraints = {
+      video: {
+        facingMode: { ideal: facing },
+        width: { ideal: 1280 },
+        height: { ideal: 960 }
+      },
+      audio: false
+    };
+
+    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = cameraStream;
+    await video.play();
+  } catch (err) {
+    console.warn('getUserMedia ideal facingMode failed, retrying with basic constraint:', err);
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = cameraStream;
+      await video.play();
+    } catch (err2) {
+      console.error('Camera access denied or failed:', err2);
+      closeCameraModal();
+      toast('กรุณาอนุญาตสิทธิ์กล้องในเบราว์เซอร์เพื่อถ่ายภาพ 📷');
+      const directInput = $('#directCameraInput');
+      if (directInput) directInput.click();
+    }
+  }
+}
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => {
+      try { track.stop(); } catch (_) {}
+    });
+    cameraStream = null;
+  }
+  const video = $('#cameraVideo');
+  if (video) video.srcObject = null;
+}
+
+function closeCameraModal() {
+  stopCameraStream();
+  const modal = $('#cameraModal');
+  if (modal) modal.hidden = true;
+}
+
+async function switchCameraFacing() {
+  currentCameraFacing = currentCameraFacing === 'environment' ? 'user' : 'environment';
+  await startCameraStream(currentCameraFacing);
+  toast(currentCameraFacing === 'environment' ? 'สลับเป็นกล้องหลัง 🍽️' : 'สลับเป็นกล้องหน้า 🤳');
+}
+
+function captureCameraPhoto() {
+  const video = $('#cameraVideo');
+  const canvas = $('#cameraCanvas');
+  const flash = $('#cameraFlash');
+  if (!video || !canvas) return;
+
+  const w = video.videoWidth || 800;
+  const h = video.videoHeight || 600;
+
+  const maxDim = 960;
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+
+  const ctx = canvas.getContext('2d');
+  if (currentCameraFacing === 'user') {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+  if (flash) {
+    flash.classList.add('flashing');
+    setTimeout(() => flash.classList.remove('flashing'), 200);
+  }
+
+  if (!draft) openSheet();
+  draft.imageBase64 = base64;
+  draft.status = 'ถ่ายรูปสำเร็จแล้ว! ✨ โมจิกำลังวิเคราะห์อาหาร...';
+
+  setTimeout(() => {
+    closeCameraModal();
+    renderSheet();
+    toast('ถ่ายรูปอาหารสำเร็จ! 📸');
+    if (!draft.txt.trim()) {
+      analyzeMeal();
+    }
+  }, 180);
+}
+
 function pickImage(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      const maxDim = 800;
+      const maxDim = 960;
       const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
       const canvas = document.createElement('canvas');
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      draft.imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      draft.status = 'เลือกรูปแล้ว กด "ให้โมจิวิเคราะห์" ได้เลยน้า';
+      if (!draft) openSheet();
+      draft.imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      draft.status = 'เลือกรูปแล้ว โมจิพร้อมประเมินโภชนาการ 🍡';
       renderSheet();
+      if (!draft.txt.trim()) {
+        analyzeMeal();
+      }
     };
     img.src = e.target.result;
   };
