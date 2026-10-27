@@ -1293,6 +1293,138 @@ export function claimQuest(userId, questId) {
   };
 }
 
+// -------------------------------------------------------------
+// Gang Co-op Challenge (ภารกิจรวมพลังแก๊ง / Boss Raid)
+// -------------------------------------------------------------
+export function getGangCoopStatus(userId = null) {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const weekKey = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+
+  const monday = new Date(now);
+  const currentDay = monday.getDay();
+  const diff = monday.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+  monday.setDate(diff);
+  const weekStartStr = monday.toISOString().slice(0, 10);
+  const weekStartTs = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate()).getTime();
+
+  const coopPool = [
+    {
+      id: 'coop_water',
+      title: 'รวมพลังดับกระหายแก๊งโมจิ 💧',
+      desc: 'ช่วยกันดื่มน้ำสะสมของแก๊งให้ครบ 20,000 ml ในสัปดาห์นี้',
+      icon: '🌊',
+      target: 20000,
+      unit: 'ml',
+      rewardCoins: 60,
+      rewardScore: 150,
+      metric: 'water'
+    },
+    {
+      id: 'coop_meals',
+      title: 'สัปดาห์นักชิมเพื่อสุขภาพ 🍱',
+      desc: 'ช่วยกันบันทึกมื้ออาหารของแก๊งให้ครบ 35 มื้อในสัปดาห์นี้',
+      icon: '🥗',
+      target: 35,
+      unit: 'มื้อ',
+      rewardCoins: 60,
+      rewardScore: 150,
+      metric: 'meals'
+    },
+    {
+      id: 'coop_social',
+      title: 'แก๊งมิตรภาพสายฟิต 💖',
+      desc: 'ช่วยกันกดหัวใจและส่งคอมเมนต์ให้เพื่อนในแก๊งรวม 25 ครั้ง',
+      icon: '🎉',
+      target: 25,
+      unit: 'ครั้ง',
+      rewardCoins: 60,
+      rewardScore: 150,
+      metric: 'social'
+    }
+  ];
+
+  const currentCoop = { ...coopPool[weekNo % coopPool.length] };
+  currentCoop.periodKey = `${currentCoop.id}_${weekKey}`;
+
+  let totalProgress = 0;
+  let userContribution = 0;
+  const memberContributions = [];
+
+  const allUsers = getAllUsers();
+  for (const u of allUsers) {
+    let uVal = 0;
+    if (currentCoop.metric === 'water') {
+      uVal = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date >= ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(u.id, weekStartStr)?.s || 0;
+    } else if (currentCoop.metric === 'meals') {
+      uVal = db.prepare("SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date >= ? AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')").get(u.id, weekStartStr)?.c || 0;
+    } else if (currentCoop.metric === 'social') {
+      uVal = db.prepare("SELECT COUNT(*) as c FROM post_reactions WHERE user_id = ? AND created_at >= ?").get(u.id, weekStartTs)?.c || 0;
+    }
+    totalProgress += uVal;
+    if (userId && u.id === userId) {
+      userContribution = uVal;
+    }
+    if (uVal > 0) {
+      memberContributions.push({
+        id: u.id,
+        nickname: u.nickname,
+        avatar_image: u.avatar_image,
+        avatar_face: u.avatar_face,
+        avatar_color: u.avatar_color,
+        avatar_hat: u.avatar_hat,
+        val: uVal
+      });
+    }
+  }
+
+  memberContributions.sort((a, b) => b.val - a.val);
+
+  const isCompleted = totalProgress >= currentCoop.target;
+  let isClaimed = false;
+  if (userId) {
+    const claim = db.prepare('SELECT id FROM quest_claims WHERE user_id = ? AND quest_id = ? AND period_key = ?').get(userId, currentCoop.id, currentCoop.periodKey);
+    isClaimed = !!claim;
+  }
+
+  return {
+    ...currentCoop,
+    progress: totalProgress,
+    userContribution,
+    isCompleted,
+    isClaimed,
+    contributors: memberContributions.slice(0, 6)
+  };
+}
+
+export function claimGangCoopReward(userId) {
+  const coop = getGangCoopStatus(userId);
+  if (!coop.isCompleted) return { success: false, error: 'ภารกิจรวมพลังแก๊งยังไม่สำเร็จ' };
+  if (coop.isClaimed) return { success: false, error: 'คุณรับรางวัลภารกิจนี้ไปแล้ว' };
+
+  const claimId = `coop_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  db.prepare(`
+    INSERT INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(claimId, userId, coop.id, coop.periodKey, Date.now());
+
+  addCoins(userId, coop.rewardCoins);
+  db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ? WHERE id = ?').run(coop.rewardScore, userId);
+
+  recordActivity(userId, 'goal', `🎉 แก๊งร่วมใจพิชิต [${coop.title}] สำเร็จ! รับรางวัลใหญ่ (+${coop.rewardCoins} 🪙, +${coop.rewardScore} pt) ยกแก๊ง! 🤝✨`, 0);
+
+  return {
+    success: true,
+    rewardCoins: coop.rewardCoins,
+    rewardScore: coop.rewardScore,
+    user: getUser(userId)
+  };
+}
+
 // Monthly Calendar Log Aggregation
 export function getMonthlyCalendar(userId, yearMonthStr) {
   const ym = yearMonthStr || new Date().toISOString().slice(0, 7);

@@ -707,3 +707,222 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   // If all Gemini API models fail or quota is exhausted (429), fall back smoothly to smart conversational engine
   return generateSmartMochiReply(message, userContext);
 }
+
+// -------------------------------------------------------------
+// Smart Meal Recommendation Engine ("เย็นนี้กินไรดี?")
+// -------------------------------------------------------------
+export async function recommendSmartMeal({ user, todayLogs = [] }) {
+  const settings = getSettings();
+  const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
+
+  const nickname = (user?.nickname || 'เพื่อน').trim();
+  const goalType = user?.goal_type || 'weight_loss';
+  const calGoal = Number(user?.calorie_goal) || 2000;
+  const sugarGoal = Number(user?.sugar_goal) || 25;
+
+  const todayCal = todayLogs.reduce((sum, l) => sum + (Number(l.calorie) || 0), 0);
+  const todaySugar = todayLogs.reduce((sum, l) => sum + (Number(l.sugar) || 0), 0);
+  const todayProtein = todayLogs.reduce((sum, l) => sum + (Number(l.protein) || 0), 0);
+  const remCal = Math.max(0, calGoal - todayCal);
+  const remSugar = Math.max(0, Math.round((sugarGoal - todaySugar) * 10) / 10);
+
+  const goalLabel = goalType === 'weight_loss' ? 'ลดน้ำหนักและลดไขมัน'
+    : goalType === 'muscle_gain' ? 'สร้างกล้ามเนื้อและเพิ่มความกระชับ'
+    : 'รักษาสุขภาพและควบคุมน้ำหนัก';
+
+  // Rule-based fallback builder
+  const fallbackGenerator = () => {
+    let advice = `เย็นนี้คุณ${nickname} มีโควต้าคงเหลือ ${Math.round(remCal)} kcal โมจิช่วยคัดสรร 3 เมนูแนะนำที่พอดีกับเป้าหมาย${goalLabel} มาให้แล้วครับ 🍡✨`;
+    let recs = [];
+
+    if (remCal < 350) {
+      recs = [
+        {
+          category: '🏪 7-Eleven สะดวกซื้อ',
+          name: 'อกไก่นุ่มพริกไทยดำ + น้ำเต้าหู้โทฟุซัง (หวาน 0%)',
+          calorie: 180,
+          sugar: 1,
+          protein: 26,
+          carbs: 4,
+          fat: 5,
+          reason: 'โควต้าแคลอรี่เหลือน้อย มื้อนี้เน้นโปรตีนล้วน อิ่มท้องสบายใจ ไม่สะสมไขมัน',
+          tips: 'เวฟร้อนทานได้ทันที เลี่ยงการใส่น้ำจิ้มหวานเพิ่ม'
+        },
+        {
+          category: '🍳 อาหารตามสั่ง',
+          name: 'เกาเหลาต้มเลือดหมูใบตำลึง (ไม่กระเทียมเจียว) ข้าวสวย 1/3 ถ้วย',
+          calorie: 260,
+          sugar: 1.5,
+          protein: 24,
+          carbs: 18,
+          fat: 7,
+          reason: 'ซดน้ำซุปร้อนๆ คล่องคอ ผักตำลึงไฟเบอร์สูง ช่วยขับถ่าย',
+          tips: 'สั่งแม่ค้าว่าไม่ใส่หมูกรอบ ไม่ใส่ชูรส ไม่ใส่กระเทียมเจียว'
+        },
+        {
+          category: '🥗 สุขภาพ / ปรุงง่าย',
+          name: 'ยำวุ้นเส้นอกไก่ฉีกแตงกวา (มะนาวสด)',
+          calorie: 210,
+          sugar: 2,
+          protein: 22,
+          carbs: 22,
+          fat: 3,
+          reason: 'แซ่บจัดจ้าน ไฟเบอร์แน่น แต่น้ำตาลและไขมันต่ำมาก',
+          tips: 'ใช้น้ำมะนาวสดแท้ ไม่เติมน้ำตาลทราย'
+        }
+      ];
+    } else if (remCal < 650) {
+      recs = [
+        {
+          category: '🏪 7-Eleven สะดวกซื้อ',
+          name: 'ข้าวกล้อง + อกไก่นุ่มคั่วกลิ้ง + ไข่ต้มยางมะตูม 1 ฟอง',
+          calorie: 390,
+          sugar: 2,
+          protein: 34,
+          carbs: 42,
+          fat: 9,
+          reason: 'สารอาหารครบ 5 หมู่ โปรตีน 34g ช่วยฟื้นฟูกล้ามเนื้อ อิ่มยาวถึงเช้า',
+          tips: 'เลือกข้าวกล้องหรือไรซ์เบอร์รี่ ดัชนีน้ำตาลต่ำกว่าข้าวขาว'
+        },
+        {
+          category: '🍳 อาหารตามสั่ง',
+          name: 'สุกี้น้ำอกไก่ ผักรวม เน้นโปรตีน (น้ำจิ้ม 1 ช้อนชา)',
+          calorie: 340,
+          sugar: 3.5,
+          protein: 30,
+          carbs: 35,
+          fat: 6,
+          reason: 'ผักกาดขาวและผักบุ้งให้อิ่มจุกๆ แคลอรี่เบาๆ สบายท้อง',
+          tips: 'แยกน้ำจิ้มสุกี้ ตักจิ้มทีละนิดแทนการเทราดทั้งชาม'
+        },
+        {
+          category: '🥗 สุขภาพ / ปรุงง่าย',
+          name: 'สเต็กอกไก่ย่างเกลือพริกไทย + มันเทศนึ่ง + บรอกโคลีลวก',
+          calorie: 420,
+          sugar: 3,
+          protein: 40,
+          carbs: 45,
+          fat: 8,
+          reason: 'เมนูคลีนในฝัน คาร์บเชิงซ้อนจากมันเทศ อิ่มนาน ไม่กระตุ้นอินซูลิน',
+          tips: 'ใช้น้ำมันมะกอกสเปรย์บางๆ หรือหม้อทอดไร้น้ำมัน'
+        }
+      ];
+    } else {
+      recs = [
+        {
+          category: '🏪 7-Eleven สะดวกซื้อ',
+          name: 'สปาเก็ตตี้อกไก่ซอสมะเขือเทศ + ไข่ตุ๋นคัพ 7-11',
+          calorie: 480,
+          sugar: 5,
+          protein: 36,
+          carbs: 58,
+          fat: 12,
+          reason: 'โควต้าแคลอรี่เหลือเยอะ อร่อยฟิน โปรตีนและคาร์บครบถ้วน',
+          tips: 'ทานคู่กับน้ำเปล่าเย็นๆ เติมความสดชื่น'
+        },
+        {
+          category: '🍳 อาหารตามสั่ง',
+          name: 'ข้าวราดกะเพราอกไก่ชิ้น (ไม่ติดมัน) ไข่ดาวน้ำ',
+          calorie: 520,
+          sugar: 2.5,
+          protein: 38,
+          carbs: 60,
+          fat: 14,
+          reason: 'เมนูยอดฮิต พริกและกะเพราช่วยกระตุ้นการเผาผลาญ',
+          tips: 'สั่งแม่ค้าว่าผัดน้ำมันน้อย ไม่ใส่น้ำตาล และขอไข่ดาวน้ำ'
+        },
+        {
+          category: '🥗 สุขภาพ / ปรุงง่าย',
+          name: 'แซลมอนย่างซีอิ๊วญี่ปุ่น + ข้าวญี่ปุ่น + สลัดผักงาขาว',
+          calorie: 550,
+          sugar: 4,
+          protein: 42,
+          carbs: 52,
+          fat: 18,
+          reason: 'โอเมก้า 3 จากปลาแซลมอนช่วยลดการอักเสบ บำรุงสมองและหัวใจ',
+          tips: 'ย่างบนกระทะเทฟลอนโดยไม่ต้องเติมน้ำมันเพิ่ม'
+        }
+      ];
+    }
+
+    return {
+      success: true,
+      remaining_cal: Math.round(remCal),
+      remaining_sugar: remSugar,
+      advice,
+      recommendations: recs
+    };
+  };
+
+  if (!apiKey) {
+    return fallbackGenerator();
+  }
+
+  const prompt = `
+คุณคือน้องโมจิ (Moji Kal 🍡) นักโภชนาการ AI ประจำตัวของ "${nickname}"
+ผู้ใช้คนนี้มีเป้าหมาย: "${goalLabel}"
+สถิติโควต้าวันนี้:
+- แคลอรีเป้าหมาย: ${calGoal} kcal, กินไปแล้ว: ${Math.round(todayCal)} kcal, **เหลือโควต้าอีก: ${Math.round(remCal)} kcal**
+- น้ำตาลเป้าหมาย: ${sugarGoal} g, กินไปแล้ว: ${fmt(todaySugar)} g, **เหลือโควต้า: ${fmt(remSugar)} g**
+- โปรตีนที่กินไปแล้ว: ${fmt(todayProtein)} g
+
+โจทย์: แนะนำ 3 เมนูอาหารสำหรับมื้อต่อไป (มื้อเย็น) ที่เข้ากับโควต้าแคลอรีที่เหลือและเป้าหมายสุขภาพ:
+1. หมวด "🏪 7-Eleven สะดวกซื้อ"
+2. หมวด "🍳 อาหารตามสั่ง"
+3. หมวด "🥗 สุขภาพ / ปรุงง่าย"
+
+ตอบกลับเป็น JSON format เท่านั้น โดยมีโครงสร้างดังนี้:
+{
+  "advice": "ข้อความทักทายสั้นๆ น่ารักจากโมจิ ประเมินโควต้าวันนี้อย่างอบอุ่น (ประมาณ 1-2 ประโยค)",
+  "recommendations": [
+    {
+      "category": "🏪 7-Eleven สะดวกซื้อ",
+      "name": "ชื่อเมนูภาษาไทย",
+      "calorie": 350,
+      "sugar": 2,
+      "protein": 32,
+      "carbs": 35,
+      "fat": 8,
+      "reason": "ทำไมโมจิถึงแนะนำเมนูนี้ให้ผู้ใช้คนนี้",
+      "tips": "ทริคการกินหรือการสั่งแบบสุขภาพดี"
+    }
+  ]
+}
+`;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          response_mime_type: 'application/json',
+          temperature: 0.5,
+          maxOutputTokens: 1200
+        }
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const parsed = JSON.parse(rawText);
+      if (parsed && Array.isArray(parsed.recommendations) && parsed.recommendations.length) {
+        return {
+          success: true,
+          remaining_cal: Math.round(remCal),
+          remaining_sugar: remSugar,
+          advice: parsed.advice || `โมจิเลือก 3 เมนูแนะนำมาให้คุณ${nickname} แล้วครับ 🍡✨`,
+          recommendations: parsed.recommendations
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Mochi AI] Gemini recommendSmartMeal error, using fallback:', err.message);
+  }
+
+  return fallbackGenerator();
+}

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as db from './db.mjs';
-import { analyzeFoodWithGemini, chatWithMochi, getSettings, saveSettings } from './gemini.mjs';
+import { analyzeFoodWithGemini, chatWithMochi, recommendSmartMeal, getSettings, saveSettings } from './gemini.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -444,6 +444,34 @@ const server = http.createServer(async (req, res) => {
         if (!result.success) {
           return sendJson(res, 400, result);
         }
+        return sendJson(res, 200, result);
+      }
+
+      // 10.0.3 Gang Co-op Challenge (ภารกิจรวมพลังแก๊ง)
+      if (pathname === '/api/coop' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId') || '';
+        const coop = db.getGangCoopStatus(userId);
+        return sendJson(res, 200, { success: true, coop });
+      }
+
+      if (pathname === '/api/coop/claim' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const result = db.claimGangCoopReward(userId);
+        return sendJson(res, result.success ? 200 : 400, result);
+      }
+
+      // 10.0.4 Smart Meal Recommendation by AI ("เย็นนี้กินไรดี?")
+      if (pathname === '/api/recommend-meal' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const user = db.getUser(userId);
+        if (!user) return sendJson(res, 404, { error: 'User not found' });
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayLogs = db.getLogs(userId, todayStr);
+        const result = await recommendSmartMeal({ user, todayLogs });
         return sendJson(res, 200, result);
       }
 

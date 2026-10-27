@@ -2574,6 +2574,139 @@ textarea { resize: none; margin-bottom: 8px; }
   70% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
+
+/* Social Feed Custom Comment Input */
+.ig-comment-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 10px;
+}
+.ig-comment-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.ig-comment-input:focus {
+  border-color: var(--pink);
+  background: var(--card);
+}
+.ig-comment-send-btn {
+  background: linear-gradient(135deg, var(--pink), #FB7185);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(255, 158, 181, 0.4);
+}
+.ig-comment-send-btn:active {
+  transform: scale(0.95);
+}
+
+/* Gang Co-op Challenge (Boss Raid) */
+.coop-raid-card {
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.9), rgba(243, 232, 255, 0.9));
+  border: 1.5px solid #C7D2FE;
+  border-radius: 20px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 14px rgba(99, 102, 241, 0.08);
+}
+.coop-raid-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.coop-raid-bar-wrap {
+  margin: 8px 0;
+}
+.coop-raid-bar-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid #C7D2FE;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.coop-raid-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #6366F1, #A855F7, #EC4899);
+  transition: width 0.4s ease;
+}
+.coop-members-stack {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.coop-member-avatar-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  overflow: hidden;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.coop-member-avatar-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* AI Meal Recommendation Styles */
+.recommend-banner-btn {
+  background: linear-gradient(135deg, #FFF1F2, #FFE4E6);
+  border: 1.5px solid #FECDD3;
+  border-radius: 18px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(244, 63, 94, 0.06);
+}
+.recommend-banner-btn:active {
+  transform: scale(0.98);
+}
+.recommend-dish-card {
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recommend-cat-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  align-self: flex-start;
+}
 .friend-header {
   display: flex;
   justify-content: space-between;
@@ -4074,6 +4207,7 @@ let gangStories = [];
 let socialFeedFilter = 'all'; // 'all' | 'meal' | 'water' | 'goal'
 let userQuests = { daily: [], weekly: [], main: [] };
 let activeQuestTab = 'daily'; // 'daily' | 'weekly' | 'main'
+let gangCoopData = null;
 let draft = null;
 let appSettings = {};
 let isListeningVoice = false;
@@ -4159,13 +4293,21 @@ function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', a
 
     // Movie Collection: Star Wars & Others
     jedi_hood: '<path d="M32 26c0-18 12-24 28-24s28 6 28 24c-8 6-48 6-56 0z" fill="#78350F" stroke="#451A03" stroke-width="2"/><path d="M40 24c0-10 8-14 20-14s20 4 20 14z" fill="#451A03"/>',
-    pirate_hat: '<polygon points="26,24 60,6 94,24 78,28 60,20 42,28" fill="#0F172A" stroke="#B45309" stroke-width="1.5"/><circle cx="60" cy="16" r="3" fill="#DC2626"/><line x1="56" y1="16" x2="64" y2="16" stroke="#FFFFFF" stroke-width="1.2"/>'
+    pirate_hat: '<polygon points="26,24 60,6 94,24 78,28 60,20 42,28" fill="#0F172A" stroke="#B45309" stroke-width="1.5"/><circle cx="60" cy="16" r="3" fill="#DC2626"/><line x1="56" y1="16" x2="64" y2="16" stroke="#FFFFFF" stroke-width="1.2"/>',
+
+    // New Foodie & Gamer Exclusive Hats
+    boba_hat: '<ellipse cx="60" cy="22" rx="16" ry="6" fill="#F59E0B" stroke="#D97706" stroke-width="1.2"/><rect x="48" y="8" width="24" height="15" rx="3" fill="#FEF3C7" stroke="#D97706" stroke-width="1.2"/><line x1="60" y1="8" x2="64" y2="-2" stroke="#B45309" stroke-width="3" stroke-linecap="round"/><circle cx="53" cy="18" r="2" fill="#1E293B"/><circle cx="60" cy="19" r="2" fill="#1E293B"/><circle cx="67" cy="18" r="2" fill="#1E293B"/>',
+    fried_egg: '<ellipse cx="60" cy="22" rx="24" ry="7" fill="#334155"/><line x1="78" y1="20" x2="94" y2="14" stroke="#475569" stroke-width="3" stroke-linecap="round"/><ellipse cx="58" cy="20" rx="12" ry="4" fill="#FFFFFF"/><circle cx="58" cy="19" r="4.5" fill="#F59E0B"/>',
+    diamond_crown: '<polygon points="40,24 45,6 54,16 60,2 66,16 75,6 80,24" fill="#E0F2FE" stroke="#38BDF8" stroke-width="1.5"/><circle cx="60" cy="4" r="2.5" fill="#38BDF8"/><circle cx="45" cy="8" r="2" fill="#38BDF8"/><circle cx="75" cy="8" r="2" fill="#38BDF8"/><line x1="40" y1="22" x2="80" y2="22" stroke="#0284C7" stroke-width="2"/>'
   };
 
   // Body Accessories / Held items
   const ACCESSORIES = {
     none: '',
     boba: '<g transform="translate(86,64)"><rect x="0" y="4" width="18" height="24" rx="4" fill="#F59E0B" opacity=".9"/><rect x="2" y="2" width="14" height="4" rx="2" fill="#D97706"/><line x1="9" y1="2" x2="13" y2="-6" stroke="#4B5563" stroke-width="2.5" stroke-linecap="round"/><circle cx="5" cy="22" r="2" fill="#1E293B"/><circle cx="11" cy="22" r="2" fill="#1E293B"/><circle cx="8" cy="18" r="2" fill="#1E293B"/></g>',
+    golden_fork: '<g transform="translate(88,52)"><rect x="4" y="0" width="8" height="12" fill="#F59E0B" stroke="#D97706" stroke-width="1"/><line x1="6" y1="0" x2="6" y2="6" stroke="#FEF08A" stroke-width="1.5"/><line x1="10" y1="0" x2="10" y2="6" stroke="#FEF08A" stroke-width="1.5"/><line x1="8" y1="12" x2="8" y2="34" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/></g>',
+    fruit_smoothie: '<g transform="translate(86,60)"><rect x="0" y="4" width="16" height="22" rx="4" fill="#F43F5E" opacity=".9"/><rect x="2" y="2" width="12" height="4" rx="2" fill="#E11D48"/><line x1="8" y1="2" x2="12" y2="-6" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="14" r="3" fill="#FFE4E6" opacity=".7"/></g>',
+    dumbbell_gold: '<g transform="translate(10,64)"><rect x="0" y="2" width="7" height="16" rx="2" fill="#F59E0B"/><rect x="18" y="2" width="7" height="16" rx="2" fill="#F59E0B"/><rect x="4" y="7" width="17" height="6" fill="#FDE68A"/></g>',
     dumbbell: '<g transform="translate(10,66)"><rect x="0" y="2" width="6" height="14" rx="2" fill="#475569"/><rect x="18" y="2" width="6" height="14" rx="2" fill="#475569"/><rect x="4" y="6" width="16" height="6" fill="#94A3B8"/></g>',
     apple: '<g transform="translate(88,68)"><circle cx="8" cy="8" r="8" fill="#22C55E"/><path d="M8 2q2-5 5-3" stroke="#78350F" stroke-width="1.5" fill="none"/><circle cx="6" cy="6" r="2" fill="#86EFAC" opacity=".6"/></g>',
     water: '<g transform="translate(88,62)"><rect x="1" y="6" width="14" height="24" rx="4" fill="#38BDF8"/><rect x="4" y="2" width="8" height="5" rx="1.5" fill="#0284C7"/><path d="M4 14q3 3 6 0" stroke="#FFFFFF" stroke-width="1.5" fill="none"/></g>',
@@ -4332,10 +4474,11 @@ async function fetchQuests() {
 async function fetchFeed() {
   if (!currentUser) return;
   try {
-    const [feedRes, socRes, questRes] = await Promise.all([
+    const [feedRes, socRes, questRes, coopRes] = await Promise.all([
       fetch(`/api/feed?date=${key()}&userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
       fetch(`/api/feed/social?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
-      fetch(`/api/quests?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } })
+      fetch(`/api/quests?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } }),
+      fetch(`/api/coop?userId=${currentUser.id}`, { headers: { 'x-user-id': currentUser.id } })
     ]);
     const data = await feedRes.json();
     feedData = data.feed || [];
@@ -4348,6 +4491,12 @@ async function fetchFeed() {
       const qData = await questRes.json();
       if (qData.success && qData.quests) {
         userQuests = qData.quests;
+      }
+    }
+    if (coopRes.ok) {
+      const cData = await coopRes.json();
+      if (cData.success && cData.coop) {
+        gangCoopData = cData.coop;
       }
     }
   } catch (err) {
@@ -4389,6 +4538,179 @@ async function claimQuestReward(questId) {
   } catch (err) {
     console.error('claimQuestReward error:', err);
     toast('เกิดข้อผิดพลาดในการรับรางวัล');
+  }
+}
+
+async function submitPostComment(postId) {
+  const input = document.getElementById(`commentInput_${postId}`);
+  if (!input) return;
+  const text = (input.value || '').trim();
+  if (!text) return toast('กรุณาพิมพ์ข้อความคอมเมนต์');
+  input.value = '';
+  await sendQuickCheer(postId, text);
+}
+
+async function claimGangCoopReward() {
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  try {
+    const res = await fetch('/api/coop/claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof fireConfetti === 'function') fireConfetti();
+      toast(`🎉 สมาชิกแก๊งสุดยอดมาก! ได้รับรางวัลใหญ่ +${data.rewardCoins} 🪙 และ +${data.rewardScore} pt!`);
+      currentUser.coins = (currentUser.coins || 0) + data.rewardCoins;
+      currentUser.goal_score = (currentUser.goal_score || 0) + data.rewardScore;
+      await fetchFeed();
+      await fetchLeaderboard();
+      renderFeed();
+    } else {
+      toast(data.error || 'ภารกิจรวมพลังแก๊งยังไม่สำเร็จ');
+    }
+  } catch (err) {
+    console.error('claimGangCoopReward error:', err);
+    toast('เกิดข้อผิดพลาดในการรับรางวัล');
+  }
+}
+
+async function openRecommendMealModal() {
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  
+  openSheet(`
+    <div style="text-align:center; padding:32px 10px;">
+      <div style="font-size:38px; margin-bottom:12px; animation:bounce 1s infinite;">🍱</div>
+      <b style="font-size:15px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">น้องโมจิกำลังวิเคราะห์โควต้า...</b>
+      <p style="font-size:12px; color:var(--mute); margin-top:4px;">คัดสรร 3 เมนูอร่อยที่เข้ากับแคลอรี่คงเหลือวันนี้ให้คุณ ${esc(currentUser.nickname)} 🍡</p>
+    </div>
+  `);
+
+  try {
+    const res = await fetch('/api/recommend-meal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      return openSheet(`
+        <div style="padding:16px; text-align:center;">
+          <p style="color:var(--red); font-size:13px;">${esc(data.error || 'ไม่สามารถวิเคราะห์เมนูได้ในขณะนี้')}</p>
+          <button class="btn sm" onclick="closeSheet()">ปิด</button>
+        </div>
+      `);
+    }
+
+    const remainingKcal = data.remaining_cal;
+    const advice = data.advice;
+    const recs = data.recommendations || [];
+
+    openSheet(`
+      <div style="padding:4px 0 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:20px;">🍱</span>
+              <h2 style="font-size:17px; font-family:'Mali',sans-serif; margin:0; color:var(--ink);">เย็นนี้กินไรดี?</h2>
+            </div>
+            <span style="font-size:11.5px; color:var(--mute);">AI แนะนำเมนูตามโควต้าแคลอรี่คงเหลือ</span>
+          </div>
+          <div style="background:var(--pink-light); border:1px solid var(--pink); border-radius:12px; padding:4px 10px; text-align:right;">
+            <div style="font-size:10px; color:var(--pink); font-weight:700;">โควต้าคงเหลือ</div>
+            <b style="font-size:14px; color:var(--pink); font-family:'Mali',sans-serif;">${fmt(remainingKcal)} <small style="font-size:10px;">kcal</small></b>
+          </div>
+        </div>
+
+        <div style="background:linear-gradient(135deg, rgba(255,158,181,0.15), rgba(111,203,176,0.15)); border:1.5px dashed var(--pink); border-radius:16px; padding:10px 12px; margin-bottom:14px; font-size:12px; line-height:1.4; color:var(--ink); display:flex; gap:10px; align-items:center;">
+          <div style="flex-shrink:0;">
+            ${mascotSVG(currentUser?.avatar_face || 'happy', currentUser?.avatar_color || '#FF9EB5', 42, currentUser?.avatar_hat)}
+          </div>
+          <div>${esc(advice)}</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; max-height:58vh; overflow-y:auto; padding-right:2px;">
+          ${recs.map((r) => {
+            const is711 = (r.category || '').includes('7-Eleven');
+            const isOrder = (r.category || '').includes('ตามสั่ง');
+            const pillBg = is711 ? '#FEF3C7' : (isOrder ? '#E0E7FF' : '#ECFDF5');
+            const pillColor = is711 ? '#B45309' : (isOrder ? '#4338CA' : '#047857');
+
+            return `
+              <div class="recommend-dish-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="recommend-cat-pill" style="background:${pillBg}; color:${pillColor};">${esc(r.category || 'เมนูแนะนำ')}</span>
+                  <b style="font-size:15px; color:var(--pink); font-family:'Mali',sans-serif;">${fmt(r.calorie)} <small style="font-size:10px; color:var(--mute);">kcal</small></b>
+                </div>
+
+                <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink); line-height:1.35;">${esc(r.name)}</b>
+
+                <div style="font-size:11px; color:var(--mute); line-height:1.35;">
+                  💡 ${esc(r.reason)}
+                </div>
+
+                ${r.tips ? `
+                  <div style="font-size:10.5px; color:#4B5563; background:rgba(0,0,0,0.03); padding:4px 8px; border-radius:8px;">
+                    🎯 <b>ทริค:</b> ${esc(r.tips)}
+                  </div>
+                ` : ''}
+
+                <div style="display:flex; gap:5px; flex-wrap:wrap; font-size:10px;">
+                  <span style="background:#EFF6FF; color:#1D4ED8; padding:2px 6px; border-radius:6px; font-weight:700;">💪 โปรตีน ${fmt(r.protein || 0)}g</span>
+                  <span style="background:#FFFBEB; color:#B45309; padding:2px 6px; border-radius:6px; font-weight:700;">🍚 คาร์บ ${fmt(r.carbs || 0)}g</span>
+                  <span style="background:#ECFDF5; color:#047857; padding:2px 6px; border-radius:6px; font-weight:700;">🍬 น้ำตาล ${fmt(r.sugar || 0)}g</span>
+                </div>
+
+                <button class="btn s sm" style="margin-top:4px; font-size:11.5px; padding:6px 10px;" onclick="logRecommendedDish('${esc(r.name)}', ${r.calorie}, ${r.sugar || 0}, ${r.protein || 0}, ${r.carbs || 0}, ${r.fat || 0})">
+                  + บันทึกมื้อนี้ลงไดอารี่ 🥗
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `);
+  } catch (err) {
+    console.error('openRecommendMealModal error:', err);
+    toast('เกิดข้อผิดพลาดในการโหลดเมนูแนะนำ');
+  }
+}
+
+async function logRecommendedDish(dishName, cal, sugar, protein, carbs, fat) {
+  if (!currentUser) return;
+  closeSheet();
+  try {
+    toast(`กำลังบันทึก "${dishName}" ลงไดอารี่... ⏳`);
+    const res = await fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        name: dishName,
+        calorie: cal,
+        sugar: sugar,
+        protein: protein,
+        carbs: carbs,
+        fat: fat,
+        portion_size: 'ปกติ',
+        sweetness_level: 'normal',
+        confidence: 0.95
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof fireConfetti === 'function') fireConfetti();
+      toast(`🎉 บันทึก "${dishName}" (+${fmt(cal)} kcal) เรียบร้อยแล้ว!`);
+      await fetchLogs();
+      await fetchStreak();
+      render();
+    } else {
+      toast(data.message || 'บันทึกไม่สำเร็จ');
+    }
+  } catch (err) {
+    console.error('logRecommendedDish error:', err);
+    toast('เกิดข้อผิดพลาดในการบันทึกอาหาร');
   }
 }
 
@@ -4541,7 +4863,7 @@ async function sendQuickCheer(postId, cheerText) {
           text: cheerText,
           created_at: Date.now()
         });
-        toast(`ส่งกำลังใจ "${cheerText}" ให้เพื่อนแล้ว (+1 🪙) 💖`);
+        toast(`ส่งข้อความ "${cheerText.length > 20 ? cheerText.slice(0, 18) + '...' : cheerText}" สำเร็จ (+1 🪙) 💬💖`);
         renderFeed();
       }
     }
@@ -4922,6 +5244,18 @@ function renderToday() {
     <div class="rings">
       ${ringSVG(totalCal, currentUser?.calorie_goal || 2000, 'var(--pink)', fmt(totalCal) + ' kcal', 'เป้า ' + (currentUser?.calorie_goal || 2000))}
       ${ringSVG(totalSugar, currentUser?.sugar_goal || 25, 'var(--mint)', fmt(totalSugar) + ' g', 'น้ำตาล / ' + (currentUser?.sugar_goal || 25) + ' g')}
+    </div>
+
+    <!-- Smart Meal Recommendation AI Banner ("เย็นนี้กินไรดี?") -->
+    <div class="recommend-banner-btn" onclick="openRecommendMealModal()">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:26px;">🍱</span>
+        <div>
+          <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">เย็นนี้กินไรดี? 💡</b>
+          <span style="font-size:11px; color:var(--mute);">ให้โมจิ AI คำนวณโควต้าที่เหลือและแนะนำเมนูเด็ด</span>
+        </div>
+      </div>
+      <button class="btn sm" style="padding:6px 12px; font-size:11.5px; white-space:nowrap; pointer-events:none;">ถามโมจิ ➜</button>
     </div>
 
     <!-- Daily Nutrition Balance Card (โภชนาการประจำวัน) -->
@@ -6329,8 +6663,67 @@ function renderFeed() {
                 <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">ภารกิจสุขภาพของแก๊ง</b>
                 <span style="font-size:10.5px; color:var(--mute); background:var(--bg); padding:2px 7px; border-radius:8px;">RPG Quests</span>
               </div>
-              <span style="font-size:11px; color:#B45309; font-weight:700;">🪙 สะสมคอยน์ & คะแนน</span>
+              <button class="btn s sm" style="font-size:11px; padding:3px 9px;" onclick="go('fashion')">🛍️ ร้านค้าแฟชั่น</button>
             </div>
+
+            <!-- Gang Co-op Challenge (System 2: ภารกิจรวมพลังแก๊ง) -->
+            ${gangCoopData ? (() => {
+              const cPct = Math.min(100, Math.round((gangCoopData.progress / gangCoopData.target) * 100));
+              const isCoopClaimable = gangCoopData.isCompleted && !gangCoopData.isClaimed;
+              return `
+                <div class="coop-raid-card">
+                  <div class="coop-raid-top">
+                    <div>
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:18px;">${gangCoopData.icon || '🤝'}</span>
+                        <b style="font-size:13px; font-family:'Mali',sans-serif; color:#312E81;">ภารกิจรวมพลังแก๊ง (Co-op Boss)</b>
+                      </div>
+                      <div style="font-size:11.5px; color:#4338CA; font-weight:700; margin-top:2px;">${esc(gangCoopData.title)}</div>
+                      <div style="font-size:10.5px; color:#6B7280; line-height:1.3;">${esc(gangCoopData.desc)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                      <span class="quest-reward-pill" style="background:#E0E7FF; color:#4338CA; border-color:#C7D2FE;">🪙 +${gangCoopData.rewardCoins}</span>
+                      <div style="font-size:9.5px; color:#6366F1; font-weight:800; margin-top:2px;">+${gangCoopData.rewardScore} pt ยกแก๊ง!</div>
+                    </div>
+                  </div>
+
+                  <div class="coop-raid-bar-wrap">
+                    <div style="display:flex; justify-content:space-between; font-size:10.5px; color:#4F46E5; font-weight:700; margin-bottom:3px;">
+                      <span>พลังสะสมของทั้งแก๊ง</span>
+                      <span>${fmt(gangCoopData.progress)} / ${fmt(gangCoopData.target)} ${esc(gangCoopData.unit)} (${cPct}%)</span>
+                    </div>
+                    <div class="coop-raid-bar-track">
+                      <div class="coop-raid-bar-fill" style="width:${cPct}%;"></div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-size:10.5px; color:#6B7280;">ผู้ร่วมสู้:</span>
+                      <div class="coop-members-stack">
+                        ${(gangCoopData.contributors || []).slice(0, 4).map(m => `
+                          <div class="coop-member-avatar-chip" title="${esc(m.nickname)} ช่วยไป ${fmt(m.val)} ${esc(gangCoopData.unit)}">
+                            ${m.avatar_image ? `<img src="${esc(m.avatar_image)}">` : mascotSVG(m.avatar_face, m.avatar_color, 24, m.avatar_hat)}
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+
+                    <div>
+                      ${gangCoopData.isClaimed ? `
+                        <span class="badge ok" style="font-size:10.5px; padding:3px 7px;">✓ รับแล้ว</span>
+                      ` : isCoopClaimable ? `
+                        <button class="quest-claim-btn pulse" onclick="claimGangCoopReward()">🎁 รับรางวัลร่วมกัน</button>
+                      ` : `
+                        <span style="font-size:10.5px; color:#6366F1; font-weight:700; background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:10px;">
+                          คุณช่วยไป ${fmt(gangCoopData.userContribution || 0)} ${esc(gangCoopData.unit)}
+                        </span>
+                      `}
+                    </div>
+                  </div>
+                </div>
+              `;
+            })() : ''}
 
             <!-- Category Tabs -->
             <div class="quest-category-tabs">
@@ -6576,6 +6969,12 @@ function renderFeed() {
                   `).join('')}
                 </div>
               ` : ''}
+
+              <!-- Free-Text Comment Input Bar (System 1) -->
+              <div class="ig-comment-input-row">
+                <input type="text" id="commentInput_${p.id}" class="ig-comment-input" placeholder="เขียนคอมเมนต์แซวเพื่อน..." onkeydown="if(event.key==='Enter') submitPostComment('${p.id}')">
+                <button class="ig-comment-send-btn" onclick="submitPostComment('${p.id}')">ส่ง 💬</button>
+              </div>
             </div>
           `;
         }).join('');
@@ -9420,7 +9819,11 @@ const WARDROBE_CONFIG = {
       { id: 'jon_fur', title: 'เสื้อคลุมไนท์วอทช์', icon: '🐺', series: '⚔️ Game of Thrones', price: 140 },
       { id: 'targaryen_helm', title: 'เกราะมังกรทาร์แกเรียน', icon: '🐉', series: '⚔️ Game of Thrones', price: 160 },
       { id: 'jedi_hood', title: 'ฮู้ดอัศวินเจได', icon: '🥋', series: '🪐 Star Wars', price: 110 },
-      { id: 'pirate_hat', title: 'หมวกกัปตันโจรสลัด', icon: '🏴‍☠️', series: '⚓ Pirates of Caribbean', price: 130 }
+      { id: 'pirate_hat', title: 'หมวกกัปตันโจรสลัด', icon: '🏴‍☠️', series: '⚓ Pirates of Caribbean', price: 130 },
+      // New Foodie & Exclusive Coin Shop Hats
+      { id: 'boba_hat', title: 'หมวกชานมไข่มุก', icon: '🧋', price: 80 },
+      { id: 'fried_egg', title: 'กระทะไข่ดาว', icon: '🍳', price: 70 },
+      { id: 'diamond_crown', title: 'มงกุฎเพชรสายเบิร์น', icon: '💎', price: 180 }
     ]
   },
   accessory: {
@@ -9430,6 +9833,9 @@ const WARDROBE_CONFIG = {
       { id: 'none', title: 'มือเปล่า', icon: '✋', free: true },
       { id: 'water', title: 'ขวดน้ำดื่ม', icon: '💧', free: true },
       { id: 'apple', title: 'แอปเปิ้ลเขียว', icon: '🍏', price: 40 },
+      { id: 'golden_fork', title: 'ส้อมทองคำ', icon: '🍴', price: 90 },
+      { id: 'fruit_smoothie', title: 'แก้วสมูทตี้ผลไม้', icon: '🥤', price: 60 },
+      { id: 'dumbbell_gold', title: 'ดัมเบลทองคำ', icon: '🏋️', price: 120 },
       { id: 'spoon', title: 'ช้อนส้อม', icon: '🍴', price: 60 },
       { id: 'heart', title: 'หัวใจหวาน', icon: '💖', price: 80 },
       { id: 'dumbbell', title: 'ดัมเบลฟิตเนส', icon: '🏋️', mission: { type: 'logs', target: 8, label: 'บันทึกอาหารครบ 8 มื้อ 🥩' } },
