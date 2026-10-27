@@ -7,6 +7,7 @@ data/settings.json
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/.production_cleaned*
 data/images/
 data/backups/
 
