@@ -4605,6 +4605,15 @@ function renderFeed() {
       </div>
     </div>
 
+    <!-- Invite Friends Quick Banner -->
+    <div style="background:linear-gradient(135deg, rgba(255,158,181,0.2), rgba(111,203,176,0.2)); border:1.5px dashed var(--pink); border-radius:18px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div>
+        <b style="font-size:13px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">ชวนเพื่อนเข้าแก๊ง 🔗</b>
+        <span style="font-size:11px; color:var(--mute);">ส่งลิงก์ให้เพื่อนเข้าได้ทันที ไม่ต้องใส่รหัสคำเชิญ</span>
+      </div>
+      <button class="btn sm" style="padding:6px 12px; font-size:11.5px; white-space:nowrap;" onclick="shareGangInviteLink()">+ ชวนเพื่อน 📤</button>
+    </div>
+
     <!-- Sub-tab Switcher (Dashboard / Leaderboard / Members) -->
     <div class="feed-tabs">
       <button class="feed-tab-btn ${feedSubTab === 'activities' ? 'active' : ''}" onclick="setFeedSubTab('activities')">
@@ -5133,10 +5142,64 @@ async function openMemberDetailModal(userId) {
         </div>
 
         <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
+        ${!u.is_me ? `
+          <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง</button>
+        ` : ''}
       </div>
     `;
   } catch (err) {
     el.innerHTML = '<div class="sh" style="text-align:center; padding:20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล <button class="btn g sm" onclick="closeSheet()">ปิด</button></div>';
+  }
+}
+
+async function deleteMemberFromGang(userId, name) {
+  if (!confirm(`คุณต้องการลบสมาชิก "${name}" ออกจากแก๊งโมจิใช่หรือไม่?\n\n💡 สมาชิกนี้จะถูกนำออกจากแก๊งและลีดเดอร์บอร์ดทันที`)) return;
+  try {
+    const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+    if (res.ok) {
+      toast(`ลบสมาชิก "${name}" เรียบร้อยแล้ว 🍡`);
+      closeSheet();
+      await Promise.all([fetchUsers(), fetchFeed(), fetchLeaderboard()]);
+      render();
+    } else {
+      toast('ลบสมาชิกไม่สำเร็จ');
+    }
+  } catch (e) {
+    toast('เกิดข้อผิดพลาดในการลบสมาชิก');
+  }
+}
+
+async function shareGangInviteLink() {
+  const shareUrl = window.location.origin;
+  const shareText = `มาเข้าแก๊งโมจิกันเถอะ! 🍡✨ นับแคลอรีและคุมน้ำตาลด้วยกันแบบสนุกๆ สไตล์น่ารัก ไม่ต้องใช้รหัสคำเชิญ กดเข้าลิงก์นี้แล้วสร้างตัวละครได้เลย: ${shareUrl}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'แก๊งโมจิ · ชวนนับแคลและคุมน้ำตาล 🍡',
+        text: shareText,
+        url: shareUrl
+      });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  // Fallback: Copy to clipboard
+  try {
+    await navigator.clipboard.writeText(shareText);
+    fireConfetti();
+    toast('คัดลอกลิงก์ชวนเพื่อนแล้ว! 🍡 ส่งให้เพื่อนใน LINE ได้เลย (ไม่ต้องใช้รหัสคำเชิญ)');
+  } catch (err) {
+    const ta = document.createElement('textarea');
+    ta.value = shareText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    fireConfetti();
+    toast('คัดลอกลิงก์ชวนเพื่อนแล้ว! 🍡 ส่งให้เพื่อนใน LINE ได้เลย');
   }
 }
 
@@ -6810,8 +6873,11 @@ function openProfileModal() {
       <div style="background:var(--pinkS); border:1.5px dashed var(--pink); border-radius:18px; padding:14px; margin-bottom:14px; text-align:center;">
         <span style="font-size:24px; display:block; margin-bottom:4px;">✨</span>
         <b style="font-size:13.5px; color:var(--pink-ink); display:block; margin-bottom:4px;">ชวน / เพิ่มสมาชิกใหม่ในแก๊ง</b>
-        <span style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:10px;">ทำแบบสอบถามสั้นๆ เพื่อให้ระบบประเมินและปรับเป้าหมายเฉพาะบุคคลอัตโนมัติ</span>
-        <button class="btn sm" style="width:100%; margin-bottom:8px;" onclick="openOnboardingModal({ isNewUser: true })">🎯 ทำแบบสอบถามเพิ่มเพื่อนใหม่ ➜</button>
+        <span style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:10px;">ส่งลิงก์ให้เพื่อนเปิดบนมือถือเพื่อสร้างตัวละครโมจิได้เลย (ไม่ต้องใช้รหัสคำเชิญ)</span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn sm" style="flex:1;" onclick="shareGangInviteLink()">🔗 แชร์ลิงก์ชวนเพื่อน</button>
+          <button class="btn s sm" style="flex:1;" onclick="openOnboardingModal({ isNewUser: true })">➕ เพิ่มบนเครื่องนี้</button>
+        </div>
       </div>
 
       <button class="btn g" style="width:100%;" onclick="closeSheet()">ปิดหน้าต่าง</button>

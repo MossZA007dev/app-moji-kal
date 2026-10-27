@@ -210,17 +210,14 @@ try {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const now = Date.now();
-    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 1800, 25, 'full', 'crown', 'cheerful', 353, 'weight_loss', 450, now - 86400000 * 3);
-    insertUser.run('u2', 'เพื่อนปังปอนด์', '#6FCBB0', 'ok', 2200, 20, 'full', 'none', 'kind', 282, 'sugar_cut', 380, now - 86400000 * 2);
-    insertUser.run('u3', 'คุณนัท', '#FFC285', 'worry', 1900, 20, 'summary', 'none', 'kind', 190, 'healthy_balance', 310, now - 86400000 * 1);
-  } else {
-    // Ensure default users have rich goal presets if empty/default
-    try {
-      db.prepare("UPDATE users SET goal_type = 'weight_loss', goal_score = 450 WHERE id = 'u1' AND (goal_score IS NULL OR goal_score = 150)").run();
-      db.prepare("UPDATE users SET goal_type = 'sugar_cut', goal_score = 380, sugar_goal = 20 WHERE id = 'u2' AND (goal_score IS NULL OR goal_score = 150)").run();
-      db.prepare("UPDATE users SET goal_type = 'healthy_balance', goal_score = 310, calorie_goal = 1900, sugar_goal = 20 WHERE id = 'u3' AND (goal_score IS NULL OR goal_score = 150)").run();
-    } catch (_) {}
+    insertUser.run('u1', 'โมจิจัง', '#FF9EB5', 'happy', 1800, 25, 'full', 'crown', 'cheerful', 353, 'weight_loss', 450, now);
   }
+  // Clean up legacy demo users so the app is 100% clean for real production use
+  db.prepare("DELETE FROM users WHERE id IN ('u2', 'u3', 'u_1793104988179')").run();
+  db.prepare("DELETE FROM activities WHERE user_id IN ('u2', 'u3', 'u_1793104988179')").run();
+  db.prepare("DELETE FROM logs WHERE user_id IN ('u2', 'u3', 'u_1793104988179')").run();
+  db.prepare("DELETE FROM daily_goals WHERE user_id IN ('u2', 'u3', 'u_1793104988179')").run();
+  try { db.prepare("DELETE FROM weight_logs WHERE user_id IN ('u2', 'u3', 'u_1793104988179')").run(); } catch (_) {}
 } catch (e) {
   console.warn('Initial users seed warning:', e.message);
 }
@@ -250,10 +247,7 @@ try {
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     const now = Date.now();
-    insertAct.run('act_1', 'u1', 'meal', 'บันทึกมื้ออาหาร "สุกี้น้ำอกไก่" (+5 🪙)', 5, now - 1800000);
-    insertAct.run('act_2', 'u2', 'water', 'ดื่มน้ำเปล่าชื่นใจ 💧 (+2 🪙)', 2, now - 3600000);
-    insertAct.run('act_3', 'u3', 'challenge', 'เข้าร่วมชาเลนจ์ "งดน้ำหวาน 3 วันติด" 🎯 (+15 🪙)', 15, now - 7200000);
-    insertAct.run('act_4', 'u1', 'streak', 'รักษาสถิติบันทึกต่อเนื่อง 3 วันติด! 🔥 (+10 🪙)', 10, now - 10800000);
+    insertAct.run('act_1', 'u1', 'meal', 'เริ่มต้นเข้าสู่แก๊งโมจิ! 🍡 (+5 🪙)', 5, now - 1800000);
   }
 } catch (e) {
   console.warn('Initial activities seed warning:', e.message);
