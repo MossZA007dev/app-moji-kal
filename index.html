@@ -1,9 +1,17 @@
 <!doctype html>
-<html lang="th">
+<html lang="th" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>โมจิ · นับแคลและน้ำตาลกับเพื่อน</title>
+<script>
+  (function() {
+    try {
+      var t = localStorage.getItem('moji_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (_) {}
+  })();
+</script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="alternate icon" type="image/png" href="/data/icon-192.png">
 <link rel="apple-touch-icon" href="/data/icon-192.png">
@@ -44,7 +52,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root[data-theme="auto"] {
     --bg: #1B1719;
     --card: #262024;
     --ink: #F7EEF2;
@@ -62,9 +70,9 @@
     --purple-ink: #C4B5FD;
     color-scheme: dark;
   }
-  :root:not([data-theme="light"]) .badge.ok { background: #1B382F; color: #6EE7B7; border: 1px solid #059669; }
-  :root:not([data-theme="light"]) .badge.warn { background: #3B2A1A; color: #FCD34D; border: 1px solid #D97706; }
-  :root:not([data-theme="light"]) .badge.alert { background: #3B1B20; color: #FCA5A5; border: 1px solid #DC2626; }
+  :root[data-theme="auto"] .badge.ok { background: #1B382F; color: #6EE7B7; border: 1px solid #059669; }
+  :root[data-theme="auto"] .badge.warn { background: #3B2A1A; color: #FCD34D; border: 1px solid #D97706; }
+  :root[data-theme="auto"] .badge.alert { background: #3B1B20; color: #FCA5A5; border: 1px solid #DC2626; }
 }
 
 :root[data-theme="dark"] {
@@ -3375,21 +3383,19 @@ textarea { resize: none; margin-bottom: 8px; }
 <script>
 // Theme Initialization
 (function initTheme() {
-  const savedTheme = localStorage.getItem('moji_theme') || 'auto';
-  if (savedTheme !== 'auto') {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }
+  const savedTheme = localStorage.getItem('moji_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
 })();
 
 function getAppTheme() {
-  return localStorage.getItem('moji_theme') || 'auto';
+  return localStorage.getItem('moji_theme') || 'light';
 }
 
 function getThemeLabel() {
   const t = getAppTheme();
   if (t === 'dark') return '🌙 โหมดมืด';
-  if (t === 'light') return '☀️ โหมดสว่าง';
-  return '🌓 ตามระบบ';
+  if (t === 'auto') return '🌓 ตามระบบ';
+  return '☀️ โหมดสว่าง (ค่าเริ่มต้น)';
 }
 
 function openThemeModal() {
@@ -3399,28 +3405,15 @@ function openThemeModal() {
   el.innerHTML = `
     <div class="sh">
       <h2 class="hd" style="font-size:18px; margin-bottom:6px;">🎨 ธีมและการแสดงผล</h2>
-      <p style="font-size:12.5px; color:var(--mute); margin:0 0 16px;">เลือกสไตล์การแสดงผลที่สบายตาที่สุดสำหรับคุณ คอนทราสต์สูง อ่านง่ายทุกโหมด</p>
+      <p style="font-size:12.5px; color:var(--mute); margin:0 0 16px;">เลือกสไตล์การแสดงผลที่สบายตาที่สุดสำหรับคุณ ค่าเริ่มต้นคือโหมดสว่างสีขาวพาสเทลสะอาดตา</p>
 
       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
-        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('auto')">
-          <div class="settings-row-left">
-            <span style="font-size:22px;">🌓</span>
-            <div>
-              <span class="settings-label-title">ตามการตั้งค่าระบบ (System Default)</span>
-              <span class="settings-label-sub">เปลี่ยนตามธีมของอุปกรณ์คุณโดยอัตโนมัติ</span>
-            </div>
-          </div>
-          <div class="settings-row-right">
-            ${current === 'auto' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
-          </div>
-        </div>
-
-        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('light')">
+        <div class="settings-row" style="border:1.5px solid ${current === 'light' ? 'var(--pink)' : 'var(--line)'}; border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('light')">
           <div class="settings-row-left">
             <span style="font-size:22px;">☀️</span>
             <div>
-              <span class="settings-label-title">โหมดสว่าง (Light Theme)</span>
-              <span class="settings-label-sub">โทนสีพาสเทลโมจินุ่มละมุน สดใสสบายตา</span>
+              <span class="settings-label-title">โหมดสว่าง (Light Theme) ⭐ ค่าเริ่มต้น</span>
+              <span class="settings-label-sub">โทนสีขาวพาสเทลโมจินุ่มละมุน สดใส สะอาด สบายตา</span>
             </div>
           </div>
           <div class="settings-row-right">
@@ -3428,7 +3421,7 @@ function openThemeModal() {
           </div>
         </div>
 
-        <div class="settings-row" style="border:1px solid var(--line); border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('dark')">
+        <div class="settings-row" style="border:1.5px solid ${current === 'dark' ? 'var(--pink)' : 'var(--line)'}; border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('dark')">
           <div class="settings-row-left">
             <span style="font-size:22px;">🌙</span>
             <div>
@@ -3440,6 +3433,19 @@ function openThemeModal() {
             ${current === 'dark' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
           </div>
         </div>
+
+        <div class="settings-row" style="border:1.5px solid ${current === 'auto' ? 'var(--pink)' : 'var(--line)'}; border-radius:16px; padding:12px; background:var(--card);" onclick="setAppTheme('auto')">
+          <div class="settings-row-left">
+            <span style="font-size:22px;">🌓</span>
+            <div>
+              <span class="settings-label-title">ตามการตั้งค่าระบบ (System Default)</span>
+              <span class="settings-label-sub">เปลี่ยนตามธีมของอุปกรณ์คุณโดยอัตโนมัติ</span>
+            </div>
+          </div>
+          <div class="settings-row-right">
+            ${current === 'auto' ? '<span class="badge ok">✓ ใช้งานอยู่</span>' : ''}
+          </div>
+        </div>
       </div>
 
       <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
@@ -3449,14 +3455,10 @@ function openThemeModal() {
 
 function setAppTheme(theme) {
   localStorage.setItem('moji_theme', theme);
-  if (theme === 'auto') {
-    document.documentElement.removeAttribute('data-theme');
-  } else {
-    document.documentElement.setAttribute('data-theme', theme);
-  }
+  document.documentElement.setAttribute('data-theme', theme);
   closeSheet();
   render();
-  toast(theme === 'dark' ? 'เปิดโหมดมืดเรียบร้อย 🌙' : theme === 'light' ? 'เปิดโหมดสว่างเรียบร้อย ☀️' : 'ตั้งค่าตามระบบเรียบร้อย 🌓');
+  toast(theme === 'dark' ? 'เปิดโหมดมืดเรียบร้อย 🌙' : theme === 'auto' ? 'ตั้งค่าตามระบบเรียบร้อย 🌓' : 'เปิดโหมดสว่างเรียบร้อย ☀️');
 }
 
 const $ = s => document.querySelector(s);
