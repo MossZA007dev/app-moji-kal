@@ -5519,10 +5519,7 @@ function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', a
   if (is3DModel) {
     const fileName = color.startsWith('/data/skins/') ? color : `/data/skins/${color}.png`;
     return `<svg viewBox="0 0 120 112" width="${size}" height="${Math.round(size * 0.93)}" class="skin-3d-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
-      ${isBackAccessory ? a : ''}
-      <image href="${fileName}" xlink:href="${fileName}" x="12" y="10" width="96" height="92" preserveAspectRatio="xMidYMid meet"/>
-      ${h}
-      ${!isBackAccessory ? a : ''}
+      <image href="${fileName}" xlink:href="${fileName}" x="4" y="0" width="112" height="112" preserveAspectRatio="xMidYMid meet"/>
     </svg>`;
   }
 
@@ -14029,11 +14026,21 @@ async function equipFashionItem(category, itemId, showToastMsg = true) {
   if (currentUser.avatar_image) {
     currentUser.avatar_image = null;
   }
-  if (category === 'hat') currentUser.avatar_hat = itemId;
-  else if (category === 'accessory') currentUser.avatar_accessory = itemId;
-  else if (category === 'face') currentUser.avatar_face = itemId;
-  else if (category === 'color') currentUser.avatar_color = itemId;
-  else if (category === 'personality') currentUser.personality = itemId;
+
+  if (category === 'skin3d' || (category === 'color' && String(itemId).startsWith('skin_3d_'))) {
+    currentUser.avatar_color = itemId;
+    currentUser.avatar_hat = 'none';
+    currentUser.avatar_accessory = 'none';
+  } else {
+    if ((category === 'hat' || category === 'accessory') && String(currentUser.avatar_color).startsWith('skin_3d_')) {
+      currentUser.avatar_color = '#FF9EB5';
+    }
+    if (category === 'hat') currentUser.avatar_hat = itemId;
+    else if (category === 'accessory') currentUser.avatar_accessory = itemId;
+    else if (category === 'face') currentUser.avatar_face = itemId;
+    else if (category === 'color') currentUser.avatar_color = itemId;
+    else if (category === 'personality') currentUser.personality = itemId;
+  }
 
   fashionPreview = {
     hat: currentUser.avatar_hat || 'none',
@@ -14070,11 +14077,21 @@ function selectFashionTryOn(category, itemId) {
     if (mItem && mItem.cat) targetCat = mItem.cat;
     else if (category === 'skin3d') targetCat = 'color';
   }
-  if (targetCat === 'hat') fashionPreview.hat = itemId;
-  else if (targetCat === 'accessory') fashionPreview.accessory = itemId;
-  else if (targetCat === 'face') fashionPreview.face = itemId;
-  else if (targetCat === 'color') fashionPreview.color = itemId;
-  else if (targetCat === 'personality') fashionPreview.personality = itemId;
+
+  if (category === 'skin3d' || (targetCat === 'color' && String(itemId).startsWith('skin_3d_'))) {
+    fashionPreview.color = itemId;
+    fashionPreview.hat = 'none';
+    fashionPreview.accessory = 'none';
+  } else {
+    if ((targetCat === 'hat' || targetCat === 'accessory') && String(fashionPreview.color).startsWith('skin_3d_')) {
+      fashionPreview.color = (currentUser.avatar_color && !currentUser.avatar_color.startsWith('skin_3d_')) ? currentUser.avatar_color : '#FF9EB5';
+    }
+    if (targetCat === 'hat') fashionPreview.hat = itemId;
+    else if (targetCat === 'accessory') fashionPreview.accessory = itemId;
+    else if (targetCat === 'face') fashionPreview.face = itemId;
+    else if (targetCat === 'color') fashionPreview.color = itemId;
+    else if (targetCat === 'personality') fashionPreview.personality = itemId;
+  }
 
   render();
   fireStageBounce();
@@ -14135,11 +14152,18 @@ function renderFashionStageTagsHtml() {
   const is3D = Boolean(colItem?.image || fashionPreview.color?.startsWith('skin_3d_'));
   const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
+  if (is3D) {
+    return `
+      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 ฟิกเกอร์ 3D: ${colThumb}${colItem ? colItem.title : 'สกิน 3D'}</span>
+      <span class="wardrobe-preview-tag" style="color:var(--mute);">ฟิกเกอร์ Art Toy แบบสำเร็จรูป (Full Set)</span>
+    `;
+  }
+
   return `
-    <span class="wardrobe-preview-tag">โมเดล/สกิน: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    <span class="wardrobe-preview-tag">สีโมจิ: ${colThumb}${colItem ? colItem.title : 'ชมพู'}</span>
     <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
     <span class="wardrobe-preview-tag">ของถือ/อาวุธ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
-    ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
+    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
   `;
 }
 
@@ -14453,11 +14477,18 @@ function renderWardrobeTagsHtml() {
   const is3D = Boolean(colItem?.image || currentUser?.avatar_color?.startsWith('skin_3d_'));
   const colThumb = colItem?.image ? `<img src="${colItem.image}" style="width:14px; height:14px; vertical-align:middle; margin-right:3px; object-fit:contain;">` : `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${colItem ? (colItem.gradient || colItem.hex) : '#FF9EB5'}; vertical-align:middle; margin-right:3px;"></span>`;
 
+  if (is3D) {
+    return `
+      <span class="wardrobe-preview-tag" style="background:linear-gradient(135deg, #FFF1F2, #F3E8FF); border-color:#D8B4FE; color:#6B21A8; font-weight:700;">🌟 ฟิกเกอร์ 3D: ${colThumb}${colItem ? colItem.title : 'สกิน 3D'}</span>
+      <span class="wardrobe-preview-tag" style="color:var(--mute);">ฟิกเกอร์ Art Toy แบบสำเร็จรูป</span>
+    `;
+  }
+
   return `
-    <span class="wardrobe-preview-tag">โมเดล/สกิน: ${colThumb}${colItem ? colItem.title : (is3D ? 'สกิน 3D' : 'ชมพู')}</span>
+    <span class="wardrobe-preview-tag">สีโมจิ: ${colThumb}${colItem ? colItem.title : 'ชมพู'}</span>
     <span class="wardrobe-preview-tag">หมวก: ${hatItem ? hatItem.title + ' ' + hatItem.icon : 'ต้นกล้า'}</span>
     <span class="wardrobe-preview-tag">ของถือ/อาวุธ: ${accItem ? accItem.title + ' ' + accItem.icon : 'มือเปล่า'}</span>
-    ${!is3D ? `<span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>` : ''}
+    <span class="wardrobe-preview-tag">หน้า: ${faceItem ? faceItem.title : 'ยิ้ม'}</span>
   `;
 }
 
@@ -14474,11 +14505,20 @@ function switchWardrobeCategory(tab) {
 
 function selectWardrobeItem(type, val) {
   if (!currentUser) return;
-  if (type === 'hat') currentUser.avatar_hat = val;
-  else if (type === 'accessory') currentUser.avatar_accessory = val;
-  else if (type === 'face') currentUser.avatar_face = val;
-  else if (type === 'color') currentUser.avatar_color = val;
-  else if (type === 'personality') currentUser.personality = val;
+  if (type === 'color' && String(val).startsWith('skin_3d_')) {
+    currentUser.avatar_color = val;
+    currentUser.avatar_hat = 'none';
+    currentUser.avatar_accessory = 'none';
+  } else {
+    if ((type === 'hat' || type === 'accessory') && String(currentUser.avatar_color).startsWith('skin_3d_')) {
+      currentUser.avatar_color = '#FF9EB5';
+    }
+    if (type === 'hat') currentUser.avatar_hat = val;
+    else if (type === 'accessory') currentUser.avatar_accessory = val;
+    else if (type === 'face') currentUser.avatar_face = val;
+    else if (type === 'color') currentUser.avatar_color = val;
+    else if (type === 'personality') currentUser.personality = val;
+  }
 
   // Refresh live preview with squash & stretch bounce
   const prev = $('#wardrobeModalPreview');
