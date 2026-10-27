@@ -13519,62 +13519,6 @@ const WARDROBE_CONFIG = {
     title: 'สกินพรีเมียม',
     icon: '✨',
     items: [
-      // 🌟 โมเดล 3D ร่างเปล่า (Customizable 3D Base Models - แต่งตัว ใส่หมวก อาวุธหนังซีรีส์ได้ 100%)
-      {
-        id: 'skin_3d_base_pink',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_pink.png',
-        title: 'โมเดล 3D ซากุระพาสเทล 🌸',
-        desc: 'โมเดล 3D ร่างเปล่า สไตล์ Pop Mart พร้อมแต่งตัวใส่หมวก/ถืออาวุธหนังซีรีส์ได้ตามใจ',
-        series: '✨ 3D BASE MODEL (FREE)',
-        free: true
-      },
-      {
-        id: 'skin_3d_base_mint',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_mint.png',
-        title: 'โมเดล 3D มัทฉะมินต์ 🍵',
-        desc: 'โมเดล 3D ร่างเปล่าสีเขียวมัทฉะพาสเทล พร้อมใส่หมวกและถือไอเทม',
-        series: '✨ 3D BASE MODEL',
-        price: 40
-      },
-      {
-        id: 'skin_3d_base_white',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_white.png',
-        title: 'โมเดล 3D นมสดวนิลา 🥛',
-        desc: 'โมเดล 3D ร่างเปล่าสีขาวละมุน คลาสสิก แมตช์กับชุดและอาวุธได้ทุกสไตล์',
-        series: '✨ 3D BASE MODEL',
-        price: 40
-      },
-      {
-        id: 'skin_3d_base_purple',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_purple.png',
-        title: 'โมเดล 3D ลาเวนเดอร์ทาโร่ 🍠',
-        desc: 'โมเดล 3D ร่างเปล่าสีม่วงพาสเทล หรูหราแฟนตาซี',
-        series: '✨ 3D BASE MODEL',
-        price: 40
-      },
-      {
-        id: 'skin_3d_base_peach',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_peach.png',
-        title: 'โมเดล 3D พีชคอรัล 🍑',
-        desc: 'โมเดล 3D ร่างเปล่าสีส้มพีช สดใส มีพลัง อบอุ่น',
-        series: '✨ 3D BASE MODEL',
-        price: 40
-      },
-      {
-        id: 'skin_3d_base_yellow',
-        cat: 'color',
-        image: '/data/skins/skin_3d_base_yellow.png',
-        title: 'โมเดล 3D เนยน้ำผึ้ง 🍯',
-        desc: 'โมเดล 3D ร่างเปล่าสีเหลืองเนยสดใส สบายตา',
-        series: '✨ 3D BASE MODEL',
-        price: 40
-      },
-      // 🌟 สกิน 3D ซีรีส์พิเศษ (3D Themed Collectibles)
       {
         id: 'skin_3d_strawberry',
         cat: 'color',
@@ -13892,7 +13836,7 @@ function isItemUnlocked(category, itemId) {
                WARDROBE_CONFIG.skin3d?.items.find(i => (i.id || i.hex) === itemId) ||
                WARDROBE_CONFIG.movie?.items.find(i => (i.id || i.hex) === itemId);
   if (item && item.free) return true;
-  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind' || itemId === 'skin_3d_strawberry' || itemId === 'skin_3d_base_pink') return true;
+  if (itemId === 'none' || itemId === 'happy' || itemId === '#FF9EB5' || itemId === 'kind' || itemId === 'skin_3d_strawberry') return true;
 
   // If item is currently worn, user automatically owns it
   if (category === 'hat' && currentUser.avatar_hat === itemId) return true;
