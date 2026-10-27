@@ -474,23 +474,26 @@ export function generateSmartMochiReply(message = '', userContext = {}) {
   const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
   const isOverSugar = remSugar < 0;
   const q = String(message || '').toLowerCase().trim();
+  let cleanName = (nickname || 'เพื่อน').trim();
+  if (cleanName === 'โมจิจัง' || cleanName === 'โมจิ') cleanName = 'เพื่อน';
+  const userDisplayName = cleanName.startsWith('คุณ') ? cleanName : `คุณ${cleanName}`;
 
   // 1. GREETING INTENT
-  if (/^(สวัสดี|หวัดดี|ดีจ้า|ดีครับ|ดีค่ะ|ฮัลโหล|hello|hi|hey|โย่ว|ว่าไง)/i.test(q) || q === 'สวัสดี' || q === 'หวัดดี') {
+  if (/^(สวัสดี|หวัดดี|ดีจ้า|ดีครับ|ดีค่ะ|ฮัลโหล|hello|hi|hey|โย่ว|ว่าไง|อรุณสวัสดิ์)/i.test(q) || q === 'สวัสดี' || q === 'หวัดดี') {
     if (personality === 'cheerful') {
       return {
-        reply: `สวัสดีจ้าคุณ ${nickname}! 🌟 วันนี้โมจิพร้อมลุยช่วยดูแลแคลและน้ำตาลให้แบบจัดเต็มแล้วน้า! ตอนนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g มีเมนูไหนอยากให้ช่วยคิดหรือปรึกษาพิมพ์มาได้เลยจ้า 🍡✨`,
+        reply: `สวัสดีค่า${userDisplayName}! 🌟 วันนี้โมจิพร้อมลุยช่วยดูแลความสดชื่นและสุขภาพให้แล้วน้า มีอะไรอยากปรึกษาหรือหิวมื้อไหนพิมพ์บอกโมจิได้เลยจ้า 🍡✨`,
         mochiMood: 'happy'
       };
     }
     if (personality === 'disciplined') {
       return {
-        reply: `สวัสดีครับคุณ ${nickname} 📋 วันนี้เป้าหมายคุมน้ำตาลอยู่ที่ < ${sugar_goal}g (ทานไปแล้ว ${fmt(today_sugar)}g เหลืออีก ${fmt(remSugar)}g) พร้อมบันทึกมื้ออาหารอย่างมีวินัยไปด้วยกันครับ!`,
+        reply: `สวัสดีครับ${userDisplayName} 📋 วันนี้เป้าหมายคุมน้ำตาลอยู่ที่ < ${sugar_goal}g พร้อมบันทึกมื้ออาหารอย่างมีวินัยไปด้วยกันครับ มีคำถามเรื่องอาหารปรึกษาได้เลยครับ!`,
         mochiMood: 'ok'
       };
     }
     return {
-      reply: `สวัสดีจ้าคุณ ${nickname} 💖 ดีใจที่ได้คุยกันนะคะ วันนี้ทานอะไรมาหรือยังเอ่ย? โมจิพร้อมคอยดูแลและแนะนำเรื่องอาหารให้อย่างสบายใจเสมอเลยน้า 🍡`,
+      reply: `สวัสดีค่า${userDisplayName} 💖 ดีใจที่ได้คุยกันนะคะ วันนี้เป็นยังไงบ้างเอ่ย มีอะไรอยากให้โมจิช่วยดูแลเรื่องอาหารหรือสุขภาพ บอกได้เลยน้า 🍡`,
       mochiMood: 'happy'
     };
   }
@@ -590,6 +593,9 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   const { nickname, personality, goal_type, calorie_goal, sugar_goal, today_cal, today_sugar, today_carbs, today_sodium, today_protein, today_fat, today_meals, streak } = userContext;
   const remCal = Math.max(0, calorie_goal - today_cal);
   const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
+  let cleanName = (nickname || 'เพื่อน').trim();
+  if (cleanName === 'โมจิจัง' || cleanName === 'โมจิ') cleanName = 'เพื่อน';
+  const userDisplayName = cleanName.startsWith('คุณ') ? cleanName : `คุณ${cleanName}`;
 
   // If no API key configured, use our rich Smart Mochi engine immediately
   if (!apiKey) {
@@ -597,34 +603,55 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   }
 
   const personalityDesc = personality === 'cheerful'
-    ? 'ร่าเริง สดใส พลังบวกสูง ใช้ emoji เยอะ ชอบให้กำลังใจและชวนหัวเราะ'
+    ? 'ร่าเริง สดใส พลังบวกสูง ใช้ emoji น่ารัก ชอบให้กำลังใจและชวนคุยอย่างเป็นกันเอง'
     : personality === 'disciplined'
-    ? 'จริงจัง มีวินัย แนะนำตัวเลขและเทคนิคคุมน้ำตาลอย่างแม่นยำ สุภาพ'
+    ? 'สุภาพ จริงจัง มีวินัย แนะนำตัวเลขและเทคนิคคุมน้ำตาลอย่างกระชับ แม่นยำ'
     : 'อบอุ่น ใจดี เป็นมิตร ปลอบประโลม ไม่กดดัน และไม่ตำหนิผู้ใช้';
 
   const systemPrompt = `
-คุณคือ "โมจิ" (Mochi 🍡) ตัวละครผู้ช่วยโภชนาการและคุมน้ำตาลสุดน่ารัก
-ข้อมูลผู้ใช้ปัจจุบัน:
-- ชื่อเล่น: ${nickname || 'เพื่อน'}
-- บุคลิกของคุณ: ${personalityDesc}
+คุณคือ "น้องโมจิ" (Mochi 🍡) AI ผู้ช่วยน่ารักประจำตัวที่คอยดูแลอาหาร โภชนาการ และการคุมน้ำตาล
+คู่สนทนาของคุณคือ: "${userDisplayName}"
+
+ข้อมูลสุขภาพและมื้ออาหารของผู้ใช้ในวันนี้ (ใช้อ้างอิงเมื่อผู้ใช้ถามเรื่องอาหารหรือสุขภาพ):
 - เป้าหมายสุขภาพหลัก: ${goal_type || 'ควบคุมน้ำหนักและสุขภาพ'}
 - สถิติวันนี้:
   • แคลอรี: ${Math.round(today_cal)} / ${calorie_goal} kcal (เหลืออีก ${Math.round(remCal)} kcal)
   • น้ำตาล: ${fmt(today_sugar)} / ${sugar_goal} g (เหลือโควตาอีก ${fmt(remSugar)} g)
   • แป้ง (คาร์บ): ${fmt(today_carbs || 0)} g
-  • โซเดียม: ${fmt(today_sodium || 0)} mg (เกณฑ์ WHO ไม่ควรเกิน 2,000 mg/วัน)
+  • โซเดียม: ${fmt(today_sodium || 0)} mg (เกณฑ์แนะนำไม่ควรเกิน 2,000 mg/วัน)
   • โปรตีน: ${fmt(today_protein || 0)} g
   • ไขมัน: ${fmt(today_fat || 0)} g
-- Streak ความสม่ำเสมอ: ${streak || 0} วันติด
 - มื้ออาหารที่กินไปแล้ววันนี้ (${today_meals?.length || 0} มื้อ):
-  ${today_meals && today_meals.length ? today_meals.map(m => `• ${m.name} (${Math.round(m.calorie)} kcal, น้ำตาล ${fmt(m.sugar)}g, แป้ง ${fmt(m.carbs||0)}g, โซเดียม ${fmt(m.sodium||0)}mg, โปรตีน ${fmt(m.protein||0)}g)`).join('\n  ') : 'ยังไม่ได้บันทึกมื้อใด'}
+  ${today_meals && today_meals.length ? today_meals.map(m => `• ${m.name} (${Math.round(m.calorie)} kcal, น้ำตาล ${fmt(m.sugar)}g, แป้ง ${fmt(m.carbs||0)}g, โซเดียม ${fmt(m.sodium||0)}mg, โปรตีน ${fmt(m.protein||0)}g)`).join('\n  ') : 'ยังไม่มีการบันทึกมื้ออาหารใดในวันนี้'}
 
-แนวทางการตอบ:
-1. ตอบเป็นภาษาไทย น่ารัก อบอุ่น กระชับ ไม่เกิน 2-4 ประโยค
-2. ให้คำแนะนำโภชนาการที่ครอบคลุมทั้ง น้ำตาล, แคลอรี, แป้ง/คาร์บ, โปรตีน และ โซเดียม หากโซเดียมสูง (>1500mg) แนะนำให้ดื่มน้ำเปล่าเพิ่ม
-3. ถ้าผู้ใช้ถามหาของกินหรือมื้อเย็น ให้แนะนำเมนูอาหารไทยที่อร่อยและสอดคล้องกับ "โควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g)" และปริมาณสารอาหารที่ยังขาด
-4. ไม่ส่งเสริมการอดอาหารเด็ดขาด แนะนำให้กินโปรตีนและผักเพื่อความอิ่มท้อง
+กฎและแนวทางการตอบอย่างเป็นธรรมชาติ (สำคัญมากที่สุด):
+1. **การทักทายและการพูดคุยทั่วไป (Greetings & Casual Chat):**
+   - หากผู้ใช้แค่ "ทักทาย" หรือคุยเล่น (เช่น "สวัสดี", "ดีจ้า", "หวัดดี", "ฮัลโหล", "hi", "hello", "ว่าไง", "กินข้าวยัง", "เป็นไงบ้าง")
+   - ให้ตอบทักทายกลับอย่างน่ารัก อบอุ่น สั้นกระชับ 1-2 ประโยค ชวนคุยถามไถ่ทั่วไป (เช่น "สวัสดีค่า${userDisplayName}! 🍡 ดีใจที่ได้คุยกันนะคะ วันนี้เป็นยังไงบ้างเอ่ย มีอะไรอยากให้โมจิช่วยไหมคะ ✨")
+   - ⚠️ ห้ามเด็ดขาด: อย่าวิเคราะห์แคลอรี น้ำตาล หรือยัดเยียดแนะนำเมนูอาหารในคำทักทายเด็ดขาด! ผู้ใช้ยังไม่ได้ถามหาเมนูอาหาร!
+2. **การเรียกชื่อและตัวตน (Identity):**
+   - ตัวคุณคือ "น้องโมจิ" (AI ผู้ช่วย) แทนตัวเองว่า "โมจิ"
+   - ห้ามเรียกผู้ใช้ว่า "โมจิ" หรือ "โมจิจัง" เป็นอันขาด เพราะนั่นคือชื่อของคุณเอง! ให้เรียกผู้ใช้ว่า "${userDisplayName}" หรือ "คุณ"
+3. **เมื่อผู้ใช้ถามเรื่องอาหาร / ขอมื้อเย็น / หิว / ปรึกษาโภชนาการ:**
+   - ค่อยนำสถิติอาหารวันนี้และโควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g) มาแนะนำเมนูอาหารไทยที่อร่อย อิ่มท้อง และดีต่อสุขภาพ หากโซเดียมสูงให้เตือนจิบน้ำเปล่าเพิ่ม
+4. **เมื่อผู้ใช้บ่นหลุดกิน / เครียด / ท้อ:**
+   - ปลอบใจอย่างอ่อนโยน ให้กำลังใจแบบเพื่อนสนิท ไม่ตัดสิน ไม่ซ้ำเติม
+5. **ความยาวและโทนเสียง:**
+   - บุคลิก: ${personalityDesc}
+   - ตอบเป็นภาษาไทย สั้น กระชับ เป็นกันเอง น่ารัก ไม่เกิน 2-4 ประโยค ไม่ใช้ภาษาทางการแข็งทื่อเหมือนหุ่นยนต์
 `;
+
+  // Build conversational context with history
+  let conversationText = systemPrompt + '\n\n';
+  if (Array.isArray(history) && history.length > 0) {
+    conversationText += 'ประวัติการสนทนาก่อนหน้านี้:\n';
+    for (const h of history.slice(-6)) {
+      conversationText += `${h.role === 'mochi' ? 'น้องโมจิ' : userDisplayName}: ${h.content}\n`;
+    }
+    conversationText += `\nข้อความล่าสุดจากผู้ใช้ (${userDisplayName}): ${message}`;
+  } else {
+    conversationText += `ข้อความล่าสุดจากผู้ใช้ (${userDisplayName}): ${message}`;
+  }
 
   // Candidate models to attempt in case of model retirement or quota limits
   const candidateModels = [
@@ -640,7 +667,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const contents = [
-        { role: 'user', parts: [{ text: systemPrompt + '\n\nคำถามจากผู้ใช้: ' + message }] }
+        { role: 'user', parts: [{ text: conversationText }] }
       ];
 
       const response = await fetch(url, {

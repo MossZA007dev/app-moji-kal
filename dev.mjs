@@ -235,6 +235,13 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { messages });
       }
 
+      if (pathname === '/api/chat' && req.method === 'DELETE') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        db.clearChatMessages(userId);
+        return sendJson(res, 200, { success: true });
+      }
+
       if (pathname === '/api/chat' && req.method === 'POST') {
         const body = await parseJsonBody(req);
         const userId = req.headers['x-user-id'] || body.userId;
@@ -243,6 +250,9 @@ const server = http.createServer(async (req, res) => {
 
         const user = db.getUser(userId);
         if (!user) return sendJson(res, 401, { error: 'unauthorized', message: 'กรุณาเข้าสู่ระบบก่อนคุยกับโมจิ' });
+
+        // Retrieve recent history before inserting new message
+        const history = db.getChatMessages(userId, 6);
 
         // Save user message
         db.saveChatMessage({ userId, role: 'user', content: message });
@@ -275,7 +285,7 @@ const server = http.createServer(async (req, res) => {
           streak: streak.current
         };
 
-        const result = await chatWithMochi({ message, userContext });
+        const result = await chatWithMochi({ message, userContext, history });
 
         // Save mochi response
         db.saveChatMessage({ userId, role: 'mochi', content: result.reply });

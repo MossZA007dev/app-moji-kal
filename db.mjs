@@ -13,6 +13,7 @@ if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'moji.db');
 const db = new DatabaseSync(dbPath);
+export { db };
 
 // Initialize schema
 db.exec(`
@@ -821,6 +822,12 @@ export function saveChatMessage({ userId, role, content }) {
   const stmt = db.prepare('INSERT INTO chat_messages (id, user_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)');
   stmt.run(id, userId, role, content, Date.now());
   return { id, role, content };
+}
+
+export function clearChatMessages(userId) {
+  const stmt = db.prepare('DELETE FROM chat_messages WHERE user_id = ?');
+  stmt.run(userId);
+  return { success: true };
 }
 
 // ----------------------------------------------------
