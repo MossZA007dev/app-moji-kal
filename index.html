@@ -972,6 +972,68 @@ nav button i { font-style: normal; font-size: 18px; }
   animation: popIn 0.3s ease;
 }
 
+/* Weight Tracker Widget */
+.weight-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 13px 16px;
+  margin: 10px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+.weight-num {
+  font-family: "Mali", sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+.weight-unit {
+  font-size: 13px;
+  color: var(--mute);
+  font-weight: 600;
+}
+.weight-diff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+.weight-diff-pill.down {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+.weight-diff-pill.up {
+  background: #FFFBEB;
+  color: #D97706;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+}
+.weight-diff-pill.same {
+  background: #F3F4F6;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+.weight-target-track {
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 999px;
+  margin-top: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.weight-target-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mint), #10B981);
+  transition: width 0.4s ease;
+}
+
 /* Weekly Macro Trends Chart */
 .stats-metric-pills {
   display: flex;
@@ -2922,6 +2984,7 @@ let appSettings = {};
 let isListeningVoice = false;
 let statsMetric = 'sugar'; // 'sugar' | 'carbs' | 'protein' | 'sodium' | 'water'
 let deferredInstallPrompt = null;
+let userWeightLogs = [];
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
@@ -3073,6 +3136,17 @@ async function fetchLeaderboard(sort = leaderboardSort) {
     leaderboardData = data.leaderboard || [];
   } catch (err) {
     console.error('Fetch leaderboard error:', err);
+  }
+}
+
+async function fetchWeightLogs() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/weights?userId=${currentUser.id}`);
+    const data = await res.json();
+    userWeightLogs = data.logs || [];
+  } catch (err) {
+    console.error('Fetch weight logs error:', err);
   }
 }
 
@@ -3268,7 +3342,7 @@ function render() {
 function go(t) {
   tab = t;
   if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges()]).then(render);
-  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak()]).then(render);
+  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs()]).then(render);
   else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).then(render);
   else if (t === 'chat') fetchChatHistory().then(render);
   else render();
@@ -3317,10 +3391,61 @@ function renderToday() {
   const sodiumFillClass = isSodiumAlert ? 'sodium-alert' : isSodiumWarn ? 'sodium-warn' : 'sodium-ok';
   const sodiumStatusText = isSodiumAlert ? '⚠️ เกินเกณฑ์ 2,000 mg' : isSodiumWarn ? '⚡ เริ่มแตะเกณฑ์ระวัง' : '💚 สมดุลดี สบายไต';
 
+  // Weight tracking calculations
+  const curWeight = Number(currentUser?.weight) || 60;
+  const targetWeight = currentUser?.target_weight ? Number(currentUser.target_weight) : null;
+  
+  let weightDiffText = '';
+  let weightDiffClass = 'same';
+  if (userWeightLogs && userWeightLogs.length > 1) {
+    const sortedW = [...userWeightLogs].sort((a,b) => new Date(a.date) - new Date(b.date));
+    const latest = sortedW[sortedW.length - 1];
+    const prev = sortedW[sortedW.length - 2];
+    const diff = Math.round((latest.weight - prev.weight) * 10) / 10;
+    if (diff < 0) {
+      weightDiffText = `📉 ลดลง ${Math.abs(diff)} kg`;
+      weightDiffClass = 'down';
+    } else if (diff > 0) {
+      weightDiffText = `📈 เพิ่มขึ้น ${diff} kg`;
+      weightDiffClass = 'up';
+    } else {
+      weightDiffText = `✨ คงที่`;
+      weightDiffClass = 'same';
+    }
+  } else if (userWeightLogs && userWeightLogs.length === 1) {
+    weightDiffText = `🌱 บันทึกครั้งแรก`;
+    weightDiffClass = 'same';
+  }
+
+  let targetProgressText = '';
+  let targetPct = 0;
+  if (targetWeight) {
+    const toSpan = Math.round(Math.abs(curWeight - targetWeight) * 10) / 10;
+    if (toSpan <= 0.3) {
+      targetProgressText = `🎉 ถึงเป้าหมายแล้ว! (${targetWeight} kg)`;
+      targetPct = 100;
+    } else {
+      targetProgressText = `เป้าหมาย ${targetWeight} kg · เหลืออีก ${toSpan} kg`;
+      const firstW = userWeightLogs.length ? userWeightLogs[0].weight : curWeight;
+      const totalSpan = Math.abs(firstW - targetWeight);
+      if (totalSpan > 0) {
+        const achieved = Math.abs(firstW - curWeight);
+        targetPct = Math.min(100, Math.max(8, Math.round((achieved / totalSpan) * 100)));
+      } else {
+        targetPct = 50;
+      }
+    }
+  }
+
   $('#main').innerHTML = `
-    <div class="top">
-      <h1>โมจิวันนี้ 🍡</h1>
-      <span>${dateTh}</span>
+    <div class="top" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h1>โมจิวันนี้ 🍡</h1>
+        <span>${dateTh}</span>
+      </div>
+      <button class="btn s sm" style="font-size:11.5px; padding:6px 12px; border-radius:14px; background:#FFF0F5; border:1.5px solid var(--pink); color:var(--pink-ink); font-weight:700; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(255,117,140,0.15);" onclick="openShareModal()">
+        <span>📸</span> <span>สรุป & แชร์การ์ด</span>
+      </button>
     </div>
 
     <div class="card mo">
@@ -3431,6 +3556,36 @@ function renderToday() {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Quick Weight Tracker Card (ฟีเจอร์ติดตามน้ำหนัก ⚖️) -->
+    <div class="weight-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:24px;">⚖️</span>
+          <div>
+            <div style="display:flex; align-items:baseline; gap:6px;">
+              <span class="weight-num">${curWeight}</span>
+              <span class="weight-unit">kg</span>
+              ${weightDiffText ? `<span class="weight-diff-pill ${weightDiffClass}">${weightDiffText}</span>` : ''}
+            </div>
+            <div style="font-size:11.5px; color:var(--mute); margin-top:2px;">
+              ${targetWeight ? targetProgressText : 'แตะเพื่อบันทึกหรือตั้งเป้าหมายน้ำหนัก'}
+            </div>
+          </div>
+        </div>
+
+        <button class="btn s sm" style="font-size:11.5px; padding:5px 12px; display:flex; align-items:center; gap:4px;" onclick="openWeightModal()">
+          <span>⚖️ ชั่งน้ำหนัก</span>
+          <small style="color:var(--pink); font-weight:700;">(+10 🪙)</small>
+        </button>
+      </div>
+
+      ${targetWeight ? `
+        <div class="weight-target-track" title="ความคืบหน้าสู่เป้าหมาย ${targetWeight} kg">
+          <div class="weight-target-fill" style="width: ${targetPct}%;"></div>
+        </div>
+      ` : ''}
     </div>
 
     <!-- Gentle Health Reminder (Pillar 5) -->
@@ -3550,6 +3705,223 @@ async function undoWaterLog() {
     toast('ยกเลิกบันทึกแก้วน้ำล่าสุดแล้ว 💧');
   } else {
     toast(data.message || 'ไม่มีรายการดื่มน้ำ');
+  }
+}
+
+// Weight Tracker Modal & Progress Chart
+function openWeightModal() {
+  const curWeight = Number(currentUser?.weight) || 60;
+  const targetWeight = currentUser?.target_weight || '';
+  
+  // Sort logs chronologically
+  const sorted = [...userWeightLogs].sort((a,b) => new Date(a.date) - new Date(b.date));
+  
+  // Render SVG Sparkline / Journey Chart
+  let chartSvg = '';
+  if (sorted.length >= 2) {
+    const weights = sorted.map(l => l.weight);
+    const minW = Math.min(...weights, targetWeight ? Number(targetWeight) : Infinity) - 1;
+    const maxW = Math.max(...weights, targetWeight ? Number(targetWeight) : -Infinity) + 1;
+    const range = (maxW - minW) || 1;
+    const chartW = 320;
+    const chartH = 125;
+    const padX = 28;
+    const padY = 22;
+    const usableW = chartW - padX * 2;
+    const usableH = chartH - padY * 2;
+
+    const points = sorted.map((l, i) => {
+      const x = padX + (i / (sorted.length - 1)) * usableW;
+      const y = padY + usableH - ((l.weight - minW) / range) * usableH;
+      return { x, y, weight: l.weight, date: l.date.slice(5) };
+    });
+
+    const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+    const areaData = `${pathData} L ${points[points.length-1].x.toFixed(1)} ${chartH} L ${points[0].x.toFixed(1)} ${chartH} Z`;
+
+    let targetLine = '';
+    if (targetWeight) {
+      const targetY = padY + usableH - ((Number(targetWeight) - minW) / range) * usableH;
+      targetLine = `
+        <line x1="${padX}" y1="${targetY.toFixed(1)}" x2="${chartW - padX}" y2="${targetY.toFixed(1)}" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4,4" />
+        <text x="${chartW - padX}" y="${(targetY - 4).toFixed(1)}" fill="#10B981" font-size="9" text-anchor="end" font-weight="700">เป้าหมาย ${targetWeight} kg</text>
+      `;
+    }
+
+    chartSvg = `
+      <div style="background:#FFF9FB; border:1px solid #FFE4EB; border-radius:18px; padding:12px; margin:12px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="font-size:12px; color:var(--pink-ink);">📈 กราฟการเดินทางของน้ำหนัก (${sorted.length} ครั้งล่าสุด)</b>
+          <span style="font-size:11px; color:var(--mute);">${targetWeight ? 'เป้าหมาย: ' + targetWeight + ' kg' : 'ไม่ได้ตั้งเป้า'}</span>
+        </div>
+        <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%; height:auto; overflow:visible;">
+          <defs>
+            <linearGradient id="weightAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF758C" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#FF758C" stop-opacity="0.0" />
+            </linearGradient>
+          </defs>
+          <path d="${areaData}" fill="url(#weightAreaGrad)" />
+          <path d="${pathData}" fill="none" stroke="var(--pink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          ${targetLine}
+          ${points.map(p => `
+            <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#FFFFFF" stroke="var(--pink)" stroke-width="2.5" />
+            <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" font-size="9.5" font-weight="700" fill="var(--ink)" text-anchor="middle">${p.weight}</text>
+            <text x="${p.x.toFixed(1)}" y="${chartH - 2}" font-size="8.5" fill="var(--mute)" text-anchor="middle">${p.date}</text>
+          `).join('')}
+        </svg>
+      </div>
+    `;
+  } else if (sorted.length === 1) {
+    chartSvg = `
+      <div style="background:#FFF9FB; border:1px solid #FFE4EB; border-radius:16px; padding:12px; text-align:center; margin:10px 0; font-size:12px; color:var(--mute);">
+        🌱 บันทึกน้ำหนักครั้งแรกแล้ว (${sorted[0].weight} kg) เมื่อชั่งครบ 2 ครั้งขึ้นไป กราฟแนวโน้มน้ำหนักจะปรากฏที่นี่!
+      </div>
+    `;
+  }
+
+  const el = $('#sheet');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="sh">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 class="hd" style="font-size:18px; margin:0;">⚖️ บันทึกน้ำหนัก & กราฟสุขภาพ</h2>
+        <span class="badge ok" style="font-size:11px;">+10 🪙 ทุกครั้งที่ชั่ง</span>
+      </div>
+
+      <!-- Quick Weight Stepper Input -->
+      <div style="background:var(--card); border:1.5px solid var(--line); border-radius:20px; padding:16px; text-align:center; margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--mute); display:block; margin-bottom:8px;">น้ำหนักวันนี้ (กิโลกรัม)</label>
+        
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <button type="button" class="btn g sm" style="width:38px; height:38px; font-size:16px; font-weight:700; border-radius:50%; padding:0;" onclick="adjustWeightInput(-0.5)">-0.5</button>
+          <button type="button" class="btn g sm" style="width:38px; height:38px; font-size:14px; font-weight:700; border-radius:50%; padding:0;" onclick="adjustWeightInput(-0.1)">-0.1</button>
+          <div style="position:relative; width:120px;">
+            <input type="number" step="0.1" id="modalWeightInput" value="${curWeight}" style="font-size:28px; font-weight:800; font-family:'Mali',sans-serif; text-align:center; color:var(--ink); height:50px; padding:0; border-radius:16px; border:2px solid var(--pink);">
+          </div>
+          <button type="button" class="btn g sm" style="width:38px; height:38px; font-size:14px; font-weight:700; border-radius:50%; padding:0;" onclick="adjustWeightInput(0.1)">+0.1</button>
+          <button type="button" class="btn g sm" style="width:38px; height:38px; font-size:16px; font-weight:700; border-radius:50%; padding:0;" onclick="adjustWeightInput(0.5)">+0.5</button>
+        </div>
+
+        <div class="g2" style="margin-top:12px; text-align:left;">
+          <div>
+            <label style="font-size:11px; color:var(--mute);">🎯 น้ำหนักเป้าหมาย (kg)</label>
+            <input type="number" step="0.1" id="modalTargetWeightInput" value="${targetWeight}" placeholder="เช่น 55.0">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--mute);">📝 โน้ตสั้นๆ</label>
+            <input type="text" id="modalWeightNote" placeholder="เช่น หลังตื่นนอน">
+          </div>
+        </div>
+
+        <button class="btn" style="margin-top:14px; width:100%; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="saveWeightEntry()">
+          <span>💾 บันทึกน้ำหนักวันนี้</span>
+          <span style="background:rgba(255,255,255,0.3); padding:2px 8px; border-radius:999px; font-size:12px;">+10 🪙</span>
+        </button>
+      </div>
+
+      ${chartSvg}
+
+      <!-- History List -->
+      ${sorted.length ? `
+        <div style="margin-top:12px;">
+          <b style="font-size:12.5px; color:var(--ink); display:block; margin-bottom:6px;">ประวัติการชั่ง (${sorted.length} ครั้งล่าสุด):</b>
+          <div style="max-height:160px; overflow-y:auto; border:1px solid var(--line); border-radius:14px; background:var(--card);">
+            ${[...sorted].reverse().map(l => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); font-size:12px;">
+                <div>
+                  <b style="color:var(--ink); font-size:13px;">${l.weight} kg</b>
+                  <span style="color:var(--mute); font-size:11px; margin-left:6px;">${l.date} ${l.note ? '· ' + esc(l.note) : ''}</span>
+                </div>
+                <button type="button" class="btn g sm" style="padding:2px 6px; font-size:10px; color:#EF4444;" onclick="deleteWeightEntry('${l.id}')">ลบ</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <button class="btn g" style="margin-top:12px;" onclick="closeSheet()">ปิด</button>
+    </div>
+  `;
+}
+
+function adjustWeightInput(delta) {
+  const input = $('#modalWeightInput');
+  if (!input) return;
+  const current = Number(input.value) || 60;
+  input.value = (Math.round((current + delta) * 10) / 10).toFixed(1);
+}
+
+async function saveWeightEntry() {
+  const weightVal = Number($('#modalWeightInput')?.value);
+  const targetVal = $('#modalTargetWeightInput')?.value.trim();
+  const note = $('#modalWeightNote')?.value.trim() || '';
+
+  if (isNaN(weightVal) || weightVal <= 0) {
+    toast('กรุณากรอกน้ำหนักที่ถูกต้อง');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/weights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        weight: weightVal,
+        date: key(),
+        note
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentUser = data.user;
+      
+      // Also update target_weight if changed
+      const newTarget = targetVal !== '' ? Number(targetVal) : null;
+      if (newTarget !== currentUser.target_weight) {
+        const uRes = await fetch(`/api/users/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_weight: newTarget })
+        });
+        const uData = await uRes.json();
+        currentUser = uData.user;
+      }
+
+      await fetchWeightLogs();
+      updateUserHeader();
+      renderToday();
+      openWeightModal();
+      toast(`บันทึกน้ำหนัก ${weightVal} kg เรียบร้อย! (+10 🪙) ⚖️`);
+      if (data.milestoneActivity) {
+        fireConfetti();
+        toast('🎉 ยินดีด้วย! คุณถึงเป้าหมายน้ำหนักแล้ว (+50 🪙)');
+      }
+    }
+  } catch (err) {
+    console.error('Save weight error:', err);
+    toast('บันทึกน้ำหนักไม่สำเร็จ');
+  }
+}
+
+async function deleteWeightEntry(id) {
+  if (!confirm('ต้องการลบประวัติน้ำหนักนี้ใช่หรือไม่?')) return;
+  try {
+    const res = await fetch(`/api/weights/${id}?userId=${currentUser.id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      await fetchWeightLogs();
+      if (userWeightLogs.length) {
+        currentUser.weight = userWeightLogs[userWeightLogs.length - 1].weight;
+      }
+      renderToday();
+      openWeightModal();
+      toast('ลบประวัติน้ำหนักเรียบร้อย');
+    }
+  } catch (err) {
+    console.error('Delete weight error:', err);
+    toast('ลบไม่สำเร็จ');
   }
 }
 
@@ -5564,6 +5936,17 @@ function openEditProfileModal() {
         </div>
       </div>
 
+      <div class="g2" style="margin-top:10px;">
+        <div>
+          <label style="font-size:11.5px;">⚖️ น้ำหนักปัจจุบัน (kg)</label>
+          <input type="number" step="0.1" id="editModalWeight" value="${currentUser?.weight || 60}">
+        </div>
+        <div>
+          <label style="font-size:11.5px;">🎯 น้ำหนักเป้าหมาย (kg)</label>
+          <input type="number" step="0.1" id="editModalTargetWeight" value="${currentUser?.target_weight || ''}" placeholder="เช่น 55.0">
+        </div>
+      </div>
+
       <!-- Custom Macro & Micronutrient Goals (Feature 2) -->
       <div style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -5627,6 +6010,9 @@ async function saveProfileFromModal() {
   let sugar = Math.max(10, Math.min(60, Number($('#editModalSugar')?.value) || currentUser.sugar_goal));
   const goalType = selectedProfileGoalType || currentUser.goal_type || 'weight_loss';
 
+  const weightVal = Number($('#editModalWeight')?.value) || currentUser.weight;
+  const targetWeightVal = $('#editModalTargetWeight')?.value.trim();
+
   const carbsVal = $('#editModalCarbs')?.value.trim();
   const proteinVal = $('#editModalProtein')?.value.trim();
   const fatVal = $('#editModalFat')?.value.trim();
@@ -5642,6 +6028,8 @@ async function saveProfileFromModal() {
         goal_type: goalType,
         calorie_goal: cal,
         sugar_goal: sugar,
+        weight: weightVal,
+        target_weight: targetWeightVal !== '' ? Number(targetWeightVal) : null,
         carbs_goal: carbsVal ? Number(carbsVal) : null,
         protein_goal: proteinVal ? Number(proteinVal) : null,
         fat_goal: fatVal ? Number(fatVal) : null,
@@ -5651,9 +6039,19 @@ async function saveProfileFromModal() {
     });
     const data = await res.json();
     currentUser = data.user;
+
+    // If weight entered differed from previous weight, log it in weight_logs
+    if (weightVal && weightVal !== currentUser.weight) {
+      await fetch('/api/weights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, weight: weightVal, date: key(), note: 'อัปเดตจากหน้าโปรไฟล์' })
+      });
+    }
+
     closeSheet();
     updateUserHeader();
-    await Promise.all([fetchUsers(), fetchFeed(), fetchLeaderboard()]);
+    await Promise.all([fetchUsers(), fetchFeed(), fetchLeaderboard(), fetchWeightLogs()]);
     render();
     toast('บันทึกเป้าหมายสุขภาพเรียบร้อยแล้ว 🍡');
   } catch (e) {
@@ -6255,132 +6653,303 @@ async function applyBmrResults() {
   }
 }
 
-// Share Modal (PNG Download)
+// Share Modal (Daily Health Recap & Social Card)
 function openShareModal() {
-  const totalCal = currentLogs.reduce((a, b) => a + b.calorie, 0);
-  const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
-  const dateTh = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+  const totalCal = currentLogs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
+  const totalSugar = currentLogs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+  const totalCarbs = Math.round(currentLogs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
+  const totalProtein = Math.round(currentLogs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
+  const totalFat = Math.round(currentLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
+  const totalSodium = Math.round(currentLogs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
+  
+  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterCount = waterLogs.length;
+  const waterGoal = Number(currentUser?.water_goal) || 8;
+  const curWeight = Number(currentUser?.weight) || 60;
+  const targetWeight = currentUser?.target_weight ? Number(currentUser.target_weight) : null;
+  const dateTh = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = `
     <div class="sh">
-      <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แชร์การ์ดสุขภาพ 💌</h2>
-      <div style="max-width:320px; margin:0 auto 10px; border-radius:20px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.1);">
-        <canvas id="shareCanvas" width="800" height="960" style="width:100%; display:block;"></canvas>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <h2 class="hd" style="font-size:18px; margin:0;">📸 การ์ดสุขภาพประจำวัน 🍡</h2>
+        <span class="badge ok" style="font-size:11px;">Instagram · LINE · Story</span>
       </div>
-      <div class="gap">
-        <button class="btn" onclick="downloadShareImage()">📷 บันทึกรูปภาพ (PNG)</button>
-        <button class="btn s" onclick="copyShareText()">คัดลอกข้อความ</button>
+      <p style="font-size:12px; color:var(--mute); margin-bottom:12px;">
+        การ์ดสรุปผลดีไซน์พิเศษสำหรับแชร์ลง Social Media หรือเก็บเป็นไดอารี่สุขภาพ
+      </p>
+
+      <div style="max-width:330px; margin:0 auto 12px; border-radius:22px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.12); border:1.5px solid var(--line);">
+        <canvas id="shareCanvas" width="880" height="1180" style="width:100%; display:block; background:#FFF;"></canvas>
       </div>
-      <button class="btn g" style="margin-top:6px;" onclick="closeSheet()">ปิด</button>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn" style="display:flex; align-items:center; justify-content:center; gap:6px;" onclick="shareRecapImage()">
+          <span>📤</span> <span>แชร์ลง Story / LINE / บันทึกรูป</span>
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn s" style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="downloadShareImage()">
+            <span>📥</span> <span>เซฟรูปภาพ (PNG)</span>
+          </button>
+          <button class="btn s" style="flex:1; display:flex; align-items:center; justify-content:center; gap:5px;" onclick="copyShareText()">
+            <span>📋</span> <span>คัดลอกข้อความ</span>
+          </button>
+        </div>
+        <button class="btn g sm" style="margin-top:4px;" onclick="closeSheet()">ปิด</button>
+      </div>
     </div>
   `;
-  drawShareCanvas(totalCal, totalSugar, dateTh);
+  drawShareCanvas(totalCal, totalSugar, totalCarbs, totalProtein, totalFat, totalSodium, waterCount, waterGoal, curWeight, targetWeight, dateTh);
 }
 
-function drawShareCanvas(totalCal, totalSugar, dateTh) {
+function drawShareCanvas(totalCal, totalSugar, totalCarbs, totalProtein, totalFat, totalSodium, waterCount, waterGoal, curWeight, targetWeight, dateTh) {
   const canvas = document.getElementById('shareCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
+  const W = 880;
+  const H = 1180;
 
-  const grad = ctx.createLinearGradient(0, 0, 800, 960);
-  grad.addColorStop(0, '#FFE8EE');
-  grad.addColorStop(0.5, '#FFF8F5');
+  // Background Gradient
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#FFEBF0');
+  grad.addColorStop(0.45, '#FFF8F4');
   grad.addColorStop(1, '#DCF6EE');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 800, 960);
+  ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = '#F3E6E4';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(20, 20, 760, 920);
-
-  ctx.fillStyle = '#4A3F44';
-  ctx.font = 'bold 36px "Mali", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('โมจิ · นับแคลและน้ำตาล 🍡', 400, 90);
-
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '22px "Noto Sans Thai", sans-serif';
-  ctx.fillText(`สรุปวันนี้ของ ${currentUser?.nickname || 'ฉัน'} (${dateTh})`, 400, 135);
-
-  ctx.fillStyle = '#FF9F43';
-  ctx.font = 'bold 24px "Mali", sans-serif';
-  ctx.fillText(`🔥 สม่ำเสมอ ${userStreak.current} วันติด!`, 400, 175);
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.roundRect(60, 210, 680, 240, 24);
-  ctx.fill();
-  ctx.strokeStyle = '#F3E6E4';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '22px "Noto Sans Thai", sans-serif';
-  ctx.fillText('แคลอรีสะสม', 230, 260);
-  ctx.fillStyle = '#FF5E74';
-  ctx.font = 'bold 60px "Mali", sans-serif';
-  ctx.fillText(Math.round(totalCal), 230, 340);
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '18px "Noto Sans Thai", sans-serif';
-  ctx.fillText(`เป้าหมาย ${currentUser?.calorie_goal || 2000} kcal`, 230, 400);
-
-  ctx.strokeStyle = '#F3E6E4';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(400, 240);
-  ctx.lineTo(400, 420);
-  ctx.stroke();
-
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '22px "Noto Sans Thai", sans-serif';
-  ctx.fillText('น้ำตาลวันนี้', 570, 260);
-  const isOverSugar = totalSugar > (currentUser?.sugar_goal || 25);
-  ctx.fillStyle = isOverSugar ? '#FF5E74' : '#5ABEA3';
-  ctx.font = 'bold 60px "Mali", sans-serif';
-  ctx.fillText(fmt(totalSugar) + 'g', 570, 340);
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '18px "Noto Sans Thai", sans-serif';
-  ctx.fillText(`เป้าหมาย ${currentUser?.sugar_goal || 25} g`, 570, 400);
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.roundRect(60, 480, 680, 380, 24);
-  ctx.fill();
-  ctx.strokeStyle = '#F3E6E4';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.fillStyle = '#4A3F44';
-  ctx.font = 'bold 26px "Mali", sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('เมนูอร่อยในวันนี้ 🍱', 100, 530);
-
-  const displayMeals = currentLogs.slice(0, 5);
-  if (displayMeals.length) {
-    displayMeals.forEach((m, idx) => {
-      const y = 585 + idx * 52;
-      ctx.fillStyle = '#4A3F44';
-      ctx.font = '22px "Noto Sans Thai", sans-serif';
-      ctx.fillText(`• ${m.name}`, 100, y);
-
-      ctx.fillStyle = '#9A8C92';
-      ctx.font = '20px "Noto Sans Thai", sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(`${Math.round(m.calorie)} kcal  (${fmt(m.sugar)}g น้ำตาล)`, 700, y);
-      ctx.textAlign = 'left';
-    });
-  } else {
-    ctx.fillStyle = '#9A8C92';
-    ctx.font = '22px "Noto Sans Thai", sans-serif';
-    ctx.fillText('ยังไม่ได้บันทึกอะไรในวันนี้', 100, 590);
+  // Outer Border & Rounded Corner Inset
+  ctx.strokeStyle = '#F2D3DC';
+  ctx.lineWidth = 4;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(16, 16, W - 32, H - 32, 28);
+    ctx.stroke();
   }
 
-  ctx.fillStyle = '#9A8C92';
-  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  // Top App Brand Pill
+  ctx.fillStyle = '#FFFFFF';
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - 180, 36, 360, 38, 19);
+    ctx.fill();
+    ctx.strokeStyle = '#F5D0D8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#FF5E74';
+  ctx.font = 'bold 18px "Mali", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('— สร้างนิสัยสุขภาพดีไปด้วยกันกับโมจิ —', 400, 905);
+  ctx.fillText('🍡 MOJI KAL · สรุปสุขภาพประจำวัน', W / 2, 61);
+
+  // User Mascot Avatar SVG
+  const svg = mascotSVG(currentUser?.avatar_face || 'happy', currentUser?.avatar_color || '#FF9EB5', 125, currentUser?.avatar_hat || 'none');
+  const img = new Image();
+  img.onload = () => {
+    ctx.drawImage(img, W / 2 - 62, 95, 125, 125);
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+
+  // Nickname
+  ctx.fillStyle = '#4A3F44';
+  ctx.font = 'bold 30px "Mali", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`คุณ ${currentUser?.nickname || 'โมจิ'} 🌸`, W / 2, 252);
+
+  // Date & Streak Subtitle Pill
+  ctx.fillStyle = '#827479';
+  ctx.font = '19px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`${dateTh} · 🔥 วินัยสม่ำเสมอ ${userStreak?.current || 1} วันติด!`, W / 2, 286);
+
+  // Helper for drawing rounded cards
+  function drawCard(x, y, w, h, radius, fill = '#FFFFFF', stroke = '#F0DFE3') {
+    ctx.fillStyle = fill;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, radius);
+      ctx.fill();
+      if (stroke) {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillRect(x, y, w, h);
+    }
+  }
+
+  // 1. Dual Cards: Calories & Sugar (Y = 320, H = 185)
+  const cardW = 365;
+  const calGoal = Number(currentUser?.calorie_goal) || 2000;
+  const sugarGoal = Number(currentUser?.sugar_goal) || 25;
+  const isOverSugar = totalSugar > sugarGoal;
+
+  // Calorie Card
+  drawCard(60, 320, cardW, 185, 22);
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '20px "Noto Sans Thai", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('🔥 พลังงานแคลอรี', 85, 360);
+
+  ctx.fillStyle = '#FF5E74';
+  ctx.font = 'bold 54px "Mali", sans-serif';
+  ctx.fillText(Math.round(totalCal).toLocaleString(), 85, 428);
+
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '17px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`เป้าหมาย ${calGoal.toLocaleString()} kcal`, 85, 465);
+
+  const calPct = Math.min(1, totalCal / (calGoal || 1));
+  drawCard(85, 480, cardW - 50, 8, 4, '#F3E4E8', null);
+  drawCard(85, 480, (cardW - 50) * calPct, 8, 4, '#FF758C', null);
+
+  // Sugar Card
+  drawCard(455, 320, cardW, 185, 22);
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '20px "Noto Sans Thai", sans-serif';
+  ctx.fillText('🍬 น้ำตาลวันนี้', 480, 360);
+
+  ctx.fillStyle = isOverSugar ? '#EF4444' : '#10B981';
+  ctx.font = 'bold 54px "Mali", sans-serif';
+  ctx.fillText(fmt(totalSugar) + 'g', 480, 428);
+
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '17px "Noto Sans Thai", sans-serif';
+  ctx.fillText(`เป้าหมาย ${sugarGoal} g (${isOverSugar ? '⚠️ เกินเกณฑ์' : '🟢 ในเกณฑ์ดี'})`, 480, 465);
+
+  const sugPct = Math.min(1, totalSugar / (sugarGoal || 1));
+  drawCard(480, 480, cardW - 50, 8, 4, '#F3E4E8', null);
+  drawCard(480, 480, (cardW - 50) * sugPct, 8, 4, isOverSugar ? '#EF4444' : '#10B981', null);
+
+  // 2. 4 Macros Row (Y = 525, H = 135)
+  const mBoxW = 175;
+  const mGap = 20;
+  const startX = 60;
+  const mY = 525;
+  const carbsGoal = Number(currentUser?.carbs_goal) || 180;
+  const proteinGoal = Number(currentUser?.protein_goal) || 70;
+  const fatGoal = Number(currentUser?.fat_goal) || 55;
+  const sodiumLimit = Number(currentUser?.sodium_goal) || 2000;
+
+  const macros = [
+    { label: '🍞 คาร์บ', val: fmt(totalCarbs) + 'g', goal: `เป้า ${carbsGoal}g`, col: '#D97706' },
+    { label: '🥩 โปรตีน', val: fmt(totalProtein) + 'g', goal: `เป้า ${proteinGoal}g`, col: '#2563EB' },
+    { label: '🥑 ไขมัน', val: fmt(totalFat) + 'g', goal: `เป้า ${fatGoal}g`, col: '#059669' },
+    { label: '🧂 โซเดียม', val: fmt(totalSodium) + 'mg', goal: `< ${sodiumLimit}mg`, col: totalSodium > sodiumLimit ? '#EF4444' : '#4B5563' }
+  ];
+
+  macros.forEach((m, idx) => {
+    const x = startX + idx * (mBoxW + mGap);
+    drawCard(x, mY, mBoxW, 135, 18);
+    ctx.fillStyle = '#8C7D83';
+    ctx.font = '17px "Noto Sans Thai", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.label, x + mBoxW / 2, mY + 34);
+
+    ctx.fillStyle = m.col;
+    ctx.font = 'bold 27px "Mali", sans-serif';
+    ctx.fillText(m.val, x + mBoxW / 2, mY + 78);
+
+    ctx.fillStyle = '#9C8E93';
+    ctx.font = '15px "Noto Sans Thai", sans-serif';
+    ctx.fillText(m.goal, x + mBoxW / 2, mY + 112);
+  });
+
+  // 3. Hydration & Weight Row (Y = 680, H = 120)
+  drawCard(60, 680, 760, 120, 20);
+  
+  // Left: Water Tracker
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.fillText('💧 การดื่มน้ำเปล่า', 90, 718);
+
+  ctx.fillStyle = '#0284C7';
+  ctx.font = 'bold 28px "Mali", sans-serif';
+  ctx.fillText(`${waterCount} / ${waterGoal} แก้ว (${waterCount * 250} ml)`, 90, 758);
+
+  ctx.fillStyle = '#9C8E93';
+  ctx.font = '15px "Noto Sans Thai", sans-serif';
+  ctx.fillText(waterCount >= waterGoal ? '🎉 ดื่มน้ำครบตามเป้า สบายไตและผิวสดชื่น!' : 'ดื่มน้ำเปล่าช่วยเร่งการเผาผลาญ', 90, 785);
+
+  // Vertical divider
+  ctx.strokeStyle = '#F0DFE3';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(440, 700);
+  ctx.lineTo(440, 780);
+  ctx.stroke();
+
+  // Right: Weight
+  ctx.fillStyle = '#8C7D83';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.fillText('⚖️ น้ำหนักตัว', 470, 718);
+
+  ctx.fillStyle = '#4A3F44';
+  ctx.font = 'bold 28px "Mali", sans-serif';
+  ctx.fillText(`${curWeight} kg`, 470, 758);
+
+  ctx.fillStyle = '#9C8E93';
+  ctx.font = '15px "Noto Sans Thai", sans-serif';
+  ctx.fillText(targetWeight ? `เป้าหมาย ${targetWeight} kg (เหลืออีก ${Math.abs(curWeight - targetWeight).toFixed(1)} kg)` : 'ดูแลรักษาสุขภาพอย่างสม่ำเสมอ', 470, 785);
+
+  // 4. Mochi's Inspiring Feedback Box (Y = 820, H = 175)
+  drawCard(60, 820, 760, 175, 22, '#FFF6F8', '#F8B4C4');
+  ctx.fillStyle = '#E11D48';
+  ctx.font = 'bold 21px "Mali", sans-serif';
+  ctx.fillText('🍡 คำชมและกำลังใจจากน้องโมจิ:', 90, 862);
+
+  // Dynamic feedback
+  let quoteLine1 = 'วันนี้ทำได้ยอดเยี่ยมมาก! บันทึกอาหารและดูแลตัวเองได้เป็นอย่างดี';
+  let quoteLine2 = 'วินัยเล็กๆ ที่ทำทุกวัน จะพาคุณไปถึงรูปร่างและสุขภาพในฝันแน่นอน พรุ่งนี้ลุยต่อด้วยกันนะ 💖';
+  if (totalSugar <= sugarGoal && waterCount >= waterGoal) {
+    quoteLine1 = 'สุดยอดเลย! วันนี้คุมน้ำตาลอยู่หมัด และดื่มน้ำครบตามเป้าหมายแบบ 10/10';
+    quoteLine2 = 'สุขภาพดีขึ้นทุกวัน ร่างกายสดชื่น เจ้าโมจิภูมิใจในตัวคุณมากที่สุดเลยนะ ✨';
+  } else if (isOverSugar) {
+    quoteLine1 = 'วันนี้ทานน้ำตาลเกินเกณฑ์ไปนิดหน่อย ไม่เป็นไรน้า ดื่มน้ำเปล่าเยอะๆ เพื่อช่วยขับน้ำตาล';
+    quoteLine2 = 'ความผิดพลาดคือการเรียนรู้ มื้อต่อไปเลือกทานผักและโปรตีน คืนสมดุลให้ร่างกายกันนะ สู้ๆ! 💪';
+  }
+
+  ctx.fillStyle = '#4A3F44';
+  ctx.font = '19px "Noto Sans Thai", sans-serif';
+  ctx.fillText(quoteLine1, 90, 910);
+  ctx.fillText(quoteLine2, 90, 946);
+
+  // Footer Tagline
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#9C8D94';
+  ctx.font = '18px "Noto Sans Thai", sans-serif';
+  ctx.fillText('— สร้างนิสัยสุขภาพดีไปด้วยกันที่ mojikal.render.com 🍡 —', W / 2, 1045);
+}
+
+// Native Web Share API with File
+async function shareRecapImage() {
+  const canvas = document.getElementById('shareCanvas');
+  if (!canvas) return;
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+    const dateStr = key();
+    const file = new File([blob], `moji_recap_${dateStr}.png`, { type: 'image/png' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: `สรุปสุขภาพวันนี้กับโมจิ 🍡`,
+          text: `วันนี้ฉันดูแลสุขภาพกับโมจิ แคลอรี ${Math.round(currentLogs.reduce((a,b)=>a+b.calorie,0))} kcal น้ำตาล ${fmt(currentLogs.reduce((a,b)=>a+b.sugar,0))}g 🔥 สม่ำเสมอ ${userStreak?.current || 1} วันติด!`
+        });
+        toast('แชร์ภาพสรุปสำเร็จแล้ว 🍡✨');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          downloadShareImage();
+        }
+      }
+    } else {
+      downloadShareImage();
+    }
+  }, 'image/png');
 }
 
 function downloadShareImage() {
@@ -7714,16 +8283,26 @@ function showUndoToast(msg, onUndo) {
 }
 
 function shareText() {
-  const totalCal = currentLogs.reduce((a, b) => a + b.calorie, 0);
-  const totalSugar = currentLogs.reduce((a, b) => a + b.sugar, 0);
-  const dateStr = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const totalCal = currentLogs.reduce((a, b) => a + (Number(b.calorie) || 0), 0);
+  const totalSugar = currentLogs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+  const totalCarbs = Math.round(currentLogs.reduce((a, b) => a + (Number(b.carbs) || 0), 0) * 10) / 10;
+  const totalProtein = Math.round(currentLogs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
+  const totalFat = Math.round(currentLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
+  const totalSodium = Math.round(currentLogs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
+  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterCount = waterLogs.length;
+  const curWeight = Number(currentUser?.weight) || 60;
+  const dateStr = new Date().toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
 
-  return `🍡 สรุปโภชนาการวันนี้ของ ${currentUser?.nickname} (${dateStr})\n` +
-    `🔥 ความสม่ำเสมอ: ${userStreak.current} วันติด!\n` +
-    `🔥 แคลอรี: ${Math.round(totalCal)} / ${currentUser?.calorie_goal} kcal\n` +
-    `🍬 น้ำตาล: ${fmt(totalSugar)} / ${currentUser?.sugar_goal} g\n\n` +
-    (currentLogs.length ? currentLogs.map(l => `• ${l.name} — ${Math.round(l.calorie)} kcal (น้ำตาล ${fmt(l.sugar)} g)`).join('\n') : '(ยังไม่มีบันทึก)') +
-    `\n\n— จากแอปโมจินับแคลและน้ำตาล`;
+  return `🍡 สรุปโภชนาการประจำวันของ ${currentUser?.nickname || 'ฉัน'} (${dateStr})\n` +
+    `🔥 ความมีวินัย: ${userStreak?.current || 1} วันติด!\n` +
+    `🔥 แคลอรี: ${Math.round(totalCal)} / ${currentUser?.calorie_goal || 2000} kcal\n` +
+    `🍬 น้ำตาล: ${fmt(totalSugar)} / ${currentUser?.sugar_goal || 25} g (${totalSugar <= (currentUser?.sugar_goal || 25) ? '🟢 ไม่เกินเกณฑ์' : '🟡 เกินเกณฑ์'})\n` +
+    `🍞 คาร์บ: ${totalCarbs}g · 🥩 โปรตีน: ${totalProtein}g · 🥑 ไขมัน: ${totalFat}g · 🧂 โซเดียม: ${totalSodium}mg\n` +
+    `💧 ดื่มน้ำ: ${waterCount} / ${currentUser?.water_goal || 8} แก้ว (${waterCount * 250} ml)\n` +
+    `⚖️ น้ำหนักตัว: ${curWeight} kg ${currentUser?.target_weight ? `(เป้า ${currentUser.target_weight} kg)` : ''}\n\n` +
+    (currentLogs.length ? currentLogs.slice(0, 4).map(l => `• ${l.name} (${Math.round(l.calorie)} kcal)`).join('\n') + (currentLogs.length > 4 ? `\n• และอีก ${currentLogs.length - 4} มื้อ...` : '') : '(ยังไม่มีบันทึกมื้ออาหาร)') +
+    `\n\n— ดูแลสุขภาพกับโมจิ 🍡 (mojikal.render.com)`;
 }
 
 async function copyShareText() {
@@ -7830,7 +8409,8 @@ async function installPwaApp() {
     fetchChallenges(),
     fetchChatHistory(),
     fetchActivities(),
-    fetchLeaderboard()
+    fetchLeaderboard(),
+    fetchWeightLogs()
   ]);
   render();
 

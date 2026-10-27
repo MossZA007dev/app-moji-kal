@@ -394,6 +394,61 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: false, message: 'ไม่มีประวัติดื่มน้ำวันนี้' });
       }
 
+      // 10.6 Weight Tracking & Journey
+      if (pathname === '/api/weights' && req.method === 'GET') {
+        const userId = parsedUrl.searchParams.get('userId') || req.headers['x-user-id'];
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const user = db.getUser(userId);
+        if (!user) return sendJson(res, 404, { error: 'User not found' });
+        const logs = db.getWeightLogs(userId);
+        return sendJson(res, 200, {
+          logs,
+          currentWeight: user.weight,
+          targetWeight: user.target_weight
+        });
+      }
+
+      if (pathname === '/api/weights' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const weight = Number(body.weight);
+        if (isNaN(weight) || weight <= 0) return sendJson(res, 400, { error: 'Valid weight is required' });
+        
+        const log = db.addWeightLog({
+          userId,
+          date: body.date,
+          weight,
+          note: body.note || ''
+        });
+
+        // Award +10 coins for logging weight
+        const act = db.recordActivity(userId, 'weight', `ชั่งน้ำหนักวันนี้ ${weight} kg ⚖️ (+10 🪙)`, 10);
+        
+        const updatedUser = db.getUser(userId);
+        let milestoneAct = null;
+        if (updatedUser.target_weight && Math.abs(weight - updatedUser.target_weight) <= 0.3) {
+          milestoneAct = db.recordActivity(userId, 'milestone', `🎉 ถึงเป้าหมายน้ำหนัก ${weight} kg แล้ว! ยอดเยี่ยมมาก (+50 🪙)`, 50);
+        }
+
+        return sendJson(res, 200, {
+          success: true,
+          log,
+          activity: act,
+          milestoneActivity: milestoneAct,
+          coinsEarned: milestoneAct ? 60 : 10,
+          user: updatedUser
+        });
+      }
+
+      if (pathname.startsWith('/api/weights/') && req.method === 'DELETE') {
+        const id = pathname.replace('/api/weights/', '');
+        const userId = parsedUrl.searchParams.get('userId') || req.headers['x-user-id'];
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        db.deleteWeightLog(id, userId);
+        return sendJson(res, 200, { success: true, removedId: id });
+      }
+
       // 11. Meal Logs
       if (pathname === '/api/logs' && req.method === 'GET') {
         const userId = parsedUrl.searchParams.get('userId');

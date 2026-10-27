@@ -135,8 +135,20 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Weight Tracking History
+  CREATE TABLE IF NOT EXISTS weight_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    weight REAL NOT NULL,
+    note TEXT,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE INDEX IF NOT EXISTS idx_logs_user_date ON logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
+  CREATE INDEX IF NOT EXISTS idx_weight_logs_user_date ON weight_logs(user_id, date);
 `);
 
 // Idempotent column migrations for users table
@@ -157,6 +169,7 @@ const neededCols = [
   { name: 'coins', type: 'INTEGER DEFAULT 120' },
   { name: 'goal_type', type: 'TEXT DEFAULT "weight_loss"' },
   { name: 'goal_score', type: 'INTEGER DEFAULT 150' },
+  { name: 'target_weight', type: 'REAL' },
   { name: 'carbs_goal', type: 'REAL' },
   { name: 'protein_goal', type: 'REAL' },
   { name: 'fat_goal', type: 'REAL' },
@@ -337,6 +350,7 @@ export function updateUser(id, data) {
   const age = Number(data.age ?? current.age);
   const height = Number(data.height ?? current.height);
   const weight = Number(data.weight ?? current.weight);
+  const target_weight = data.target_weight !== undefined ? (data.target_weight !== null && data.target_weight !== '' ? Number(data.target_weight) : null) : current.target_weight;
   const activity_level = data.activity_level ?? current.activity_level;
   const consent_pdpa = data.consent_pdpa !== undefined ? (data.consent_pdpa ? 1 : 0) : current.consent_pdpa;
   const goal_type = data.goal_type ?? current.goal_type ?? 'weight_loss';
@@ -351,7 +365,7 @@ export function updateUser(id, data) {
     UPDATE users
     SET nickname = ?, avatar_color = ?, avatar_face = ?, avatar_hat = ?, personality = ?,
         calorie_goal = ?, sugar_goal = ?, privacy_level = ?,
-        gender = ?, age = ?, height = ?, weight = ?, activity_level = ?,
+        gender = ?, age = ?, height = ?, weight = ?, target_weight = ?, activity_level = ?,
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
         goal_type = ?, goal_score = ?,
         carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?
@@ -361,7 +375,7 @@ export function updateUser(id, data) {
   stmt.run(
     nickname, avatar_color, avatar_face, avatar_hat, personality,
     calorie_goal, sugar_goal, privacy_level,
-    gender, age, height, weight, activity_level,
+    gender, age, height, weight, target_weight, activity_level,
     consent_pdpa, consent_pdpa, Date.now(),
     goal_type, goal_score,
     carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
@@ -372,11 +386,41 @@ export function updateUser(id, data) {
 
 export function deleteUserAndData(userId) {
   db.prepare('DELETE FROM logs WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM weight_logs WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM ai_usage WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM favorites WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM challenge_participants WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM chat_messages WHERE user_id = ?').run(userId);
   return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+}
+
+// Weight Tracking Functions
+export function addWeightLog({ userId, date, weight, note = '' }) {
+  const numWeight = Math.round(Number(weight) * 10) / 10;
+  const logDate = date || new Date().toISOString().slice(0, 10);
+  
+  // Check if log already exists for this date
+  const existing = db.prepare('SELECT * FROM weight_logs WHERE user_id = ? AND date = ?').get(userId, logDate);
+  const id = existing ? existing.id : (`wlog_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+
+  if (existing) {
+    db.prepare('UPDATE weight_logs SET weight = ?, note = ?, created_at = ? WHERE id = ?').run(numWeight, note, Date.now(), id);
+  } else {
+    db.prepare('INSERT INTO weight_logs (id, user_id, date, weight, note, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(id, userId, logDate, numWeight, note, Date.now());
+  }
+
+  // Update current user's weight to this value
+  db.prepare('UPDATE users SET weight = ? WHERE id = ?').run(numWeight, userId);
+
+  return { id, user_id: userId, date: logDate, weight: numWeight, note, created_at: Date.now() };
+}
+
+export function getWeightLogs(userId, limit = 60) {
+  return db.prepare('SELECT * FROM weight_logs WHERE user_id = ? ORDER BY date ASC LIMIT ?').all(userId, limit);
+}
+
+export function deleteWeightLog(id, userId) {
+  return db.prepare('DELETE FROM weight_logs WHERE id = ? AND user_id = ?').run(id, userId);
 }
 
 // AI Rate Limiting
