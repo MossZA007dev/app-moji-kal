@@ -182,7 +182,9 @@ const neededCols = [
   { name: 'water_bottle_icon', type: 'TEXT DEFAULT "bottle_500"' },
   { name: 'water_daily_target_ml', type: 'INTEGER DEFAULT 2000' },
   { name: 'water_bottle_setup', type: 'INTEGER DEFAULT 0' },
-  { name: 'unlocked_items', type: 'TEXT DEFAULT "[]"' }
+  { name: 'unlocked_items', type: 'TEXT DEFAULT "[]"' },
+  { name: 'role', type: 'TEXT DEFAULT "user"' },
+  { name: 'is_dev', type: 'INTEGER DEFAULT 0' }
 ];
 
 for (const col of neededCols) {
@@ -190,6 +192,18 @@ for (const col of neededCols) {
     db.exec(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type};`);
   }
 }
+
+// Ensure primary user or developers have role = 'dev' and is_dev = 1
+try {
+  db.exec(`
+    UPDATE users 
+    SET role = 'dev', is_dev = 1 
+    WHERE id = 'u1' 
+       OR nickname = 'มอส' 
+       OR email LIKE '%moss%' 
+       OR nickname LIKE '%dev%';
+  `);
+} catch (_) {}
 
 // Idempotent column migrations for logs table
 const logCols = db.prepare("PRAGMA table_info(logs)").all().map(c => c.name);
@@ -281,11 +295,14 @@ export function getUserByEmail(email) {
   return stmt.get(email);
 }
 
-export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat, avatar_accessory }) {
+export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat, avatar_accessory, role, is_dev }) {
   const newId = id || `u_${Date.now()}`;
+  const isDevUserVal = (role === 'dev' || is_dev === 1 || nickname === 'มอส' || (nickname && nickname.toLowerCase().includes('dev')) || (email && email.toLowerCase().includes('moss'))) ? 1 : 0;
+  const roleVal = isDevUserVal ? 'dev' : (role || 'user');
+
   const stmt = db.prepare(`
-    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality, goal_type, goal_score, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality, goal_type, goal_score, role, is_dev, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     newId,
@@ -305,9 +322,23 @@ export function createUser({ id, nickname, avatar_color, avatar_face, calorie_go
     personality || 'cheerful',
     goal_type || 'weight_loss',
     goal_score !== undefined ? Number(goal_score) : 150,
+    roleVal,
+    isDevUserVal,
     Date.now()
   );
   return getUser(newId);
+}
+
+export function isDevUser(userId) {
+  if (!userId) return false;
+  const user = getUser(userId);
+  if (!user) return false;
+  return user.role === 'dev' || 
+         user.is_dev === 1 || 
+         user.id === 'u1' || 
+         user.nickname === 'มอส' || 
+         (user.nickname && user.nickname.toLowerCase().includes('dev')) ||
+         (user.email && user.email.toLowerCase().includes('moss'));
 }
 
 export function findOrCreateGoogleUser({ google_id, email, name, picture }) {
@@ -372,6 +403,8 @@ export function updateUser(id, data) {
   const water_bottle_setup = data.water_bottle_setup !== undefined ? (data.water_bottle_setup ? 1 : 0) : (current.water_bottle_setup ?? 0);
   const coins = data.coins !== undefined ? Number(data.coins) : (current.coins ?? 120);
   const unlocked_items = data.unlocked_items !== undefined ? (typeof data.unlocked_items === 'string' ? data.unlocked_items : JSON.stringify(data.unlocked_items)) : (current.unlocked_items ?? '[]');
+  const role = data.role !== undefined ? data.role : (current.role ?? 'user');
+  const is_dev = data.is_dev !== undefined ? (data.is_dev ? 1 : 0) : (current.is_dev ?? (role === 'dev' ? 1 : 0));
 
   const stmt = db.prepare(`
     UPDATE users
@@ -381,7 +414,8 @@ export function updateUser(id, data) {
         consent_pdpa = ?, consent_at = CASE WHEN ? = 1 AND consent_at IS NULL THEN ? ELSE consent_at END,
         goal_type = ?, goal_score = ?, coins = ?, unlocked_items = ?,
         carbs_goal = ?, protein_goal = ?, fat_goal = ?, sodium_goal = ?, water_goal = ?,
-        water_bottle_ml = ?, water_bottle_name = ?, water_bottle_icon = ?, water_daily_target_ml = ?, water_bottle_setup = ?
+        water_bottle_ml = ?, water_bottle_name = ?, water_bottle_icon = ?, water_daily_target_ml = ?, water_bottle_setup = ?,
+        role = ?, is_dev = ?
     WHERE id = ?
   `);
 
@@ -393,6 +427,7 @@ export function updateUser(id, data) {
     goal_type, goal_score, coins, unlocked_items,
     carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
     water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
+    role, is_dev,
     id
   );
   return getUser(id);

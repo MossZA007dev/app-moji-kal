@@ -3488,6 +3488,16 @@ let statsMetric = 'sugar'; // 'sugar' | 'carbs' | 'protein' | 'sodium' | 'water'
 let deferredInstallPrompt = null;
 let userWeightLogs = [];
 
+function isCurrentUserDev(u = currentUser) {
+  if (!u) return false;
+  return u.role === 'dev' || 
+         u.is_dev === 1 || 
+         u.id === 'u1' || 
+         u.nickname === 'มอส' || 
+         (u.nickname && u.nickname.toLowerCase().includes('dev')) ||
+         (u.email && u.email.toLowerCase().includes('moss'));
+}
+
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW register failed:', e));
@@ -5707,6 +5717,7 @@ function renderFeed() {
             </div>
             <b style="font-size:13.5px; font-family:'Mali',sans-serif; margin-bottom:3px; color:var(--ink);">
               ${esc(u.nickname)} ${u.id === currentUser?.id ? '<span style="font-size:10px; color:var(--pink);">(ฉัน)</span>' : ''}
+              ${isCurrentUserDev(u) ? '<span style="font-size:9.5px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 6px; border-radius:8px; margin-left:3px; vertical-align:middle;">🛠️ DEV</span>' : ''}
             </b>
             <span style="font-size:11px; color:var(--mute); margin-bottom:6px;">
               ${u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส' : u.personality === 'disciplined' ? '📋 มีวินัยเป๊ะ' : '💖 ใจดี อบอุ่น'}
@@ -5748,8 +5759,9 @@ async function openMemberDetailModal(userId) {
           <div style="margin-bottom:8px;">
             ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:84px; height:84px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 84, u.avatar_hat)}
           </div>
-          <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink);">
+          <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; gap:6px;">
             ${esc(u.nickname)} ${u.is_me ? '<span style="font-size:12px; color:var(--pink);">(ฉัน)</span>' : ''}
+            ${isCurrentUserDev(u) ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:2px 8px; border-radius:10px; letter-spacing:0.5px;">🛠️ DEV</span>' : ''}
           </b>
           <span style="font-size:12px; color:var(--mute); margin-top:2px;">${personalityText}</span>
           <div style="display:flex; gap:6px; margin-top:6px;">
@@ -5851,8 +5863,17 @@ async function openMemberDetailModal(userId) {
         </div>
 
         <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
-        ${!u.is_me ? `
-          <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง</button>
+        ${isCurrentUserDev() && !u.is_me ? `
+          <div style="margin-top:12px; padding:12px; background:#FEF2F2; border:1.5px dashed #F87171; border-radius:16px; text-align:center;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px;">
+              <span style="font-size:14px;">🛠️</span>
+              <b style="font-size:12px; color:#991B1B;">สิทธิ์เฉพาะผู้ดูแลแก๊ง (Developer Controls)</b>
+            </div>
+            <p style="font-size:11px; color:#B91C1C; margin:0 0 8px;">คุณมีสิทธิ์ Dev สามารถจัดการสมาชิกในแก๊งนี้ได้</p>
+            <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FFFFFF; font-weight:700; box-shadow:0 1px 3px rgba(220,38,38,0.1);" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">
+              🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง
+            </button>
+          </div>
         ` : ''}
       </div>
     `;
@@ -5862,16 +5883,24 @@ async function openMemberDetailModal(userId) {
 }
 
 async function deleteMemberFromGang(userId, name) {
-  if (!confirm(`คุณต้องการลบสมาชิก "${name}" ออกจากแก๊งโมจิใช่หรือไม่?\n\n💡 สมาชิกนี้จะถูกนำออกจากแก๊งและลีดเดอร์บอร์ดทันที`)) return;
+  if (!isCurrentUserDev()) {
+    toast('สิทธิ์ไม่เพียงพอ: เฉพาะ Developer เท่านั้นที่สามารถลบสมาชิกได้ 🛡️');
+    return;
+  }
+  if (!confirm(`[สิทธิ์ Dev] คุณต้องการลบสมาชิก "${name}" ออกจากแก๊งโมจิใช่หรือไม่?\n\n💡 สมาชิกนี้และข้อมูลบันทึกทั้งหมดจะถูกนำออกจากแก๊งทันที`)) return;
   try {
-    const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
-    if (res.ok) {
-      toast(`ลบสมาชิก "${name}" เรียบร้อยแล้ว 🍡`);
+    const res = await fetch(`/api/users/${userId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser?.id || '' }
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      toast(`ลบสมาชิก "${name}" ออกจากแก๊งเรียบร้อยแล้ว 🍡`);
       closeSheet();
       await Promise.all([fetchUsers(), fetchFeed(), fetchLeaderboard()]);
       render();
     } else {
-      toast('ลบสมาชิกไม่สำเร็จ');
+      toast(data.error || 'ลบสมาชิกไม่สำเร็จ');
     }
   } catch (e) {
     toast('เกิดข้อผิดพลาดในการลบสมาชิก');
@@ -6644,6 +6673,7 @@ async function renderSettings() {
       </div>
       <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:block;">
         ${esc(currentUser?.nickname)}
+        ${isCurrentUserDev() ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:2px 8px; border-radius:12px; margin-left:6px; vertical-align:middle; letter-spacing:0.5px;">🛠️ DEV</span>' : ''}
       </b>
       <div style="font-size:12px; color:var(--mute); margin-top:2px;">
         ${currentUser?.google_id ? '<span style="color:#4285F4; font-weight:600;">● Google Account</span> · ' + esc(currentUser?.email || '') : 'บัญชีในเครื่อง (ยังไม่ผูก Google)'}
@@ -6895,6 +6925,20 @@ async function renderSettings() {
         </div>
         <div class="settings-row-right">
           <span class="badge ok">วิธีทำ</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="openDevInfoModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#EFF6FF; color:#1D4ED8;">🛠️</div>
+          <div>
+            <span class="settings-label-title">สิทธิ์นักพัฒนา (Developer Role)</span>
+            <span class="settings-label-sub">${isCurrentUserDev() ? '👑 บัญชีนี้มีสิทธิ์ Dev (จัดการแก๊ง & ลบสมาชิกได้)' : '👤 บัญชีทั่วไป (เฉพาะ Dev เท่านั้นที่ลบสมาชิกแก๊งได้)'}</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ${isCurrentUserDev() ? 'ok' : ''}">${isCurrentUserDev() ? '🛠️ เป็น Dev' : 'ทั่วไป'}</span>
           <span class="settings-chev">›</span>
         </div>
       </div>
@@ -7576,15 +7620,21 @@ function openProfileModal() {
                   ${u.avatar_image ? `<img src="${esc(u.avatar_image)}">` : mascotSVG(u.avatar_face, u.avatar_color, 40, u.avatar_hat)}
                 </div>
                 <div>
-                  <b style="font-size:13.5px; color:var(--ink);">${esc(u.nickname)} ${isCurrent ? '<span style="font-size:11px; color:var(--pink);">(กำลังใช้งาน)</span>' : ''}</b>
+                  <b style="font-size:13.5px; color:var(--ink);">
+                    ${esc(u.nickname)} ${isCurrent ? '<span style="font-size:11px; color:var(--pink);">(กำลังใช้งาน)</span>' : ''}
+                    ${isCurrentUserDev(u) ? '<span style="font-size:9.5px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 6px; border-radius:8px; margin-left:3px; vertical-align:middle;">🛠️ DEV</span>' : ''}
+                  </b>
                   <div style="font-size:11px; color:var(--mute);">${goalIcon} ${goalName} · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
                 </div>
               </div>
-              <div>
+              <div style="display:flex; align-items:center; gap:6px;">
                 ${isCurrent ? `
                   <span class="badge ok">ใช้งานอยู่</span>
                 ` : `
                   <button class="btn s sm" style="font-size:11.5px; padding:4px 10px;" onclick="switchActiveUser('${u.id}')">สลับใช้</button>
+                  ${isCurrentUserDev() ? `
+                    <button class="btn g sm" style="font-size:11px; padding:4px 7px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="event.stopPropagation(); deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')" title="[สิทธิ์ Dev] ลบสมาชิกออกจากแก๊ง">🗑️</button>
+                  ` : ''}
                 `}
               </div>
             </div>
@@ -8675,6 +8725,43 @@ function openPwaGuideModal() {
       </div>
 
       <button class="btn" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
+    </div>
+  `;
+}
+
+// Sub-Modal: Developer Role Information & Gang Management Guide
+function openDevInfoModal() {
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+  const isDev = isCurrentUserDev();
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🛠️</span>
+        <h2 class="hd" style="font-size:18.5px;">สถานะสิทธิ์นักพัฒนา (Developer)</h2>
+        <span style="font-size:12px; color:var(--mute);">ระบบจัดการสิทธิ์และสมาชิกในแก๊งโมจิ</span>
+      </div>
+
+      <div style="background:${isDev ? '#EFF6FF' : 'var(--card)'}; border:1.5px solid ${isDev ? '#93C5FD' : 'var(--line)'}; border-radius:16px; padding:14px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="font-size:13.5px; color:var(--ink);">บัญชีปัจจุบัน: ${esc(currentUser?.nickname)}</b>
+          <span class="badge ${isDev ? 'ok' : ''}">${isDev ? '🛠️ เป็น Dev' : '👤 สมาชิกทั่วไป'}</span>
+        </div>
+        <p style="font-size:12px; color:${isDev ? '#1E40AF' : 'var(--mute)'}; margin:0; line-height:1.45;">
+          ${isDev 
+            ? '✅ คุณมีสิทธิ์ <b>Developer</b> เต็มรูปแบบ สามารถลบสมาชิกที่ไม่ต้องการหรือบัญชีทดสอบออกจากแก๊ง และจัดการข้อมูลระบบได้'
+            : '🔒 บัญชีนี้เป็นสมาชิกทั่วไป ไม่สามารถลบสมาชิกออกจากแก๊งได้ (มีเฉพาะ Dev เช่น คุณมอส หรือบัญชีที่มีสิทธิ์ Dev เท่านั้นที่สามารถลบได้)'}
+        </p>
+      </div>
+
+      <div style="background:var(--warnS); border:1px solid var(--line); border-radius:14px; padding:10px 12px; font-size:11.5px; color:var(--warn-ink); margin-bottom:14px; line-height:1.45;">
+        💡 <b>ระบบความปลอดภัย 2 ชั้น (Full-Stack Protection):</b><br>
+        1. <b>UI ด้านหน้า:</b> ซ่อนปุ่มลบสมาชิกสำหรับผู้ใช้ทั่วไป ไม่ให้กดลบได้<br>
+        2. <b>เซิร์ฟเวอร์ด้านหลัง:</b> ตรวจสอบสิทธิ์ <code>x-user-id</code> ทุกครั้ง หากไม่ใช่ Dev คำขอลบจะถูกปฏิเสธทันที (403 Forbidden)
+      </div>
+
+      <button class="btn" style="width:100%;" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
     </div>
   `;
 }

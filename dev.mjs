@@ -336,8 +336,37 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (userMatch && req.method === 'DELETE') {
-        db.deleteUserAndData(userMatch[1]);
-        return sendJson(res, 200, { success: true, deleted: userMatch[1] });
+        const targetUserId = userMatch[1];
+        const authUserId = req.headers['x-user-id'] || parsedUrl.searchParams.get('authUserId') || '';
+
+        // Allow self-deletion for PDPA compliance, or Dev users for gang management
+        const isSelf = authUserId && authUserId === targetUserId;
+        const isDev = db.isDevUser(authUserId);
+
+        if (!isSelf && !isDev) {
+          return sendJson(res, 403, { 
+            error: 'สิทธิ์ไม่เพียงพอ: เฉพาะ Developer หรือผู้ดูแลแก๊งเท่านั้นที่สามารถลบสมาชิกออกจากแก๊งได้ 🛡️' 
+          });
+        }
+
+        db.deleteUserAndData(targetUserId);
+        return sendJson(res, 200, { success: true, deleted: targetUserId });
+      }
+
+      // 9.1 Manage Dev Role (Protected: only existing dev can grant/revoke)
+      const roleMatch = pathname.match(/^\/api\/users\/([^/]+)\/role$/);
+      if (roleMatch && req.method === 'POST') {
+        const authUserId = req.headers['x-user-id'] || '';
+        if (!db.isDevUser(authUserId)) {
+          return sendJson(res, 403, { error: 'สิทธิ์ไม่เพียงพอ: เฉพาะ Developer เท่านั้น' });
+        }
+        const body = await parseJsonBody(req);
+        const newRole = body.role === 'dev' ? 'dev' : 'user';
+        const updated = db.updateUser(roleMatch[1], {
+          role: newRole,
+          is_dev: newRole === 'dev' ? 1 : 0
+        });
+        return sendJson(res, 200, { success: true, user: updated });
       }
 
       // 10. Group Feed
