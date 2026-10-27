@@ -4288,7 +4288,7 @@ function mascotSVG(face = 'happy', color = '#FF9EB5', size = 88, hat = 'none', a
 
     // Movie & Series Collection: Game of Thrones
     iron_crown: '<polygon points="34,24 40,6 48,17 60,0 72,17 80,6 86,24" fill="#475569" stroke="#0F172A" stroke-width="1.8"/><line x1="34" y1="22" x2="86" y2="22" stroke="#94A3B8" stroke-width="2"/><circle cx="60" cy="8" r="2.5" fill="#DC2626"/><circle cx="40" cy="11" r="2" fill="#CBD5E1"/><circle cx="80" cy="11" r="2" fill="#CBD5E1"/>',
-    jon_fur: '<path d="M22 68c4-14 18-20 38-20s34 6 38 20c-10 18-66 18-76 0z" fill="#334155" stroke="#1E293B" stroke-width="2"/><ellipse cx="38" cy="62" rx="14" ry="7" fill="#64748B"/><ellipse cx="82" cy="62" rx="14" ry="7" fill="#64748B"/>',
+    jon_fur: '<g><path d="M16 70c-6 10-2 22 8 28c8 4 16-2 16-8c0-8-10-16-24-20z" fill="#334155" stroke="#1E293B" stroke-width="1.2"/><ellipse cx="23" cy="86" rx="6" ry="9" fill="#475569" transform="rotate(-15 23 86)"/><path d="M104 70c6 10 2 22-8 28c-8 4-16-2-16-8c0-8 10-16 24-20z" fill="#334155" stroke="#1E293B" stroke-width="1.2"/><ellipse cx="97" cy="86" rx="6" ry="9" fill="#475569" transform="rotate(15 97 86)"/><path d="M26 94q34 12 68 0c-6 10-56 10-68 0z" fill="#1E293B"/><circle cx="48" cy="94" r="3" fill="#CBD5E1" stroke="#475569" stroke-width="1"/><circle cx="72" cy="94" r="3" fill="#CBD5E1" stroke="#475569" stroke-width="1"/><path d="M48 94q12 4 24 0" fill="none" stroke="#94A3B8" stroke-width="1.5"/><polygon points="24,24 18,-2 46,14" fill="#334155" stroke="#1E293B" stroke-width="1.5"/><polygon points="27,22 22,3 41,15" fill="#64748B"/><polygon points="30,20 26,8 37,16" fill="#CBD5E1" opacity=".6"/><path d="M17 14q-4 3-1 7 M19 6q-3 2 0 5" stroke="#475569" stroke-width="1.5" stroke-linecap="round" fill="none"/><polygon points="96,24 102,-2 74,14" fill="#334155" stroke="#1E293B" stroke-width="1.5"/><polygon points="93,22 98,3 79,15" fill="#64748B"/><polygon points="90,20 94,8 83,16" fill="#CBD5E1" opacity=".6"/><path d="M103 14q4 3 1 7 M101 6q3 2 0 5" stroke="#475569" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M44 16q8-8 16-5q8-8 16 5q-6 3-16 0q-10 3-16 0z" fill="#475569" stroke="#1E293B" stroke-width="1.2"/><path d="M50 15q5-5 10-3q5-5 10 3z" fill="#94A3B8"/></g>',
     targaryen_helm: '<path d="M38 22c4-14 18-20 22-20s18 6 22 20z" fill="#1C1917" stroke="#991B1B" stroke-width="2"/><polygon points="46,12 36,0 52,8" fill="#DC2626"/><polygon points="74,12 84,0 68,8" fill="#DC2626"/><circle cx="60" cy="14" r="3" fill="#F59E0B"/>',
 
     // Movie Collection: Star Wars & Others
@@ -9816,7 +9816,7 @@ const WARDROBE_CONFIG = {
       { id: 'potter_glasses', title: 'แว่นแผลเป็นสายฟ้า', icon: '⚡', series: '⚡ Harry Potter', price: 100 },
       { id: 'gryffindor_scarf', title: 'ผ้าพันคอกริฟฟินดอร์', icon: '🧣', series: '⚡ Harry Potter', price: 120 },
       { id: 'iron_crown', title: 'มงกุฎบัลลังก์เหล็ก', icon: '👑', series: '⚔️ Game of Thrones', mission: { type: 'streak', target: 7, label: 'Streak 7 วันติด ❄️' } },
-      { id: 'jon_fur', title: 'เสื้อคลุมไนท์วอทช์', icon: '🐺', series: '⚔️ Game of Thrones', price: 140 },
+      { id: 'jon_fur', title: 'ฮู้ดหมาป่าไนท์วอทช์', icon: '🐺', series: '⚔️ Game of Thrones', price: 140 },
       { id: 'targaryen_helm', title: 'เกราะมังกรทาร์แกเรียน', icon: '🐉', series: '⚔️ Game of Thrones', price: 160 },
       { id: 'jedi_hood', title: 'ฮู้ดอัศวินเจได', icon: '🥋', series: '🪐 Star Wars', price: 110 },
       { id: 'pirate_hat', title: 'หมวกกัปตันโจรสลัด', icon: '🏴‍☠️', series: '⚓ Pirates of Caribbean', price: 130 },
@@ -9869,7 +9869,7 @@ const WARDROBE_CONFIG = {
       { id: 'valyrian_sword', cat: 'accessory', title: 'ดาบเหล็กวาลีเรียน', icon: '🗡️', series: '⚔️ Game of Thrones', price: 220 },
       { id: 'baby_dragon', cat: 'accessory', title: 'มังกรน้อยโดรก็อน', icon: '🐉', series: '⚔️ Game of Thrones', price: 250 },
       { id: 'iron_crown', cat: 'hat', title: 'มงกุฎบัลลังก์เหล็ก', icon: '👑', series: '⚔️ Game of Thrones', mission: { type: 'streak', target: 7, label: 'Streak 7 วันติด ❄️' } },
-      { id: 'jon_fur', cat: 'hat', title: 'เสื้อคลุมไนท์วอทช์', icon: '🐺', series: '⚔️ Game of Thrones', price: 140 },
+      { id: 'jon_fur', cat: 'hat', title: 'ฮู้ดหมาป่าไนท์วอทช์', icon: '🐺', series: '⚔️ Game of Thrones', price: 140 },
       { id: 'targaryen_helm', cat: 'hat', title: 'เกราะมังกรทาร์แกเรียน', icon: '🐉', series: '⚔️ Game of Thrones', price: 160 },
       { id: 'dragon_egg', cat: 'accessory', title: 'ไข่มังกรโบราณ', icon: '🥚', series: '⚔️ Game of Thrones', price: 130 },
 
