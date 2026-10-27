@@ -2136,8 +2136,17 @@ textarea { resize: none; margin-bottom: 8px; }
   height: 58px;
   border-radius: 50%;
   padding: 2.5px;
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: var(--line);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ig-story-avatar-wrap.has-story {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  box-shadow: 0 0 10px rgba(220, 39, 67, 0.4);
+  animation: igStoryRingPulse 2.4s ease-in-out infinite;
+}
+@keyframes igStoryRingPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 .ig-story-avatar-wrap.achieved {
   background: linear-gradient(135deg, #F59E0B, #10B981, #3B82F6);
@@ -2785,6 +2794,504 @@ textarea { resize: none; margin-bottom: 8px; }
   border-radius: 8px;
   display: inline-block;
   align-self: flex-start;
+}
+
+/* ========================================================
+   INSTAGRAM STORY VIEWER (24-Hour Stories)
+   ======================================================== */
+.story-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(10, 10, 15, 0.96);
+  backdrop-filter: blur(24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+.story-viewer-card {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 96vh;
+  max-height: 840px;
+  background: #18181b;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+  user-select: none;
+}
+@media (max-width: 480px) {
+  .story-viewer-card {
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+}
+.story-bars-row {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  z-index: 30;
+}
+.story-bar-segment {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+.story-bar-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 2px;
+  width: 0%;
+}
+.story-top-header {
+  position: absolute;
+  top: 24px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 30;
+  color: #fff;
+}
+.story-author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.story-author-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.story-time-tag {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+.story-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-profile-btn {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.story-profile-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+.story-close-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.story-slide-image-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #111;
+}
+.story-slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.story-slide-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 35%, rgba(0,0,0,0.08) 60%, rgba(0,0,0,0.45) 100%);
+  z-index: 15;
+}
+.story-tap-zone-left {
+  position: absolute;
+  top: 60px;
+  bottom: 80px;
+  left: 0;
+  width: 35%;
+  z-index: 25;
+  cursor: pointer;
+}
+.story-tap-zone-right {
+  position: absolute;
+  top: 60px;
+  bottom: 80px;
+  right: 0;
+  width: 65%;
+  z-index: 25;
+  cursor: pointer;
+}
+.story-info-card {
+  position: absolute;
+  bottom: 74px;
+  left: 14px;
+  right: 14px;
+  z-index: 26;
+  color: #fff;
+  pointer-events: none;
+}
+.story-dish-title {
+  font-size: 22px;
+  font-family: 'Mali', sans-serif;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  line-height: 1.25;
+}
+.story-nutri-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.story-nutri-badge {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.story-bottom-action-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-reaction-pills {
+  display: flex;
+  gap: 5px;
+}
+.story-reaction-pill {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.story-reaction-pill:hover,
+.story-reaction-pill:active {
+  transform: scale(1.25);
+}
+.story-comment-input {
+  flex: 1;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  padding: 8px 14px !important;
+}
+.story-comment-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+.story-send-btn {
+  background: var(--pink);
+  border: none;
+  color: #fff;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ========================================================
+   INSTAGRAM PROFILE PAGE (Matching Screenshot 2)
+   ======================================================== */
+.ig-profile-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.ig-profile-user-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+.ig-profile-avatar-wrap {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  padding: 3px;
+  background: var(--line);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.ig-profile-avatar-wrap.has-story {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  box-shadow: 0 0 14px rgba(220, 39, 67, 0.4);
+  animation: igStoryRingPulse 2.4s ease-in-out infinite;
+}
+.ig-profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--card);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.ig-profile-avatar-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ig-profile-stats-row {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+.ig-profile-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+}
+.ig-profile-stat-num {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+  line-height: 1.2;
+}
+.ig-profile-stat-label {
+  font-size: 11px;
+  color: var(--mute);
+}
+.ig-profile-bio-box {
+  margin-bottom: 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.ig-profile-bio-name {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.ig-profile-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ig-profile-action-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+.ig-profile-action-btn.primary {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: #fff;
+}
+.ig-profile-action-btn:hover {
+  transform: translateY(-1px);
+}
+.ig-profile-highlights-tray {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 14px;
+  margin-bottom: 10px;
+  scrollbar-width: none;
+}
+.ig-profile-highlights-tray::-webkit-scrollbar { display: none; }
+.ig-highlight-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 60px;
+}
+.ig-highlight-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ig-highlight-item:hover .ig-highlight-circle {
+  transform: scale(1.08);
+  border-color: var(--pink);
+}
+.ig-highlight-name {
+  font-size: 10.5px;
+  color: var(--mute);
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ig-profile-tabs-bar {
+  display: flex;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+.ig-profile-tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--mute);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.ig-profile-tab-btn.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* 3x3 Photo Grid */
+.ig-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-bottom: 16px;
+}
+.ig-grid-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--card);
+  overflow: hidden;
+  cursor: pointer;
+}
+.ig-grid-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.ig-grid-tile:hover img {
+  transform: scale(1.05);
+}
+.ig-grid-camera-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 4px;
+  backdrop-filter: blur(4px);
+}
+.ig-grid-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.ig-grid-tile:hover .ig-grid-hover-overlay {
+  opacity: 1;
+}
+.ig-grid-cal-pill {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+@keyframes floatUpParticle {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+  100% { transform: translateY(-160px) scale(1); opacity: 0; }
 }
 .friend-header {
   display: flex;
@@ -4103,6 +4610,9 @@ textarea { resize: none; margin-bottom: 8px; }
 
 <!-- Bottom Modal Sheet -->
 <div id="sheet" hidden></div>
+
+<!-- Instagram 24-Hour Story Viewer Modal -->
+<div id="storyViewerModal" hidden></div>
 
 <!-- In-App Live Camera Modal Viewfinder -->
 <div id="cameraModal" class="camera-modal" hidden>
@@ -6832,16 +7342,16 @@ function renderFeed() {
 
         <!-- Friends Stories -->
         ${gangStories.map(s => {
-          const isRingGold = s.goal_achieved;
-          const ringClass = isRingGold ? 'achieved' : (s.today_meals > 0 || s.today_water_ml > 0) ? '' : 'idle';
-          const badgeText = s.goal_achieved ? '🎯 สำเร็จ' : s.today_meals > 0 ? `🍱 ${s.today_meals}` : s.today_water_ml > 0 ? `💧 ${(s.today_water_ml/1000).toFixed(1)}L` : `🔥 ${s.streak}d`;
+          const hasStories = !!s.has_stories;
+          const ringClass = hasStories ? 'has-story' : (s.goal_achieved ? 'achieved' : 'idle');
+          const badgeText = hasStories ? `🍱 ${s.story_count}` : (s.goal_achieved ? '🎯 สำเร็จ' : `🔥 ${s.streak}d`);
           return `
-            <div class="ig-story-item" onclick="openMemberDetailModal('${s.id}')" title="กดดูโปรไฟล์ของ ${esc(s.nickname)}">
+            <div class="ig-story-item" onclick="handleStoryCircleClick('${s.id}')" title="${hasStories ? `แตะดูสตอรี่ 24 ชม. ของ ${esc(s.nickname)}` : `ดูโปรไฟล์ของ ${esc(s.nickname)}`}">
               <div class="ig-story-avatar-wrap ${ringClass}">
                 <div class="ig-story-avatar">
                   ${s.avatar_image ? `<img src="${esc(s.avatar_image)}">` : mascotSVG(s.avatar_face, s.avatar_color, 52, s.avatar_hat)}
                 </div>
-                <div class="ig-story-badge">${badgeText}</div>
+                <div class="ig-story-badge" style="${hasStories ? 'background:linear-gradient(45deg, #f09433, #dc2743);' : ''}">${badgeText}</div>
               </div>
               <span class="ig-story-name">${esc(s.nickname)} ${s.is_me ? '(ฉัน)' : ''}</span>
             </div>
@@ -7520,154 +8030,721 @@ function renderFeed() {
   `;
 }
 
-// Member Profile Detail Modal & Interactive Cheer System
-async function openMemberDetailModal(userId) {
+// ========================================================
+// INSTAGRAM 24-HOUR STORY VIEWER SYSTEM
+// ========================================================
+let currentStoryUser = null;
+let currentStoryList = [];
+let activeStoryIdx = 0;
+let storyTimerInterval = null;
+let storyProgressPct = 0;
+let isStoryPaused = false;
+let viewedStoryIds = new Set();
+
+function handleStoryCircleClick(userId) {
+  const member = gangStories.find(s => s.id === userId);
+  if (member && member.has_stories && member.stories && member.stories.length > 0) {
+    openStoryViewer(userId);
+  } else {
+    // If no stories in 24h, check via API or open their Instagram profile
+    fetch(`/api/members/${userId}`, { headers: { 'x-user-id': currentUser?.id || '' } })
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.stories && d.stories.length > 0) {
+          launchStoryViewer(d.user, d.stories);
+        } else {
+          openMemberDetailModal(userId);
+        }
+      })
+      .catch(() => openMemberDetailModal(userId));
+  }
+}
+
+function openStoryViewer(userId) {
+  let member = gangStories.find(s => s.id === userId);
+  if (member && member.stories && member.stories.length > 0) {
+    launchStoryViewer(member, member.stories);
+    return;
+  }
+  fetch(`/api/members/${userId}`, { headers: { 'x-user-id': currentUser?.id || '' } })
+    .then(r => r.json())
+    .then(d => {
+      if (d && d.stories && d.stories.length > 0) {
+        launchStoryViewer(d.user, d.stories);
+      } else {
+        toast(`ยังไม่มีสตอรี่มื้ออาหารใน 24 ชม. ของ ${d?.user?.nickname || 'เพื่อน'} 🍡`);
+        openMemberDetailModal(userId);
+      }
+    })
+    .catch(() => {
+      toast('ไม่สามารถเปิดสตอรี่ได้');
+    });
+}
+
+function launchStoryViewer(user, stories) {
+  currentStoryUser = user;
+  currentStoryList = stories;
+  activeStoryIdx = 0;
+  storyProgressPct = 0;
+  isStoryPaused = false;
+
+  const modal = $('#storyViewerModal');
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+
+  renderCurrentStorySlide();
+  startStoryTimer();
+}
+
+function closeStoryViewer() {
+  clearInterval(storyTimerInterval);
+  storyTimerInterval = null;
+  const modal = $('#storyViewerModal');
+  if (modal) {
+    modal.hidden = true;
+    modal.innerHTML = '';
+  }
+  document.body.style.overflow = '';
+}
+
+function renderCurrentStorySlide() {
+  const modal = $('#storyViewerModal');
+  if (!modal || !currentStoryUser || !currentStoryList.length) return;
+
+  const story = currentStoryList[activeStoryIdx];
+  if (!story) return;
+
+  viewedStoryIds.add(story.id);
+
+  const timeAgo = formatTimeAgo(story.created_at);
+  const foodPhoto = resolveFoodPhoto(story.name, story.image_url);
+  const likesCount = story.reactions?.likes_count || 0;
+  const isLiked = !!story.reactions?.liked_by_me;
+
+  modal.innerHTML = `
+    <div class="story-viewer-backdrop" onclick="if(event.target===this) closeStoryViewer()">
+      <div class="story-viewer-card" id="storyCardContainer"
+           onmousedown="pauseStory()" onmouseup="resumeStory()"
+           ontouchstart="pauseStory()" ontouchend="resumeStory()">
+
+        <!-- Multi-Segment Progress Bars -->
+        <div class="story-bars-row">
+          ${currentStoryList.map((s, idx) => `
+            <div class="story-bar-segment">
+              <div class="story-bar-fill" id="storyBarFill_${idx}"
+                   style="width: ${idx < activeStoryIdx ? '100%' : (idx === activeStoryIdx ? storyProgressPct + '%' : '0%')};">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Top Header: Avatar, Name, Time, Profile Jump & Close -->
+        <div class="story-top-header">
+          <div class="story-author-info" onclick="event.stopPropagation(); closeStoryViewer(); openMemberDetailModal('${currentStoryUser.id}')">
+            <div style="width:36px; height:36px; border-radius:50%; overflow:hidden; border:2px solid #fff; background:#222; display:flex; align-items:center; justify-content:center;">
+              ${currentStoryUser.avatar_image ? `<img src="${esc(currentStoryUser.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(currentStoryUser.avatar_face || 'happy', currentStoryUser.avatar_color || '#FF9EB5', 36, currentStoryUser.avatar_hat)}
+            </div>
+            <div>
+              <div class="story-author-name">${esc(currentStoryUser.nickname)}</div>
+              <div class="story-time-tag">${timeAgo} · 🍱 ${activeStoryIdx + 1}/${currentStoryList.length}</div>
+            </div>
+          </div>
+          <div class="story-header-actions" onclick="event.stopPropagation()">
+            <button class="story-profile-btn" onclick="closeStoryViewer(); openMemberDetailModal('${currentStoryUser.id}')">
+              👤 ดูโปรไฟล์
+            </button>
+            <button class="story-close-btn" onclick="closeStoryViewer()">✕</button>
+          </div>
+        </div>
+
+        <!-- Slide Background & Media -->
+        <div class="story-slide-image-wrap">
+          <img src="${foodPhoto}" class="story-slide-img" alt="${esc(story.name)}">
+          <div class="story-slide-gradient-overlay"></div>
+        </div>
+
+        <!-- Tap zones for Previous & Next -->
+        <div class="story-tap-zone-left" onclick="storyPrev(event)"></div>
+        <div class="story-tap-zone-right" onclick="storyNext(event)"></div>
+
+        <!-- Story Content Overlay Card -->
+        <div class="story-info-card">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="background:rgba(255,107,139,0.9); color:#fff; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:8px; text-transform:uppercase; letter-spacing:0.5px;">
+              ⚡ สตอรี่ 24 ชม.
+            </span>
+            ${story.image_url ? '<span style="background:rgba(0,0,0,0.6); font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid rgba(255,255,255,0.3);">📷 รูปถ่ายจริง</span>' : ''}
+          </div>
+          <h2 class="story-dish-title">${esc(story.name)}</h2>
+          <div class="story-nutri-badges">
+            <span class="story-nutri-badge" style="background:#FFE4E6; color:#BE123C; border-color:#FDA4AF;">🔥 ${fmt(story.calorie)} kcal</span>
+            <span class="story-nutri-badge" style="background:#ECFDF5; color:#047857; border-color:#A7F3D0;">🍬 น้ำตาล ${fmt(story.sugar)}g</span>
+            <span class="story-nutri-badge" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;">💪 โปรตีน ${fmt(story.protein || 0)}g</span>
+            <span class="story-nutri-badge" style="background:#FFFBEB; color:#B45309; border-color:#FDE68A;">🍚 คาร์บ ${fmt(story.carbs || 0)}g</span>
+            <span class="story-nutri-badge" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE;">🥑 ไขมัน ${fmt(story.fat || 0)}g</span>
+          </div>
+          <div style="font-size:11.5px; color:rgba(255,255,255,0.9); display:flex; gap:8px;">
+            <span>🍽️ ขนาด: <b>${esc(story.portion_size || 'ปกติ')}</b></span>
+            ${story.sweetness_level && story.sweetness_level !== 'normal' ? `<span>🍯 หวาน: <b>${esc(story.sweetness_level)}</b></span>` : ''}
+          </div>
+        </div>
+
+        <!-- Interactive Reaction & Direct Comment Bar -->
+        <div class="story-bottom-action-bar" onclick="event.stopPropagation()">
+          <div class="story-reaction-pills">
+            <button class="story-reaction-pill" onclick="sendStoryReaction('${story.id}', 'heart')" title="ถูกใจ">
+              ${isLiked ? '❤️' : '🤍'}
+            </button>
+            <button class="story-reaction-pill" onclick="sendStoryReaction('${story.id}', '🔥')" title="ไฟลุก">🔥</button>
+            <button class="story-reaction-pill" onclick="sendStoryReaction('${story.id}', '🤤')" title="น่ากิน">🤤</button>
+            <button class="story-reaction-pill" onclick="sendStoryReaction('${story.id}', '👏')" title="ปรบมือ">👏</button>
+          </div>
+          <input type="text" id="storyCommentInput" class="story-comment-input"
+                 placeholder="ส่งข้อความถึง ${esc(currentStoryUser.nickname)}..."
+                 onfocus="pauseStory()" onblur="resumeStory()"
+                 onkeydown="if(event.key==='Enter') sendStoryComment('${story.id}')">
+          <button class="story-send-btn" onclick="sendStoryComment('${story.id}')">ส่ง</button>
+        </div>
+
+        <!-- Floating Particles Container -->
+        <div id="storyFloatingContainer" style="position:absolute; inset:0; pointer-events:none; z-index:40; overflow:hidden;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function startStoryTimer() {
+  clearInterval(storyTimerInterval);
+  storyTimerInterval = setInterval(() => {
+    if (isStoryPaused) return;
+    storyProgressPct += 1.25; // approx 4 seconds per story
+    const activeFill = $(`#storyBarFill_${activeStoryIdx}`);
+    if (activeFill) {
+      activeFill.style.width = Math.min(100, storyProgressPct) + '%';
+    }
+    if (storyProgressPct >= 100) {
+      storyNext();
+    }
+  }, 50);
+}
+
+function pauseStory() {
+  isStoryPaused = true;
+}
+
+function resumeStory() {
+  isStoryPaused = false;
+}
+
+function storyNext(e) {
+  if (e) e.stopPropagation();
+  if (activeStoryIdx < currentStoryList.length - 1) {
+    activeStoryIdx++;
+    storyProgressPct = 0;
+    renderCurrentStorySlide();
+    startStoryTimer();
+  } else {
+    // Automatically transition to next gang member with active stories
+    const usersWithStories = gangStories.filter(u => u.has_stories && u.stories && u.stories.length > 0);
+    const currentUserIdx = usersWithStories.findIndex(u => u.id === currentStoryUser.id);
+    if (currentUserIdx !== -1 && currentUserIdx < usersWithStories.length - 1) {
+      const nextUser = usersWithStories[currentUserIdx + 1];
+      launchStoryViewer(nextUser, nextUser.stories);
+    } else {
+      closeStoryViewer();
+    }
+  }
+}
+
+function storyPrev(e) {
+  if (e) e.stopPropagation();
+  if (activeStoryIdx > 0) {
+    activeStoryIdx--;
+    storyProgressPct = 0;
+    renderCurrentStorySlide();
+    startStoryTimer();
+  } else {
+    const usersWithStories = gangStories.filter(u => u.has_stories && u.stories && u.stories.length > 0);
+    const currentUserIdx = usersWithStories.findIndex(u => u.id === currentStoryUser.id);
+    if (currentUserIdx > 0) {
+      const prevUser = usersWithStories[currentUserIdx - 1];
+      launchStoryViewer(prevUser, prevUser.stories);
+    } else {
+      storyProgressPct = 0;
+      startStoryTimer();
+    }
+  }
+}
+
+async function sendStoryReaction(storyId, reaction) {
+  if (!currentUser) return;
+  spawnStoryFloatingParticle(reaction === 'heart' ? '❤️' : reaction);
+
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId: storyId, reactionType: reaction === 'heart' ? 'heart' : 'comment', commentText: reaction !== 'heart' ? reaction : '' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const s = currentStoryList.find(x => x.id === storyId);
+      if (s) {
+        if (!s.reactions) s.reactions = { likes_count: 0, liked_by_me: false, comments: [] };
+        if (reaction === 'heart') {
+          s.reactions.liked_by_me = data.liked;
+          s.reactions.likes_count += (data.liked ? 1 : -1);
+        }
+      }
+      toast(`ส่งกำลังใจให้ ${currentStoryUser?.nickname || 'เพื่อน'} แล้ว! ${reaction === 'heart' ? '❤️' : reaction}`);
+      renderCurrentStorySlide();
+    }
+  } catch (e) {}
+}
+
+async function sendStoryComment(storyId) {
+  const input = $('#storyCommentInput');
+  if (!input || !input.value.trim() || !currentUser) return;
+  const text = input.value.trim();
+  input.value = '';
+  resumeStory();
+  spawnStoryFloatingParticle('💌');
+
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId: storyId, reactionType: 'comment', commentText: text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast(`ส่งข้อความถึง ${currentStoryUser?.nickname || 'เพื่อน'} แล้ว! 💌`);
+    }
+  } catch (e) {
+    toast('ส่งข้อความไม่สำเร็จ');
+  }
+}
+
+function spawnStoryFloatingParticle(char) {
+  const container = $('#storyFloatingContainer');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.textContent = char;
+  el.style.cssText = `
+    position: absolute;
+    bottom: 80px;
+    left: ${30 + Math.random() * 50}%;
+    font-size: ${26 + Math.random() * 14}px;
+    animation: floatUpParticle 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  `;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+// ========================================================
+// INSTAGRAM MEMBER PROFILE & 3X3 PHOTO GRID
+// ========================================================
+let currentMemberProfileData = null;
+let currentMemberProfileTab = 'grid'; // 'grid' | 'list' | 'badges'
+
+async function openMemberDetailModal(userId, initialTab = 'grid') {
   const el = $('#sheet');
   el.hidden = false;
-  el.innerHTML = '<div class="sh" style="text-align:center; padding:30px;">กำลังโหลดข้อมูลเพื่อน... 🍡</div>';
+  el.innerHTML = '<div class="sh" style="text-align:center; padding:40px;"><div style="font-size:28px; margin-bottom:8px;">🍡</div>กำลังโหลดโปรไฟล์...</div>';
 
   try {
     const res = await fetch(`/api/members/${userId}`, {
       headers: { 'x-user-id': currentUser?.id || '' }
     });
     const data = await res.json();
-    const u = data.user;
-    const stats = data.stats;
-    const badges = data.badges || [];
-    const meals = data.todayMeals || [];
-    const todayGoal = data.todayGoal || null;
+    if (!data.user) throw new Error('Member not found');
 
-    const personalityText = u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส พลังบวกสูง'
-      : u.personality === 'disciplined' ? '📋 มีวินัย มีแบบแผน ชัดเจน'
-      : '💖 ใจดี อบอุ่น เป็นมิตร';
+    currentMemberProfileData = data;
+    currentMemberProfileTab = initialTab || 'grid';
+    renderMemberProfileModalContent();
+  } catch (err) {
+    el.innerHTML = '<div class="sh" style="text-align:center; padding:30px;">เกิดข้อผิดพลาดในการโหลดโปรไฟล์ <button class="btn g sm" style="margin-top:10px;" onclick="closeSheet()">ปิด</button></div>';
+  }
+}
 
-    el.innerHTML = `
-      <div class="sh">
-        <!-- Profile Header -->
-        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding: 10px 0 14px; border-bottom: 1px solid var(--line);">
-          <div style="margin-bottom:8px;">
-            ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:84px; height:84px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 84, u.avatar_hat)}
+function setMemberProfileTab(tabName) {
+  currentMemberProfileTab = tabName;
+  renderMemberProfileModalContent();
+}
+
+function renderMemberProfileModalContent() {
+  const el = $('#sheet');
+  if (!el || !currentMemberProfileData) return;
+
+  const data = currentMemberProfileData;
+  const u = data.user;
+  const stats = data.stats || {};
+  const badges = data.badges || [];
+  const allMeals = data.allMeals || [];
+  const stories = data.stories || [];
+  const hasStories = !!data.has_stories;
+  const isMe = !!u.is_me;
+  const isDev = isCurrentUserDev(u);
+
+  const goalTypeNames = {
+    weight_loss: 'ลดน้ำหนัก',
+    sugar_cut: 'ลดน้ำตาล',
+    healthy_balance: 'สมดุลสุขภาพ',
+    muscle_gain: 'สร้างกล้ามเนื้อ'
+  };
+  const goalName = goalTypeNames[u.goal_type] || 'ลดน้ำหนัก';
+  const personalityText = u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส พลังบวกสูง'
+    : u.personality === 'disciplined' ? '📋 มีวินัย มีแบบแผน ชัดเจน'
+    : '💖 ใจดี อบอุ่น เป็นมิตร';
+
+  el.innerHTML = `
+    <div class="sh">
+      <!-- IG Profile Top Header Bar -->
+      <div class="ig-profile-header-bar">
+        <button class="btn g sm" style="padding:4px 10px; font-size:14px; border:none;" onclick="closeSheet()">‹ กลับ</button>
+        <b style="font-size:16px; font-family:'Mali',sans-serif; color:var(--ink);">@${esc(u.nickname)}</b>
+        <div style="width:40px; text-align:right;">
+          ${isDev ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:2px 7px; border-radius:8px;">DEV</span>' : '<span>···</span>'}
+        </div>
+      </div>
+
+      <!-- User Summary Row (Avatar + 3 Stats like IG Screenshot 2) -->
+      <div class="ig-profile-user-summary">
+        <!-- Avatar with Story Ring -->
+        <div class="ig-profile-avatar-wrap ${hasStories ? 'has-story' : ''}"
+             onclick="${hasStories ? `closeSheet(); openStoryViewer('${u.id}')` : (isMe ? "$('#profilePhotoFileInput').click()" : '')}"
+             title="${hasStories ? 'แตะดูสตอรี่ 24 ชม.' : ''}">
+          <div class="ig-profile-avatar-img">
+            ${u.avatar_image ? `<img src="${esc(u.avatar_image)}">` : mascotSVG(u.avatar_face, u.avatar_color, 82, u.avatar_hat)}
           </div>
-          <b style="font-size:18px; font-family:'Mali',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; gap:6px;">
-            ${esc(u.nickname)} ${u.is_me ? '<span style="font-size:12px; color:var(--pink);">(ฉัน)</span>' : ''}
-            ${isCurrentUserDev(u) ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:2px 8px; border-radius:10px; letter-spacing:0.5px;">🛠️ DEV</span>' : ''}
-          </b>
-          <span style="font-size:12px; color:var(--mute); margin-top:2px;">${personalityText}</span>
-          <div style="display:flex; gap:6px; margin-top:6px;">
-            <span class="coin-pill" style="font-size:12px; padding:4px 12px;">🪙 ${u.coins || 120} คอยน์</span>
-            <span class="goal-score-tag" style="font-size:12px; padding:4px 12px;">🎯 ${u.goal_score || 150} คะแนนวินัย</span>
-          </div>
+          ${hasStories ? '<div style="position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); background:linear-gradient(45deg, #f09433, #dc2743); color:#fff; font-size:9px; font-weight:800; padding:1px 6px; border-radius:8px; white-space:nowrap; border:1px solid #fff;">สตอรี่ 24 ชม.</div>' : ''}
+          ${isMe && !hasStories ? '<div class="camera-badge" style="position:absolute; bottom:0; right:0; width:24px; height:24px; font-size:12px; background:#3B82F6; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff;">📷</div>' : ''}
         </div>
 
-        <!-- Personalized Health Goal Showcase -->
-        ${todayGoal ? `
-          <div style="background:var(--card); border:1.5px solid ${todayGoal.achieved ? 'var(--mint)' : 'var(--line)'}; border-radius:16px; padding:10px 14px; margin: 12px 0 8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:12.5px; font-weight:700; color:var(--ink);">
-                ${todayGoal.badge_icon || '🎯'} <b>เป้าหมายเฉพาะบุคคล:</b> ${esc(todayGoal.goal_label)}
-              </span>
-              <span class="goal-score-tag">🎯 ${fmt(u.goal_score || 150)} pt</span>
-            </div>
-            <div style="font-size:11.5px; margin-bottom:6px;">
-              ${todayGoal.achieved
-                ? `<span class="goal-chip-achieved">🎉 วันนี้ทำตามเป้าหมายสำเร็จ! (+50 pt)</span>`
-                : `<span class="goal-chip-progress">⏳ ${esc(todayGoal.status_text)}</span>`}
-            </div>
-            <div class="bar-track" style="height:8px;">
-              <div class="bar-fill" style="width:${Math.min(100, todayGoal.progress_percent || 0)}%; background:${todayGoal.achieved ? 'var(--mint)' : 'var(--pink)'};"></div>
-            </div>
+        <!-- 3 Stats Columns -->
+        <div class="ig-profile-stats-row">
+          <div class="ig-profile-stat-box" onclick="setMemberProfileTab('grid')">
+            <span class="ig-profile-stat-num">${allMeals.length}</span>
+            <span class="ig-profile-stat-label">โพสต์มื้อ</span>
           </div>
-        ` : ''}
-
-        <!-- 4 Stat Boxes (Theme-Adaptive) -->
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin: 10px 0 12px;">
-          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:13.5px; color:var(--warn-ink); display:block;">🎯 ${u.goal_score || 150}</b>
-            <small style="font-size:10.5px; color:var(--mute);">คะแนนวินัย</small>
+          <div class="ig-profile-stat-box" onclick="toast('สตรีคปัจจุบัน: ${stats.streak} วันติดต่อกัน! 🔥')">
+            <span class="ig-profile-stat-num">🔥 ${stats.streak}d</span>
+            <span class="ig-profile-stat-label">วันสตรีค</span>
           </div>
-          <div style="background:var(--pinkS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:13.5px; color:var(--pink-ink); display:block;">🔥 ${stats.streak}</b>
-            <small style="font-size:10.5px; color:var(--mute);">วันติด</small>
-          </div>
-          <div style="background:var(--mintS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:13.5px; color:var(--mint-ink); display:block;">🪙 ${u.coins || 120}</b>
-            <small style="font-size:10.5px; color:var(--mute);">คอยน์</small>
-          </div>
-          <div style="background:var(--purpleS); border:1px solid var(--line); border-radius:12px; padding:8px 4px; text-align:center;">
-            <b style="font-size:13.5px; color:var(--purple-ink); display:block;" id="modalCheersCount">💖 ${stats.cheersReceived}</b>
-            <small style="font-size:10.5px; color:var(--mute);">กำลังใจ</small>
+          <div class="ig-profile-stat-box" onclick="toast('คะแนนวินัยเป้าหมายสะสม 🎯')">
+            <span class="ig-profile-stat-num">🎯 ${u.goal_score || 150}</span>
+            <span class="ig-profile-stat-label">คะแนนวินัย</span>
           </div>
         </div>
+      </div>
 
-        <!-- Interactive Send Cheer Section (If not me) -->
-        ${!u.is_me ? `
-          <div style="background:var(--warnS); border:1px solid var(--line); border-radius:16px; padding:10px 12px; margin-bottom:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <b style="font-size:12.5px; color:var(--warn-ink);">💌 ส่งกำลังใจให้ ${esc(u.nickname)}</b>
-              <small style="font-size:11px; color:var(--mute);">(ได้คนละ +2 🪙)</small>
-            </div>
-            <div style="display:flex; gap:6px; justify-content:space-between;">
-              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'heart')">💖 หัวใจ</button>
-              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'hi5')">✋ ไฮไฟฟ์</button>
-              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'mochi')">🍡 โมจิ</button>
-              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'fire')">🔥 สู้ๆ</button>
-              <button class="btn s sm" style="flex:1; padding:5px 4px; font-size:11.5px;" onclick="sendCheerFromModal('${u.id}', 'clap')">👏 ปรบมือ</button>
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Badges Showcase -->
-        <div style="margin-bottom:12px;">
-          <b style="font-size:13px; font-family:'Mali',sans-serif; display:block; margin-bottom:6px; color:var(--ink);">🏅 ตราสัญลักษณ์สุขภาพ (Badges):</b>
-          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">
-            ${badges.map(b => `
-              <div style="background:${b.unlocked ? 'var(--mintS)' : 'var(--card)'}; border:1px solid ${b.unlocked ? 'var(--mint)' : 'var(--line)'}; border-radius:12px; padding:6px 8px; display:flex; align-items:center; gap:6px; opacity:${b.unlocked ? '1' : '0.6'};">
-                <span style="font-size:16px;">${b.unlocked ? '✨' : '🔒'}</span>
-                <div>
-                  <b style="font-size:11.5px; display:block; color:${b.unlocked ? 'var(--mint-ink)' : 'var(--mute)'};">${esc(b.title)}</b>
-                  <small style="font-size:10px; color:var(--mute);">${esc(b.desc)}</small>
-                </div>
-              </div>
-            `).join('')}
-          </div>
+      <!-- Bio Section -->
+      <div class="ig-profile-bio-box">
+        <div class="ig-profile-bio-name">
+          <span>${esc(u.nickname)}</span>
+          ${isMe ? '<span style="font-size:11px; color:var(--pink); font-weight:700;">(ฉัน)</span>' : ''}
+          ${isDev ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 7px; border-radius:8px;">🛠️ DEVELOPER</span>' : '<span style="font-size:10px; font-weight:700; background:var(--pinkS); color:var(--pink-ink); padding:1px 7px; border-radius:8px;">🍡 สมาชิกแก๊ง</span>'}
         </div>
-
-        <!-- Today Meals -->
-        <div style="margin-bottom:14px;">
-          <b style="font-size:13px; font-family:'Mali',sans-serif; display:block; margin-bottom:6px; color:var(--ink);">🍱 มื้ออาหารวันนี้:</b>
-          ${u.privacy_level === 'summary' && !u.is_me ? `
-            <div style="font-size:12px; color:var(--mute); background:var(--card); border:1px solid var(--line); padding:10px; border-radius:12px; text-align:center;">
-              🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
-            </div>
-          ` : meals.length ? `
-            <div class="friend-meals" style="max-height:140px; overflow-y:auto;">
-              ${meals.map(m => `
-                <div class="meal-item">
-                  <span>${esc(m.name)}</span>
-                  <span style="color:var(--mute);">${fmt(m.calorie)} kcal · ${fmt(m.sugar)}g</span>
-                </div>
-              `).join('')}
-            </div>
-          ` : '<div style="font-size:12px; color:var(--mute); padding:6px 0;">ยังไม่มีบันทึกมื้ออาหารวันนี้</div>'}
+        <div style="color:var(--mute); margin-bottom:4px;">${personalityText}</div>
+        <div style="font-size:11.5px; color:var(--ink); line-height:1.5;">
+          🎯 เป้าหมาย: <b>${goalName}</b> · ⚡ <b>${u.calorie_goal || 1850}</b> kcal · 🍬 <b>${u.sugar_goal || 25}g</b><br>
+          💧 เป้าดื่มน้ำ: <b>${((u.water_daily_target_ml || 2000)/1000).toFixed(1)}L</b> / วัน · 🪙 <b>${u.coins || 120}</b> คอยน์
         </div>
+      </div>
 
-        <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
-        ${isCurrentUserDev() && !u.is_me ? `
-          <div style="margin-top:12px; padding:12px; background:#FEF2F2; border:1.5px dashed #F87171; border-radius:16px; text-align:center;">
-            <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px;">
-              <span style="font-size:14px;">🛠️</span>
-              <b style="font-size:12px; color:#991B1B;">สิทธิ์เฉพาะผู้ดูแลแก๊ง (Developer Controls)</b>
-            </div>
-            <p style="font-size:11px; color:#B91C1C; margin:0 0 8px;">คุณมีสิทธิ์ Dev สามารถจัดการสมาชิกในแก๊งนี้ได้</p>
-            <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FFFFFF; font-weight:700; box-shadow:0 1px 3px rgba(220,38,38,0.1);" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">
-              🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง
-            </button>
+      <!-- Action Buttons Row -->
+      <div class="ig-profile-actions-row">
+        ${!isMe ? `
+          <button class="ig-profile-action-btn primary" onclick="sendCheerFromModal('${u.id}', 'heart')">💖 ส่งหัวใจ</button>
+          <button class="ig-profile-action-btn" onclick="closeSheet(); go('chat');">💬 แชทโมจิ</button>
+          <button class="ig-profile-action-btn" onclick="toast('ส่งคำท้าประลองวินัยให้ ${esc(u.nickname)} แล้ว! ⚔️')">🎯 ชวนแข่ง</button>
+        ` : `
+          <button class="ig-profile-action-btn primary" onclick="closeSheet(); openOnboardingModal({ isNewUser:false, initialStep:2 });">✏️ ปรับเป้าหมาย</button>
+          <button class="ig-profile-action-btn" onclick="closeSheet(); go('fashion');">🛍️ แต่งตัวโมจิ</button>
+          <button class="ig-profile-action-btn" onclick="shareGangInviteLink()">🔗 ชวนเพื่อน</button>
+        `}
+      </div>
+
+      <!-- Story Highlights Tray (Like IG Screenshot 2) -->
+      <div class="ig-profile-highlights-tray">
+        <div class="ig-highlight-item" onclick="setMemberProfileTab('badges')">
+          <div class="ig-highlight-circle">🏆</div>
+          <span class="ig-highlight-name">ภารกิจ</span>
+        </div>
+        <div class="ig-highlight-item" onclick="setMemberProfileTab('grid')">
+          <div class="ig-highlight-circle">🍱</div>
+          <span class="ig-highlight-name">มื้อทั้งหมด</span>
+        </div>
+        <div class="ig-highlight-item" onclick="toast('สถิติสตรีคดีที่สุด: ${stats.bestStreak || stats.streak} วันติดต่อกัน! 🔥')">
+          <div class="ig-highlight-circle">🔥</div>
+          <span class="ig-highlight-name">สถิติดีสุด</span>
+        </div>
+        <div class="ig-highlight-item" onclick="toast('เป้าหมายดื่มน้ำ: ${((u.water_daily_target_ml || 2000)/1000).toFixed(1)} ลิตร/วัน 💧')">
+          <div class="ig-highlight-circle">💧</div>
+          <span class="ig-highlight-name">ดื่มน้ำ</span>
+        </div>
+        ${hasStories ? `
+          <div class="ig-highlight-item" onclick="closeSheet(); openStoryViewer('${u.id}')">
+            <div class="ig-highlight-circle" style="background:linear-gradient(45deg, #f09433, #dc2743); color:#fff;">✨</div>
+            <span class="ig-highlight-name">สตอรี่ 24h</span>
           </div>
         ` : ''}
       </div>
-    `;
-  } catch (err) {
-    el.innerHTML = '<div class="sh" style="text-align:center; padding:20px;">เกิดข้อผิดพลาดในการโหลดข้อมูล <button class="btn g sm" onclick="closeSheet()">ปิด</button></div>';
+
+      <!-- Tabs Bar: [田] 3x3 Photo Grid, [📋] List View, [🏅] Badges -->
+      <div class="ig-profile-tabs-bar">
+        <button class="ig-profile-tab-btn ${currentMemberProfileTab === 'grid' ? 'active' : ''}" onclick="setMemberProfileTab('grid')" title="ตารางรูปภาพ 3x3 (เหมือน IG)">
+          田
+        </button>
+        <button class="ig-profile-tab-btn ${currentMemberProfileTab === 'list' ? 'active' : ''}" onclick="setMemberProfileTab('list')" title="รายการมื้ออาหาร">
+          📋
+        </button>
+        <button class="ig-profile-tab-btn ${currentMemberProfileTab === 'badges' ? 'active' : ''}" onclick="setMemberProfileTab('badges')" title="ตราเกียรติยศ">
+          🏅
+        </button>
+      </div>
+
+      <!-- TAB 1: 3x3 PHOTO GRID (Instagram Grid) -->
+      ${currentMemberProfileTab === 'grid' ? `
+        ${u.privacy_level === 'summary' && !isMe ? `
+          <div style="font-size:12px; color:var(--mute); background:var(--card); border:1px solid var(--line); padding:24px 16px; border-radius:16px; text-align:center; margin: 12px 0;">
+            🔒 <b>${esc(u.nickname)}</b> ตั้งค่าแชร์เฉพาะภาพรวมตัวเลข ไม่เปิดเผยรูปภาพมื้ออาหาร
+          </div>
+        ` : allMeals.length === 0 ? `
+          <div style="text-align:center; padding:36px 16px; color:var(--mute);">
+            <div style="font-size:38px; margin-bottom:8px;">📷</div>
+            <b style="font-size:14px; color:var(--ink);">ยังไม่มีโพสต์รูปอาหาร</b><br>
+            <span style="font-size:12px;">${isMe ? 'ถ่ายรูปอาหารหรือบันทึกมื้อแรกเพื่อเริ่มสร้างฟีดไอจีของคุณ!' : `${esc(u.nickname)} ยังไม่ได้โพสต์มื้ออาหาร`}</span>
+            ${isMe ? `
+              <div style="margin-top:14px;">
+                <button class="btn sm" onclick="closeSheet(); openCameraModal();">📸 ถ่ายรูปมื้อแรกเลย</button>
+              </div>
+            ` : ''}
+          </div>
+        ` : `
+          <div class="ig-photo-grid">
+            ${allMeals.map(m => {
+              const photo = resolveFoodPhoto(m.name, m.image_url);
+              const likes = m.reactions?.likes_count || 0;
+              const comments = m.reactions?.comments?.length || 0;
+              return `
+                <div class="ig-grid-tile" onclick="openFoodPostDetailModal('${m.id}')">
+                  <img src="${photo}" alt="${esc(m.name)}" loading="lazy">
+                  ${m.image_url ? '<span class="ig-grid-camera-badge">📷</span>' : ''}
+                  <span class="ig-grid-cal-pill">🔥 ${fmt(m.calorie)}</span>
+                  <div class="ig-grid-hover-overlay">
+                    <span>❤️ ${likes}</span>
+                    <span>💬 ${comments}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      ` : ''}
+
+      <!-- TAB 2: LIST VIEW -->
+      ${currentMemberProfileTab === 'list' ? `
+        <div style="display:flex; flex-direction:column; gap:8px; margin: 10px 0 16px;">
+          ${u.privacy_level === 'summary' && !isMe ? `
+            <div style="font-size:12px; color:var(--mute); background:var(--card); border:1px solid var(--line); padding:16px; border-radius:14px; text-align:center;">
+              🔒 ${esc(u.nickname)} เลือกแชร์เฉพาะภาพรวมตัวเลข
+            </div>
+          ` : allMeals.length === 0 ? `
+            <div style="text-align:center; padding:24px; color:var(--mute); font-size:12px;">
+              ยังไม่มีบันทึกมื้ออาหาร
+            </div>
+          ` : allMeals.map(m => `
+            <div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--card); border:1px solid var(--line); border-radius:14px; cursor:pointer;" onclick="openFoodPostDetailModal('${m.id}')">
+              <div style="width:48px; height:48px; border-radius:10px; overflow:hidden; flex-shrink:0;">
+                <img src="${resolveFoodPhoto(m.name, m.image_url)}" style="width:100%; height:100%; object-fit:cover;">
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:700; color:var(--ink);">${esc(m.name)}</div>
+                <div style="font-size:11px; color:var(--mute);">${m.date || ''} · ${m.portion_size || 'ปกติ'}</div>
+              </div>
+              <div style="text-align:right; flex-shrink:0;">
+                <b style="font-size:13.5px; color:var(--pink);">${fmt(m.calorie)} kcal</b><br>
+                <small style="font-size:10.5px; color:var(--mute);">🍬 ${fmt(m.sugar)}g</small>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <!-- TAB 3: BADGES VIEW -->
+      ${currentMemberProfileTab === 'badges' ? `
+        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin: 10px 0 16px;">
+          ${badges.map(b => `
+            <div style="background:${b.unlocked ? 'var(--mintS)' : 'var(--card)'}; border:1px solid ${b.unlocked ? 'var(--mint)' : 'var(--line)'}; border-radius:12px; padding:8px 10px; display:flex; align-items:center; gap:8px; opacity:${b.unlocked ? '1' : '0.6'};">
+              <span style="font-size:18px;">${b.unlocked ? '✨' : '🔒'}</span>
+              <div>
+                <b style="font-size:12px; display:block; color:${b.unlocked ? 'var(--mint-ink)' : 'var(--mute)'};">${esc(b.title)}</b>
+                <small style="font-size:10px; color:var(--mute);">${esc(b.desc)}</small>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <!-- Close Button -->
+      <button class="btn g" style="width:100%; margin-top:10px;" onclick="closeSheet()">ปิดหน้าต่าง</button>
+
+      <!-- Developer Controls -->
+      ${isCurrentUserDev() && !isMe ? `
+        <div style="margin-top:12px; padding:12px; background:#FEF2F2; border:1.5px dashed #F87171; border-radius:16px; text-align:center;">
+          <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:4px;">
+            <span style="font-size:14px;">🛠️</span>
+            <b style="font-size:12px; color:#991B1B;">สิทธิ์เฉพาะผู้ดูแลแก๊ง (Developer Controls)</b>
+          </div>
+          <p style="font-size:11px; color:#B91C1C; margin:0 0 8px;">คุณมีสิทธิ์ Dev สามารถจัดการสมาชิกในแก๊งนี้ได้</p>
+          <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FFFFFF; font-weight:700; box-shadow:0 1px 3px rgba(220,38,38,0.1);" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">
+            🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง
+          </button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// Food Post Detail Modal (When tapping any photo in the 3x3 grid)
+function openFoodPostDetailModal(mealId) {
+  if (!currentMemberProfileData) return;
+  const meal = (currentMemberProfileData.allMeals || []).find(m => m.id === mealId);
+  if (!meal) return;
+
+  const el = $('#sheet');
+  const u = currentMemberProfileData.user;
+  const photo = resolveFoodPhoto(meal.name, meal.image_url);
+  const isLiked = !!meal.reactions?.liked_by_me;
+  const likesCount = meal.reactions?.likes_count || 0;
+  const comments = meal.reactions?.comments || [];
+
+  el.innerHTML = `
+    <div class="sh">
+      <!-- Back to Profile Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line);">
+        <button class="btn g sm" style="padding:4px 10px;" onclick="renderMemberProfileModalContent()">‹ กลับสู่โปรไฟล์</button>
+        <b style="font-size:15px; font-family:'Mali',sans-serif;">โพสต์มื้ออาหาร</b>
+        <button class="btn g sm" style="padding:4px 10px;" onclick="closeSheet()">✕</button>
+      </div>
+
+      <!-- Author info -->
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <div style="width:36px; height:36px; border-radius:50%; overflow:hidden; border:1.5px solid var(--line);">
+          ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 36, u.avatar_hat)}
+        </div>
+        <div>
+          <b style="font-size:13.5px; color:var(--ink);">${esc(u.nickname)}</b>
+          <div style="font-size:11px; color:var(--mute);">${meal.date || ''} · ${formatTimeAgo(meal.created_at)}</div>
+        </div>
+      </div>
+
+      <!-- Food Image -->
+      <div style="width:100%; aspect-ratio:4/3; border-radius:18px; overflow:hidden; background:#111; margin-bottom:12px; position:relative;">
+        <img src="${photo}" style="width:100%; height:100%; object-fit:cover;">
+        <div style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.7); color:#fff; font-size:11px; font-weight:800; padding:3px 8px; border-radius:10px; backdrop-filter:blur(4px);">
+          🔥 ${fmt(meal.calorie)} kcal
+        </div>
+      </div>
+
+      <!-- Dish Details & Macros -->
+      <div style="margin-bottom:12px;">
+        <h3 style="font-size:20px; font-family:'Mali',sans-serif; margin:0 0 6px; color:var(--ink);">${esc(meal.name)}</h3>
+        <div class="ig-post-nutri-chips" style="margin-bottom:8px;">
+          <span class="ig-nutri-chip" style="background:#FFE4E6; color:#BE123C; border-color:#FDA4AF;">🔥 แคลอรี: <b>${fmt(meal.calorie)}</b> kcal</span>
+          <span class="ig-nutri-chip" style="background:#ECFDF5; color:#047857; border-color:#A7F3D0;">🍬 น้ำตาล: <b>${fmt(meal.sugar)}</b>g</span>
+          <span class="ig-nutri-chip" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;">💪 โปรตีน: <b>${fmt(meal.protein || 0)}</b>g</span>
+          <span class="ig-nutri-chip" style="background:#FFFBEB; color:#B45309; border-color:#FDE68A;">🍚 คาร์บ: <b>${fmt(meal.carbs || 0)}</b>g</span>
+          <span class="ig-nutri-chip" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE;">🥑 ไขมัน: <b>${fmt(meal.fat || 0)}</b>g</span>
+        </div>
+        <div style="font-size:12px; color:var(--mute);">
+          🍽️ ขนาดที่กิน: <b>${esc(meal.portion_size || 'ปกติ')}</b>
+          ${meal.sweetness_level && meal.sweetness_level !== 'normal' ? ` · 🍯 ความหวาน: <b>${esc(meal.sweetness_level)}</b>` : ''}
+        </div>
+      </div>
+
+      <!-- Action Row: Like & Comment -->
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:12px;">
+        <button class="btn s sm" style="display:flex; align-items:center; gap:5px; font-size:12px;" onclick="likeFoodPostFromDetail('${meal.id}')">
+          <span>${isLiked ? '❤️' : '🤍'}</span>
+          <b>${likesCount} ถูกใจ</b>
+        </button>
+        <span style="font-size:12px; color:var(--mute);">💬 ${comments.length} ความคิดเห็น</span>
+      </div>
+
+      <!-- Comments List -->
+      ${comments.length ? `
+        <div class="ig-comments-list" style="margin-bottom:12px; max-height:160px; overflow-y:auto;">
+          ${comments.map(c => `
+            <div class="ig-comment-item">
+              <b>${esc(c.nickname)}:</b> ${esc(c.text)}
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div style="font-size:11.5px; color:var(--mute); padding:4px 0 10px;">ยังไม่มีคอมเมนต์ เป็นคนแรกที่ให้กำลังใจเพื่อนเลย!</div>'}
+
+      <!-- Comment Input -->
+      <div class="ig-comment-input-row" style="margin-bottom:12px;">
+        <input type="text" id="detailCommentInput_${meal.id}" class="ig-comment-input" placeholder="พิมพ์ให้กำลังใจเพื่อน..." onkeydown="if(event.key==='Enter') commentFoodPostFromDetail('${meal.id}')">
+        <button class="ig-comment-send-btn" onclick="commentFoodPostFromDetail('${meal.id}')">ส่ง 💬</button>
+      </div>
+
+      <button class="btn g sm" style="width:100%;" onclick="renderMemberProfileModalContent()">‹ กลับสู่โปรไฟล์</button>
+    </div>
+  `;
+}
+
+async function likeFoodPostFromDetail(mealId) {
+  if (!currentUser) return toast('กรุณาเลือกโปรไฟล์ก่อน');
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId: mealId, reactionType: 'heart' })
+    });
+    const data = await res.json();
+    if (data.success && currentMemberProfileData) {
+      const meal = (currentMemberProfileData.allMeals || []).find(m => m.id === mealId);
+      if (meal) {
+        if (!meal.reactions) meal.reactions = { likes_count: 0, liked_by_me: false, comments: [] };
+        meal.reactions.liked_by_me = data.liked;
+        meal.reactions.likes_count += (data.liked ? 1 : -1);
+      }
+      openFoodPostDetailModal(mealId);
+    }
+  } catch (e) {}
+}
+
+async function commentFoodPostFromDetail(mealId) {
+  const input = $(`#detailCommentInput_${mealId}`);
+  if (!input || !input.value.trim() || !currentUser) return;
+  const text = input.value.trim();
+  try {
+    const res = await fetch('/api/feed/reaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ postId: mealId, commentText: text })
+    });
+    const data = await res.json();
+    if (data.success && currentMemberProfileData) {
+      const meal = (currentMemberProfileData.allMeals || []).find(m => m.id === mealId);
+      if (meal) {
+        if (!meal.reactions) meal.reactions = { likes_count: 0, liked_by_me: false, comments: [] };
+        meal.reactions.comments.push({
+          id: data.commentId,
+          user_id: currentUser.id,
+          nickname: currentUser.nickname,
+          text: text,
+          created_at: Date.now()
+        });
+      }
+      toast('ส่งความคิดเห็นแล้ว! 💬 (+1 🪙)');
+      openFoodPostDetailModal(mealId);
+    }
+  } catch (e) {
+    toast('ส่งความคิดเห็นไม่สำเร็จ');
   }
 }
 

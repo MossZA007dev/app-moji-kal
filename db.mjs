@@ -1791,12 +1791,24 @@ export function getMemberDetail(targetUserId, requesterId) {
   const user = getUser(targetUserId);
   if (!user) return null;
 
+  const isMe = targetUserId === requesterId;
   const streak = calculateUserStreak(targetUserId);
   const todayDate = new Date().toISOString().slice(0, 10);
   const logs = getLogsSecure(targetUserId, requesterId, todayDate);
   const totalMeals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ?').get(targetUserId)?.c || 0;
   const cheersReceived = db.prepare('SELECT COUNT(*) as c FROM cheers WHERE to_user_id = ?').get(targetUserId)?.c || 0;
   const todayGoal = evaluateUserGoalToday(user, todayDate);
+
+  // All meal posts for Instagram-style 3x3 Photo Grid & timeline
+  const rawAllLogs = getLogsSecure(targetUserId, requesterId); // returns all logs
+  const mealLogs = rawAllLogs.filter(l => !l.water_ml && !l.name.includes('น้ำเปล่า'));
+  const allMeals = attachReactionsToPosts(mealLogs, requesterId);
+
+  // 24-hour stories
+  const since24h = Date.now() - 24 * 60 * 60 * 1000;
+  const stories = allMeals
+    .filter(m => (m.created_at >= since24h || m.date >= todayDate) && (!m.is_private || isMe))
+    .sort((a, b) => a.created_at - b.created_at);
 
   const goalTypeNames = {
     weight_loss: 'ลดน้ำหนัก',
@@ -1830,19 +1842,24 @@ export function getMemberDetail(targetUserId, requesterId) {
       goal_type: user.goal_type || 'weight_loss',
       calorie_goal: user.calorie_goal,
       sugar_goal: user.sugar_goal,
+      water_daily_target_ml: user.water_daily_target_ml || 2000,
       privacy_level: user.privacy_level,
       created_at: user.created_at,
-      is_me: targetUserId === requesterId
+      is_me: isMe
     },
     todayGoal,
     stats: {
       streak: streak.current,
       bestStreak: streak.best,
       totalMeals,
+      totalPosts: allMeals.length,
       cheersReceived
     },
     badges,
-    todayMeals: logs
+    todayMeals: logs,
+    stories,
+    has_stories: stories.length > 0,
+    allMeals
   };
 }
 
@@ -2024,10 +2041,14 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     .sort((a, b) => b.created_at - a.created_at)
     .slice(0, limit);
 
-  if (allPosts.length === 0) return [];
+  return attachReactionsToPosts(allPosts, currentUserId);
+}
+
+export function attachReactionsToPosts(posts = [], currentUserId = '') {
+  if (!posts || posts.length === 0) return [];
 
   // Batch query reactions
-  const postIds = allPosts.map(p => p.id);
+  const postIds = posts.map(p => p.id);
   const placeholders = postIds.map(() => '?').join(',');
   const reactions = db.prepare(`
     SELECT r.id, r.post_id, r.user_id, r.reaction_type, r.comment_text, r.created_at,
@@ -2066,7 +2087,7 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     }
   }
 
-  return allPosts.map(p => ({
+  return posts.map(p => ({
     ...p,
     reactions: reactionMap[p.id] || { likes_count: 0, liked_by_me: false, likers: [], comments: [] }
   }));
@@ -2075,6 +2096,7 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
 export function getGangStories(currentUserId = '') {
   const users = getAllUsers();
   const todayDate = new Date().toISOString().slice(0, 10);
+  const since24h = Date.now() - 24 * 60 * 60 * 1000;
 
   return users.map(u => {
     const isMe = u.id === currentUserId;
@@ -2084,6 +2106,31 @@ export function getGangStories(currentUserId = '') {
     // Count today's meals and water
     const meals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ?').get(u.id, todayDate)?.c || 0;
     const waterSum = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date = ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(u.id, todayDate)?.s || 0;
+
+    // Fetch user's active 24-hour stories (meals/drinks posted within 24 hours)
+    let userStories = [];
+    if (isMe || (u.privacy_level !== 'summary' && u.privacy_level !== 'private')) {
+      const rawStories = db.prepare(`
+        SELECT id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, created_at
+        FROM logs
+        WHERE user_id = ? 
+          AND (created_at >= ? OR date >= ?)
+          ${isMe ? '' : 'AND is_private = 0'}
+          AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')
+        ORDER BY created_at ASC
+      `).all(u.id, since24h, todayDate);
+
+      const mappedStories = rawStories.map(s => ({
+        ...s,
+        nickname: u.nickname,
+        avatar_image: u.avatar_image,
+        avatar_color: u.avatar_color,
+        avatar_face: u.avatar_face,
+        avatar_hat: u.avatar_hat,
+        is_me: isMe
+      }));
+      userStories = attachReactionsToPosts(mappedStories, currentUserId);
+    }
 
     return {
       id: u.id,
@@ -2097,7 +2144,10 @@ export function getGangStories(currentUserId = '') {
       today_meals: meals,
       today_water_ml: waterSum,
       goal_achieved: !!todayGoal?.achieved,
-      goal_label: todayGoal?.goal_label || ''
+      goal_label: todayGoal?.goal_label || '',
+      has_stories: userStories.length > 0,
+      story_count: userStories.length,
+      stories: userStories
     };
   });
 }
