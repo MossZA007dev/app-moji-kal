@@ -3274,6 +3274,40 @@ textarea { resize: none; margin-bottom: 8px; }
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(255, 117, 140, 0.2);
 }
+.onboard-gender-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.onboard-gender-btn:active {
+  transform: scale(0.98);
+}
+.onboard-gender-btn.active {
+  border-color: var(--pink);
+  background: #FFF5F7;
+  color: var(--pink-ink);
+  box-shadow: 0 2px 8px rgba(255, 117, 140, 0.25);
+}
+.onboard-ai-bubble {
+  background: var(--card);
+  border: 2px solid var(--pink);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(255, 158, 181, 0.2);
+}
 </style>
 </head>
 <body>
@@ -7011,15 +7045,26 @@ async function renderSettings() {
 // Onboarding Goal Questionnaire Module
 // ==========================================
 let onboardingState = {
-  step: 1, // 1: Info & Mascot, 2: Goal Quiz, 3: Auto Adjust & Confirm
+  step: 1, // 1: Info & Mascot, 2: Body Stats (Gender, Age, Height, Weight), 3: Goal Selection, 4: AI Analysis & Calibration
   isNewUser: true,
   nickname: '',
   avatar_color: '#FF9EB5',
   avatar_face: 'happy',
+  gender: 'male',
+  age: 21,
+  height: 178,
+  weight: 60,
+  activity_level: 'light',
   goal_type: 'weight_loss',
-  calorie_goal: 1600,
-  sugar_goal: 18,
-  personality: 'cheerful'
+  target_weight: 58,
+  calorie_goal: 1850,
+  sugar_goal: 20,
+  carbs_goal: 190,
+  protein_goal: 84,
+  fat_goal: 45,
+  water_daily_target_ml: 2100,
+  personality: 'cheerful',
+  aiPlanResult: null
 };
 
 const ONBOARDING_GOAL_CONFIG = {
@@ -7028,11 +7073,11 @@ const ONBOARDING_GOAL_CONFIG = {
     icon: '🏃‍♂️',
     title: 'ลดน้ำหนัก & เผาผลาญไขมัน',
     shortTitle: 'ลดน้ำหนัก',
-    tagline: 'สร้าง Calorie Deficit ดึงไขมันสะสมมาใช้',
-    defaultCal: 1600,
-    defaultSugar: 18,
-    formulaDesc: 'จำกัดพลังงาน < 1,600 kcal และคุมน้ำตาล < 18g/วัน เพื่อกระตุ้นให้ร่างกายดึงไขมันสะสมมาใช้',
-    detail: 'คุมแคลอรี < 1,600 kcal · น้ำตาล < 18g/วัน',
+    tagline: 'สร้าง Calorie Deficit อย่างปลอดภัย รักษามวลกล้ามเนื้อ',
+    defaultCal: 1800,
+    defaultSugar: 20,
+    formulaDesc: 'Deficit พลังงานอย่างปลอดภัย โดยไม่ต่ำกว่าอัตราเผาผลาญพื้นฐาน (BMR)',
+    detail: 'ปรับแคลอรี่และน้ำหนักเป้าหมายอัตโนมัติตามสรีระของคุณ',
     whyUseful: 'เหมาะสำหรับผู้ที่ต้องการลดสัดส่วน สลายไขมันส่วนเกิน และควบคุมน้ำหนักให้ลดลงอย่างปลอดภัย',
     badgeText: '🔥 เบิร์นไขมัน'
   },
@@ -7041,24 +7086,24 @@ const ONBOARDING_GOAL_CONFIG = {
     icon: '🧋',
     title: 'ลดน้ำตาล & บ๊ายบายของหวาน',
     shortTitle: 'ลดน้ำตาล',
-    tagline: 'ชะลอวัย สุขภาพดี ป้องกันเบาหวานและไขมันพอกตับ',
+    tagline: 'ชะลอวัย ผิวใส ลดไขมันช่องท้อง ป้องกันติดหวาน',
     defaultCal: 1900,
-    defaultSugar: 14,
-    formulaDesc: 'กินอาหารอิ่มได้ปกติ < 1,900 kcal แต่คุมน้ำตาลเข้มงวด < 14g/วัน (งดน้ำชง ของหวาน ชานม)',
-    detail: 'คุมน้ำตาลเข้มงวด < 14g/วัน · แคลสบายๆ < 1,900 kcal',
+    defaultSugar: 15,
+    formulaDesc: 'กินพลังงานอิ่มพอดีตาม TDEE แต่คุมน้ำตาลเข้มงวด ≤ 15g/วัน',
+    detail: 'คุมน้ำตาลเข้มงวด ≤ 15g/วัน · พลังงานสมดุล',
     whyUseful: 'เหมาะสำหรับสายชานม ติดของหวาน หรือผู้ที่ต้องการชะลอวัย ลดการอักเสบ และตัดวงจรติดหวาน',
     badgeText: '🧋 ตัดหวานเข้มข้น'
   },
   healthy_balance: {
     key: 'healthy_balance',
     icon: '🥗',
-    title: 'ลดหุ่น & สมดุลชีวิต ไม่เครียด',
+    title: 'สมดุลสุขภาพ & ไม่อดอาหาร',
     shortTitle: 'สมดุลสุขภาพ',
-    tagline: 'ไม่อดอาหาร รักษาน้ำหนัก สุขภาพดีระยะยาว',
-    defaultCal: 1800,
-    defaultSugar: 20,
-    formulaDesc: 'แคลอรีสมดุล < 1,800 kcal และคุมน้ำตาลพอเหมาะ < 20g/วัน ไม่อดอาหาร ยืดหยุ่นแต่มีวินัย',
-    detail: 'แคลอรี < 1,800 kcal · น้ำตาล < 20g/วัน',
+    tagline: 'รักษารูปร่างให้คงที่ สุขภาพดีระยะยาว ไม่เครียด',
+    defaultCal: 2000,
+    defaultSugar: 25,
+    formulaDesc: 'พลังงานสมดุลเท่ากับ TDEE และน้ำตาลตามเกณฑ์ WHO ≤ 25g/วัน',
+    detail: 'พลังงานสมดุลตาม TDEE · น้ำตาลเกณฑ์มาตรฐาน',
     whyUseful: 'เหมาะสำหรับผู้ที่ต้องการรักษารูปร่างให้คงที่ สร้างนิสัยการกินที่ดีระยะยาว โดยไม่เครียด',
     badgeText: '🥗 สุขภาพดีระยะยาว'
   },
@@ -7068,10 +7113,10 @@ const ONBOARDING_GOAL_CONFIG = {
     title: 'สร้างกล้ามเนื้อ & ลีนหุ่น',
     shortTitle: 'สร้างกล้ามเนื้อ',
     tagline: 'พลังงานถึง โปรตีนเน้นๆ เสริมความแข็งแรง',
-    defaultCal: 2400,
+    defaultCal: 2300,
     defaultSugar: 25,
-    formulaDesc: 'ทานพลังงานให้เพียงพอ ≥ 2,400 kcal เพื่อสร้างกล้ามเนื้อ พร้อมคุมน้ำตาล < 25g ไม่ให้ไขมันเกิน',
-    detail: 'พลังงานถึงเกณฑ์ ≥ 2,400 kcal · น้ำตาล < 25g/วัน',
+    formulaDesc: 'ทานพลังงานส่วนเกิน +250 kcal (Surplus) พร้อมโปรตีนสูงเพื่อเสริมสร้างกล้ามเนื้อ',
+    detail: 'พลังงาน Surplus +250 kcal · โปรตีน 1.6-1.8g/kg',
     whyUseful: 'เหมาะสำหรับผู้ที่ออกกำลังกาย เล่นเวท หรือต้องการเพิ่มมวลกล้ามเนื้อและน้ำหนักตัวแบบลีนๆ',
     badgeText: '💪 ลีนกล้ามเนื้อ'
   }
@@ -7085,6 +7130,113 @@ const ONBOARD_COLORS = [
   { hex: '#D4A373', name: 'ชานม' }
 ];
 
+// Scientific Calculation & Personalized AI Health Diagnosis
+function calculateAiHealthPlan(state) {
+  const gender = state.gender || 'male';
+  const age = Math.max(10, Math.min(100, Number(state.age) || 21));
+  const height = Math.max(100, Math.min(250, Number(state.height) || 178));
+  const weight = Math.max(30, Math.min(250, Number(state.weight) || 60));
+  const act = state.activity_level || 'light';
+  const goal = state.goal_type || 'weight_loss';
+  const nick = (state.nickname || '').trim() || 'เพื่อน';
+
+  const heightM = height / 100;
+  const bmi = Math.round((weight / (heightM * heightM)) * 10) / 10;
+
+  let bmiCategory = '';
+  if (bmi < 18.5) bmiCategory = 'รูปร่างเพรียวบาง';
+  else if (bmi < 23) bmiCategory = 'รูปร่างสมส่วน สุขภาพดี';
+  else if (bmi < 25) bmiCategory = 'น้ำหนักเกินมาตรฐานเล็กน้อย';
+  else bmiCategory = 'น้ำหนักเกินเกณฑ์มาตรฐาน';
+
+  // BMR (Mifflin-St Jeor Formula)
+  let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+  if (gender === 'male') bmr += 5;
+  else bmr -= 161;
+  bmr = Math.round(bmr);
+
+  // TDEE Multipliers
+  const actMultipliers = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
+  const mult = actMultipliers[act] || 1.375;
+  const tdee = Math.round(bmr * mult);
+
+  // Recommended Daily Water Intake (ml) = Weight * 35 ml
+  let waterTarget = Math.round((weight * 35) / 100) * 100;
+  waterTarget = Math.max(1500, Math.min(3500, waterTarget));
+
+  let targetWeight = weight;
+  let calGoal = 1800;
+  let sugarGoal = 20;
+  let proteinGoal = Math.round(weight * 1.3);
+  let carbsGoal = 180;
+  let fatGoal = 45;
+  let aiMessage = '';
+  const genderTh = gender === 'male' ? 'ชาย' : 'หญิง';
+
+  if (goal === 'weight_loss') {
+    if (bmi < 19.5) {
+      // Lean/light body: Gentle shaping, never cut calories below BMR
+      targetWeight = Math.round((weight - 2.0) * 10) / 10;
+      calGoal = Math.round(Math.max(bmr + 100, tdee - 350));
+      sugarGoal = 20;
+      proteinGoal = Math.round(weight * 1.4);
+      aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์จากสรีระ เพศ${genderTh} อายุ ${age} ปี สูง ${height} cm หนัก ${weight} kg (BMI ${bmi} ${bmiCategory}) อัตราเผาผลาญพื้นฐาน BMR ${bmr} kcal และ TDEE ${tdee} kcal\n\n🎯 <b>สำหรับเป้าหมายลดน้ำหนัก:</b> เนื่องจากสรีระของคุณเพรียวอยู่แล้ว โมจิจึงแนะนำให้ลดแบบกระชับสัดส่วน สู่เป้าหมาย <b>${targetWeight} kg (-2.0 kg)</b> เพื่อรักษามวลกล้ามเนื้อและระบบเผาผลาญให้เสถียร ไม่แนะนำให้ลดฮวบเกินนี้\n\nโมจิคำนวณพลังงานที่เหมาะสมให้วันละ <b>${calGoal} kcal</b> (Calorie Deficit อย่างปลอดภัย ไม่ต่ำกว่า BMR) คุมน้ำตาลไม่เกิน <b>${sugarGoal}g</b> และดื่มน้ำอย่างน้อยวันละ <b>${waterTarget} ml</b> จ้า 🍡`;
+    } else if (bmi < 24) {
+      const diff = Math.min(4.5, Math.max(2.5, Math.round(weight * 0.05 * 10) / 10));
+      targetWeight = Math.round((weight - diff) * 10) / 10;
+      calGoal = Math.round(Math.max(bmr + 100, tdee - 450));
+      sugarGoal = 20;
+      proteinGoal = Math.round(weight * 1.4);
+      aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์จากสรีระ เพศ${genderTh} อายุ ${age} ปี สูง ${height} cm หนัก ${weight} kg (BMI ${bmi} ${bmiCategory}) อัตราเผาผลาญประจำวัน TDEE ${tdee} kcal\n\n🎯 <b>สำหรับเป้าหมายลดน้ำหนัก:</b> โมจิแนะนำตั้งเป้าหมายแรกที่ <b>${targetWeight} kg (-${diff} kg)</b> โดยทานวันละ <b>${calGoal} kcal</b> เพื่อให้ร่างกายดึงไขมันสะสมมาใช้ต่อเนื่อง และคุมน้ำตาลไม่เกิน <b>${sugarGoal}g/วัน</b> จ้า 🍡`;
+    } else {
+      const idealWeight = Math.round(22 * heightM * heightM * 10) / 10;
+      const diff = Math.min(8, Math.max(4, Math.round((weight - idealWeight) * 0.45 * 10) / 10));
+      targetWeight = Math.round((weight - diff) * 10) / 10;
+      calGoal = Math.round(Math.max(bmr + 150, tdee - 500));
+      sugarGoal = 18;
+      proteinGoal = Math.round(weight * 1.3);
+      aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์สรีระของคุณ (BMI ${bmi} ${bmiCategory}) เผาผลาญประจำวัน TDEE ${tdee} kcal\n\n🎯 <b>สำหรับเป้าหมายลดน้ำหนัก:</b> โมจิแนะนำตั้งเป้าหมายแรกอย่างปลอดภัยลดลง <b>-${diff} kg</b> สู่ <b>${targetWeight} kg</b> โดยทานวันละ <b>${calGoal} kcal</b> (Deficit 500 kcal ที่ไม่ทำให้หิวโซหรือเสียสุขภาพ) และจำกัดน้ำตาลเข้มงวด <b>${sugarGoal}g</b> จ้า 🍡`;
+    }
+  } else if (goal === 'sugar_cut') {
+    targetWeight = Math.round((weight - 1.0) * 10) / 10;
+    calGoal = Math.round(tdee - 150);
+    sugarGoal = 15;
+    proteinGoal = Math.round(weight * 1.2);
+    aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์จากสรีระ เพศ${genderTh} อายุ ${age} ปี สูง ${height} cm หนัก ${weight} kg\n\n🧋 <b>สำหรับเป้าหมายคุมน้ำตาล:</b> ช่วยลดไขมันช่องท้อง ผิวใส และรักษาระดับน้ำตาลให้คงที่ โมจิคำนวณพลังงานที่สมดุลวันละ <b>${calGoal} kcal</b> และจำกัดน้ำตาลเข้มงวดไม่เกิน <b>${sugarGoal}g/วัน</b> จ้า 🧋`;
+  } else if (goal === 'muscle_gain') {
+    targetWeight = Math.round((weight + 2.5) * 10) / 10;
+    calGoal = Math.round(tdee + 250);
+    sugarGoal = 25;
+    proteinGoal = Math.round(weight * 1.7);
+    aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์จากสรีระ เพศ${genderTh} อายุ ${age} ปี สูง ${height} cm หนัก ${weight} kg\n\n💪 <b>สำหรับเป้าหมายเพิ่มกล้ามเนื้อ:</b> โมจิปรับแคลอรี่ส่วนเกินวันละ +250 kcal (<b>${calGoal} kcal</b>) พร้อมเน้นโปรตีน <b>${proteinGoal}g/วัน</b> เพื่อซ่อมแซมและเสริมสร้างกล้ามเนื้อ สู่เป้าหมายลีนหุ่น <b>${targetWeight} kg (+2.5 kg)</b> จ้า 💪`;
+  } else {
+    // healthy_balance
+    targetWeight = weight;
+    calGoal = tdee;
+    sugarGoal = 25;
+    proteinGoal = Math.round(weight * 1.2);
+    aiMessage = `สวัสดีคุณ${nick}! โมจิวิเคราะห์จากสรีระ เพศ${genderTh} อายุ ${age} ปี สูง ${height} cm หนัก ${weight} kg\n\n🥗 <b>สำหรับเป้าหมายสมดุลสุขภาพ:</b> โมจิคำนวณพลังงานรักษาสมดุลร่างกายวันละ <b>${calGoal} kcal</b> และน้ำตาลตามเกณฑ์ WHO ไม่เกิน <b>${sugarGoal}g/วัน</b> เพื่อสุขภาพที่ดีและไม่อดอาหารจ้า 🥗`;
+  }
+
+  fatGoal = Math.round((calGoal * 0.25) / 9);
+  carbsGoal = Math.max(100, Math.round((calGoal - (proteinGoal * 4) - (fatGoal * 9)) / 4));
+
+  return {
+    bmi,
+    bmiCategory,
+    bmr,
+    tdee,
+    waterTarget,
+    targetWeight,
+    calGoal,
+    sugarGoal,
+    proteinGoal,
+    carbsGoal,
+    fatGoal,
+    aiMessage
+  };
+}
+
 function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
   onboardingState.isNewUser = isNewUser;
   
@@ -7092,8 +7244,14 @@ function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
     onboardingState.nickname = currentUser.nickname || '';
     onboardingState.avatar_color = currentUser.avatar_color || '#FF9EB5';
     onboardingState.avatar_face = currentUser.avatar_face || 'happy';
+    onboardingState.gender = currentUser.gender || 'male';
+    onboardingState.age = currentUser.age || 21;
+    onboardingState.height = currentUser.height || 178;
+    onboardingState.weight = currentUser.weight || 60;
+    onboardingState.activity_level = currentUser.activity_level || 'light';
     onboardingState.goal_type = currentUser.goal_type || 'weight_loss';
-    onboardingState.calorie_goal = currentUser.calorie_goal || 1800;
+    onboardingState.target_weight = currentUser.target_weight || 58;
+    onboardingState.calorie_goal = currentUser.calorie_goal || 1850;
     onboardingState.sugar_goal = currentUser.sugar_goal || 20;
     onboardingState.personality = currentUser.personality || 'cheerful';
     onboardingState.step = initialStep || 2;
@@ -7101,9 +7259,15 @@ function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
     onboardingState.nickname = '';
     onboardingState.avatar_color = '#FF9EB5';
     onboardingState.avatar_face = 'happy';
+    onboardingState.gender = 'male';
+    onboardingState.age = 21;
+    onboardingState.height = 178;
+    onboardingState.weight = 60;
+    onboardingState.activity_level = 'light';
     onboardingState.goal_type = 'weight_loss';
-    onboardingState.calorie_goal = 1600;
-    onboardingState.sugar_goal = 18;
+    onboardingState.target_weight = 58;
+    onboardingState.calorie_goal = 1850;
+    onboardingState.sugar_goal = 20;
     onboardingState.personality = 'cheerful';
     onboardingState.step = initialStep || 1;
   }
@@ -7124,13 +7288,54 @@ function setOnboardColor(color) {
   }
 }
 
+function setOnboardGender(g) {
+  onboardingState.gender = g;
+  $('#onboardGenderMale')?.classList.toggle('active', g === 'male');
+  $('#onboardGenderFemale')?.classList.toggle('active', g === 'female');
+  liveUpdateBodyStats();
+}
+
+function liveUpdateBodyStats() {
+  const gender = onboardingState.gender || 'male';
+  const age = Math.max(10, Math.min(100, Number($('#onboardAge')?.value) || 21));
+  const h = Math.max(100, Math.min(250, Number($('#onboardHeight')?.value) || 178));
+  const w = Math.max(30, Math.min(250, Number($('#onboardWeight')?.value) || 60));
+  const act = $('#onboardActivity')?.value || 'light';
+
+  onboardingState.age = age;
+  onboardingState.height = h;
+  onboardingState.weight = w;
+  onboardingState.activity_level = act;
+
+  const hM = h / 100;
+  const bmi = Math.round((w / (hM * hM)) * 10) / 10;
+  let bmr = (10 * w) + (6.25 * h) - (5 * age);
+  if (gender === 'male') bmr += 5;
+  else bmr -= 161;
+  bmr = Math.round(bmr);
+
+  const actMultipliers = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 };
+  const tdee = Math.round(bmr * (actMultipliers[act] || 1.375));
+
+  let bmiCat = 'สมส่วน';
+  let bmiColor = '#10B981';
+  if (bmi < 18.5) { bmiCat = 'เพรียวบาง'; bmiColor = '#3B82F6'; }
+  else if (bmi < 23) { bmiCat = 'สมส่วน สุขภาพดี'; bmiColor = '#10B981'; }
+  else if (bmi < 25) { bmiCat = 'ท้วมเล็กน้อย'; bmiColor = '#F59E0B'; }
+  else { bmiCat = 'เกินเกณฑ์'; bmiColor = '#EF4444'; }
+
+  const liveBmi = $('#liveBmiText');
+  const liveBmr = $('#liveBmrText');
+  const liveTdee = $('#liveTdeeText');
+
+  if (liveBmi) liveBmi.innerHTML = `<b style="color:${bmiColor}; font-size:16px;">${bmi}</b> <span style="font-size:11px; color:var(--mute);">(${bmiCat})</span>`;
+  if (liveBmr) liveBmr.innerHTML = `<b>${bmr}</b> kcal`;
+  if (liveTdee) liveTdee.innerHTML = `<b>${tdee}</b> kcal`;
+}
+
 function selectOnboardingGoal(goalKey) {
   if (!ONBOARDING_GOAL_CONFIG[goalKey]) return;
   onboardingState.goal_type = goalKey;
-  const cfg = ONBOARDING_GOAL_CONFIG[goalKey];
-  onboardingState.calorie_goal = cfg.defaultCal;
-  onboardingState.sugar_goal = cfg.defaultSugar;
-
   document.querySelectorAll('.onboard-goal-card').forEach(card => {
     card.classList.toggle('active', card.dataset.goal === goalKey);
   });
@@ -7151,7 +7356,42 @@ function nextOnboardingStep(targetStep) {
       return;
     }
     if (inputNick) onboardingState.nickname = inputNick;
+  } else if (onboardingState.step === 2) {
+    const age = Number($('#onboardAge')?.value);
+    const height = Number($('#onboardHeight')?.value);
+    const weight = Number($('#onboardWeight')?.value);
+    const act = $('#onboardActivity')?.value;
+
+    if (!age || age < 10 || age > 100) {
+      toast('กรุณาระบุอายุให้ถูกต้อง (10 - 100 ปี) 🍡');
+      return;
+    }
+    if (!height || height < 100 || height > 240) {
+      toast('กรุณาระบุส่วนสูงให้ถูกต้อง (100 - 240 cm) 🍡');
+      return;
+    }
+    if (!weight || weight < 30 || weight > 250) {
+      toast('กรุณาระบุน้ำหนักให้ถูกต้อง (30 - 250 kg) 🍡');
+      return;
+    }
+
+    onboardingState.age = age;
+    onboardingState.height = height;
+    onboardingState.weight = weight;
+    if (act) onboardingState.activity_level = act;
+  } else if (onboardingState.step === 3 && targetStep === 4) {
+    // Run AI Health Plan Analysis before entering Step 4
+    const plan = calculateAiHealthPlan(onboardingState);
+    onboardingState.aiPlanResult = plan;
+    onboardingState.calorie_goal = plan.calGoal;
+    onboardingState.sugar_goal = plan.sugarGoal;
+    onboardingState.target_weight = plan.targetWeight;
+    onboardingState.carbs_goal = plan.carbsGoal;
+    onboardingState.protein_goal = plan.proteinGoal;
+    onboardingState.fat_goal = plan.fatGoal;
+    onboardingState.water_daily_target_ml = plan.waterTarget;
   }
+
   onboardingState.step = targetStep;
   renderOnboardingStep();
 }
@@ -7169,9 +7409,10 @@ function renderOnboardingStep() {
 
   let dotsHtml = `
     <div class="onboard-step-dots">
-      <div class="onboard-step-dot ${step === 1 ? 'active' : step > 1 ? 'done' : ''}"></div>
-      <div class="onboard-step-dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}"></div>
-      <div class="onboard-step-dot ${step === 3 ? 'active' : ''}"></div>
+      <div class="onboard-step-dot ${step === 1 ? 'active' : step > 1 ? 'done' : ''}" title="ชื่อและตัวละคร"></div>
+      <div class="onboard-step-dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}" title="สรีระร่างกาย"></div>
+      <div class="onboard-step-dot ${step === 3 ? 'active' : step > 3 ? 'done' : ''}" title="เป้าหมาย"></div>
+      <div class="onboard-step-dot ${step === 4 ? 'active' : ''}" title="แผนเฉพาะตัว AI"></div>
     </div>
   `;
 
@@ -7192,7 +7433,7 @@ function renderOnboardingStep() {
 
         <div style="margin-bottom:12px;">
           <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">ชื่อเล่นของคุณ</label>
-          <input id="onboardNick" placeholder="เช่น น้องมายด์, โบ๊ท, พลอย" value="${esc(onboardingState.nickname)}" maxlength="20" style="background:var(--card); font-size:14px;">
+          <input id="onboardNick" placeholder="เช่น มอส, น้องพลอย, บอม" value="${esc(onboardingState.nickname)}" maxlength="20" style="background:var(--card); font-size:14px;">
         </div>
 
         <div style="margin-bottom:16px;">
@@ -7204,7 +7445,7 @@ function renderOnboardingStep() {
           </div>
         </div>
 
-        <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: แบบสอบถามเป้าหมายสุขภาพ ➜</button>
+        <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: สรีระร่างกาย (เพศ, อายุ, สส, นน) ➜</button>
 
         ${users && users.length > 0 ? `
           <div style="text-align:center; margin-top:12px;">
@@ -7214,7 +7455,87 @@ function renderOnboardingStep() {
       </div>
     `;
   } else if (step === 2) {
-    // Step 2: Goal Quiz
+    // Step 2: Body Profile Stats (Gender, Age, Height, Weight, Activity)
+    bodyHtml = `
+      <div class="sh">
+        ${dotsHtml}
+        <div style="text-align:center; margin-bottom:12px;">
+          <span style="font-size:32px; display:block; margin-bottom:4px;">⚖️</span>
+          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">ข้อมูลสรีระของคุณ</h2>
+          <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+            เพื่อให้น้องโมจิ AI คำนวณอัตราเผาผลาญ (BMR/TDEE) และวิเคราะห์แผนที่เหมาะกับคุณที่สุด
+          </span>
+        </div>
+
+        <!-- Gender Selection -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">เพศกำเนิด</label>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="onboard-gender-btn ${onboardingState.gender === 'male' ? 'active' : ''}" onclick="setOnboardGender('male')" id="onboardGenderMale">
+              👨 ผู้ชาย
+            </button>
+            <button type="button" class="onboard-gender-btn ${onboardingState.gender === 'female' ? 'active' : ''}" onclick="setOnboardGender('female')" id="onboardGenderFemale">
+              👩 ผู้หญิง
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Grid Inputs: Age, Height, Weight -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">อายุ (ปี)</label>
+            <input type="number" id="onboardAge" value="${onboardingState.age}" min="10" max="100" oninput="liveUpdateBodyStats()" style="font-weight:700; font-size:14.5px; text-align:center;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ส่วนสูง (cm)</label>
+            <input type="number" id="onboardHeight" value="${onboardingState.height}" min="100" max="240" oninput="liveUpdateBodyStats()" style="font-weight:700; font-size:14.5px; text-align:center;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">น้ำหนัก (kg)</label>
+            <input type="number" id="onboardWeight" value="${onboardingState.weight}" step="0.5" min="30" max="250" oninput="liveUpdateBodyStats()" style="font-weight:700; font-size:14.5px; text-align:center;">
+          </div>
+        </div>
+
+        <!-- Activity Level Dropdown -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ระดับกิจกรรมประจำวัน</label>
+          <select id="onboardActivity" onchange="liveUpdateBodyStats()" style="font-size:12.5px;">
+            <option value="sedentary" ${onboardingState.activity_level === 'sedentary' ? 'selected' : ''}>นั่งทำงาน/เรียนเป็นหลัก (ขยับตัวน้อย)</option>
+            <option value="light" ${onboardingState.activity_level === 'light' ? 'selected' : ''}>ขยับตัวปานกลาง / ออกกำลังกาย 1-3 วัน/สัปดาห์</option>
+            <option value="moderate" ${onboardingState.activity_level === 'moderate' ? 'selected' : ''}>ออกกำลังกาย 3-5 วัน/สัปดาห์</option>
+            <option value="active" ${onboardingState.activity_level === 'active' ? 'selected' : ''}>ออกกำลังกายหนัก 6-7 วัน/สัปดาห์</option>
+          </select>
+        </div>
+
+        <!-- Live Calculated Body Metrics -->
+        <div id="onboardLiveMetricsBox" style="background:linear-gradient(135deg, rgba(220, 246, 238, 0.6), rgba(240, 253, 250, 0.8)); border:1.5px solid #A7F3D0; border-radius:16px; padding:10px 14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; text-align:center;">
+            <div>
+              <div style="font-size:10.5px; color:var(--mute);">ดัชนีมวลกาย BMI</div>
+              <div id="liveBmiText"><b style="color:#10B981; font-size:16px;">18.9</b> <span style="font-size:11px; color:var(--mute);">(สมส่วน)</span></div>
+            </div>
+            <div style="width:1px; height:24px; background:#A7F3D0;"></div>
+            <div>
+              <div style="font-size:10.5px; color:var(--mute);">เผาผลาญพื้นฐาน (BMR)</div>
+              <div id="liveBmrText" style="font-size:14px; color:var(--ink);"><b>1,613</b> kcal</div>
+            </div>
+            <div style="width:1px; height:24px; background:#A7F3D0;"></div>
+            <div>
+              <div style="font-size:10.5px; color:var(--mute);">เผาผลาญทั้งวัน (TDEE)</div>
+              <div id="liveTdeeText" style="font-size:14px; color:var(--ink);"><b>2,218</b> kcal</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" onclick="nextOnboardingStep(3)">ถัดไป: เลือกเป้าหมายสุขภาพ ➜</button>
+          <button class="btn g" onclick="prevOnboardingStep(1)">ย้อนกลับ</button>
+        </div>
+      </div>
+    `;
+    setTimeout(liveUpdateBodyStats, 50);
+  } else if (step === 3) {
+    // Step 3: Health Goal Selection
     bodyHtml = `
       <div class="sh">
         ${dotsHtml}
@@ -7222,7 +7543,7 @@ function renderOnboardingStep() {
           <span style="font-size:32px; display:block; margin-bottom:4px;">🎯</span>
           <h2 class="hd" style="font-size:18px; margin-bottom:4px;">เป้าหมายสุขภาพของคุณคืออะไร?</h2>
           <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
-            เลือกเป้าหมายที่ตรงกับคุณ ระบบจะคำนวณและปรับตัวเลขแคลและน้ำตาลให้เหมาะสมโดยอัตโนมัติ
+            เลือกเป้าหมายที่ต้องการ โมจิ AI จะนำข้อมูลสรีระของคุณไปวิเคราะห์แผนและตัวเลขที่เหมาะสม
           </span>
         </div>
 
@@ -7246,49 +7567,76 @@ function renderOnboardingStep() {
         </div>
 
         <div style="display:flex; flex-direction:column; gap:8px;">
-          <button class="btn" onclick="nextOnboardingStep(3)">ดูเป้าหมายที่ระบบคำนวณให้ ➜</button>
-          ${onboardingState.isNewUser ? `
-            <button class="btn g" onclick="prevOnboardingStep(1)">ย้อนกลับ</button>
-          ` : `
-            <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
-          `}
+          <button class="btn" onclick="nextOnboardingStep(4)">✨ ให้โมจิ AI วิเคราะห์แผนเฉพาะตัวคุณ ➜</button>
+          <button class="btn g" onclick="prevOnboardingStep(2)">ย้อนกลับไปแก้ไขสรีระ</button>
         </div>
       </div>
     `;
-  } else if (step === 3) {
-    // Step 3: Auto Adjust & Confirm
+  } else if (step === 4) {
+    // Step 4: Personalized AI Health Plan Analysis & Calibration
+    const plan = onboardingState.aiPlanResult || calculateAiHealthPlan(onboardingState);
+    const weightDiff = Math.round(Math.abs(onboardingState.weight - plan.targetWeight) * 10) / 10;
+    const isLoss = plan.targetWeight < onboardingState.weight;
+    const isGain = plan.targetWeight > onboardingState.weight;
+
     bodyHtml = `
       <div class="sh">
         ${dotsHtml}
         <div style="text-align:center; margin-bottom:12px;">
           <span style="font-size:32px; display:block; margin-bottom:4px;">✨</span>
-          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">โมจิปรับเป้าหมายเฉพาะบุคคลให้แล้ว!</h2>
+          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">โมจิ AI วิเคราะห์แผนเฉพาะบุคคลให้แล้ว!</h2>
           <span style="font-size:12px; color:var(--mute);">
-            ระบบคำนวณเกณฑ์โภชนาการที่เหมาะกับเป้าหมาย <b>"${cfg.title}"</b> เรียบร้อยแล้ว
+            คำนวณจากสรีระร่างกายจริงและเป้าหมาย <b>"${cfg.title}"</b>
           </span>
         </div>
 
-        <!-- Formula Highlight Box -->
-        <div class="onboard-adjust-box">
+        <!-- AI Mascot Speech Bubble Card -->
+        <div class="onboard-ai-bubble">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <span style="font-size:20px;">${cfg.icon}</span>
-            <b style="font-size:13.5px; color:var(--ink);">${cfg.title}</b>
-            <span class="badge ok" style="margin-left:auto; font-size:10px;">${cfg.badgeText}</span>
+            <span style="font-size:24px;">🍡</span>
+            <b style="font-size:13.5px; color:var(--ink);">บทวิเคราะห์จากน้องโมจิ AI:</b>
+            <span class="badge ok" style="margin-left:auto; font-size:10px;">Personalized AI</span>
           </div>
-          <p style="font-size:11.5px; color:var(--mute); margin:0 0 10px; line-height:1.4;">
-            💡 <b>เกณฑ์แนะนำ:</b> ${cfg.formulaDesc}
-          </p>
+          <div style="font-size:12px; color:var(--ink); line-height:1.6; white-space:pre-line; max-height:180px; overflow-y:auto; padding-right:4px;">
+            ${plan.aiMessage}
+          </div>
+        </div>
 
-          <div class="g2" style="margin-top:10px;">
+        <!-- Calibrated Health Metrics Adjust Box -->
+        <div class="onboard-adjust-box">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <span style="font-size:20px;">${cfg.icon}</span>
+            <b style="font-size:13.5px; color:var(--ink);">เป้าหมายที่คำนวณและปรับให้เฉพาะคุณ</b>
+            <span class="badge ok" style="margin-left:auto; font-size:10px;">ปรับแก้ได้</span>
+          </div>
+
+          <div class="g2" style="margin-bottom:10px;">
             <div>
-              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">⚡ แคลอรีต่อวัน (kcal)</label>
-              <input type="number" id="onboardCal" value="${onboardingState.calorie_goal}" min="1200" max="4000" style="background:#fff; font-weight:700; font-size:15px; color:var(--pink-ink);">
-              <small style="font-size:10.5px; color:var(--mute);">เกณฑ์แนะนำ: ${cfg.defaultCal} kcal</small>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">⚖️ น้ำหนักเป้าหมาย (kg)</label>
+              <input type="number" id="onboardTargetWeight" value="${plan.targetWeight}" step="0.5" style="background:#fff; font-weight:700; font-size:15px; color:#2563EB;">
+              <small style="font-size:10px; color:var(--mute);">
+                ${isLoss ? `ลดลง -${weightDiff} kg แบบปลอดภัย` : isGain ? `เพิ่มขึ้น +${weightDiff} kg` : 'รักษาน้ำหนักคงที่'}
+              </small>
             </div>
             <div>
-              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">🍬 น้ำตาลต่อวัน (g)</label>
-              <input type="number" id="onboardSugar" value="${onboardingState.sugar_goal}" min="5" max="80" style="background:#fff; font-weight:700; font-size:15px; color:var(--mint);">
-              <small style="font-size:10.5px; color:var(--mute);">เกณฑ์แนะนำ: ${cfg.defaultSugar} g</small>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">⚡ แคลอรีต่อวัน (kcal)</label>
+              <input type="number" id="onboardCal" value="${plan.calGoal}" min="1000" max="4000" style="background:#fff; font-weight:700; font-size:15px; color:var(--pink-ink);">
+              <small style="font-size:10px; color:var(--mute);">เผาผลาญ TDEE: ${plan.tdee} kcal</small>
+            </div>
+          </div>
+
+          <div class="g2">
+            <div>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">🍬 น้ำตาลสูงสุดต่อวัน (g)</label>
+              <input type="number" id="onboardSugar" value="${plan.sugarGoal}" min="5" max="80" style="background:#fff; font-weight:700; font-size:15px; color:var(--mint);">
+              <small style="font-size:10px; color:var(--mute);">เกณฑ์สุขภาพ: ${plan.sugarGoal} g</small>
+            </div>
+            <div>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">💧 น้ำดื่มแนะนำต่อวัน</label>
+              <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:8px 10px; font-weight:700; font-size:14.5px; color:#047857; text-align:center;">
+                ${fmt(plan.waterTarget)} ml
+              </div>
+              <small style="font-size:10px; color:var(--mute);">คำนวณจากน้ำหนักตัว × 35 ml</small>
             </div>
           </div>
         </div>
@@ -7322,7 +7670,7 @@ function renderOnboardingStep() {
 
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="btn" onclick="submitOnboarding()">${onboardingState.isNewUser ? '✨ เริ่มต้นใช้งานแอปโมจิ 🚀' : '💾 บันทึกเป้าหมายสุขภาพใหม่ ✨'}</button>
-          <button class="btn g" onclick="prevOnboardingStep(2)">ย้อนกลับไปเปลี่ยนเป้าหมาย</button>
+          <button class="btn g" onclick="prevOnboardingStep(3)">ย้อนกลับไปเปลี่ยนเป้าหมาย</button>
         </div>
       </div>
     `;
@@ -7332,10 +7680,13 @@ function renderOnboardingStep() {
 }
 
 async function submitOnboarding() {
-  const calVal = Math.max(1200, Number($('#onboardCal')?.value) || onboardingState.calorie_goal);
+  const calVal = Math.max(1000, Number($('#onboardCal')?.value) || onboardingState.calorie_goal);
   const sugarVal = Math.max(5, Math.min(80, Number($('#onboardSugar')?.value) || onboardingState.sugar_goal));
+  const targetWeightVal = Number($('#onboardTargetWeight')?.value) || onboardingState.target_weight || onboardingState.weight;
+
   onboardingState.calorie_goal = calVal;
   onboardingState.sugar_goal = sugarVal;
+  onboardingState.target_weight = targetWeightVal;
 
   if (onboardingState.isNewUser) {
     const nick = (onboardingState.nickname || '').trim() || 'เพื่อนโมจิ';
@@ -7347,9 +7698,19 @@ async function submitOnboarding() {
           nickname: nick,
           avatar_color: onboardingState.avatar_color,
           avatar_face: onboardingState.avatar_face || 'happy',
+          gender: onboardingState.gender,
+          age: onboardingState.age,
+          height: onboardingState.height,
+          weight: onboardingState.weight,
+          target_weight: onboardingState.target_weight,
+          activity_level: onboardingState.activity_level,
           goal_type: onboardingState.goal_type,
           calorie_goal: onboardingState.calorie_goal,
           sugar_goal: onboardingState.sugar_goal,
+          carbs_goal: onboardingState.carbs_goal,
+          protein_goal: onboardingState.protein_goal,
+          fat_goal: onboardingState.fat_goal,
+          water_daily_target_ml: onboardingState.water_daily_target_ml,
           personality: onboardingState.personality,
           goal_score: 150,
           privacy_level: 'full'
@@ -7362,25 +7723,35 @@ async function submitOnboarding() {
         localStorage.setItem('mochi_onboarded', 'true');
         closeSheet();
         updateUserHeader();
-        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed()]);
+        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
         render();
         fireConfetti();
-        toast(`ยินดีต้อนรับคุณ ${nick}! ระบบปรับเป้าหมายเรียบร้อยแล้ว 🍡✨`);
+        toast(`ยินดีต้อนรับคุณ ${nick}! AI ปรับแผนสุขภาพเฉพาะตัวให้เรียบร้อยแล้ว 🍡✨`);
       }
     } catch (err) {
       console.error(err);
       toast('เกิดข้อผิดพลาดในการสร้างสมาชิก');
     }
   } else {
-    // Existing user updating their goals
+    // Existing user updating their goals & body stats
     try {
       const res = await fetch(`/api/users/${currentUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          gender: onboardingState.gender,
+          age: onboardingState.age,
+          height: onboardingState.height,
+          weight: onboardingState.weight,
+          target_weight: onboardingState.target_weight,
+          activity_level: onboardingState.activity_level,
           goal_type: onboardingState.goal_type,
           calorie_goal: onboardingState.calorie_goal,
           sugar_goal: onboardingState.sugar_goal,
+          carbs_goal: onboardingState.carbs_goal,
+          protein_goal: onboardingState.protein_goal,
+          fat_goal: onboardingState.fat_goal,
+          water_daily_target_ml: onboardingState.water_daily_target_ml,
           personality: onboardingState.personality
         })
       });
@@ -7390,11 +7761,11 @@ async function submitOnboarding() {
         localStorage.setItem('mochi_onboarded', 'true');
         closeSheet();
         updateUserHeader();
-        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed()]);
+        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
         render();
         fireConfetti();
         const goalTitle = ONBOARDING_GOAL_CONFIG[onboardingState.goal_type]?.title || 'เป้าหมายใหม่';
-        toast(`ปรับเป้าหมายเป็น "${goalTitle}" สำเร็จแล้ว 🎯✨`);
+        toast(`อัปเดตสรีระและแผน AI เป็น "${goalTitle}" สำเร็จแล้ว 🎯✨`);
       }
     } catch (err) {
       console.error(err);

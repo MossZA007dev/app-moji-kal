@@ -336,22 +336,43 @@ export function getUserByEmail(email) {
   return stmt.get(email);
 }
 
-export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat, avatar_accessory, role, is_dev }) {
+export function createUser({ 
+  id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, 
+  google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, 
+  avatar_hat, avatar_accessory, role, is_dev,
+  gender, age, height, weight, target_weight, activity_level,
+  carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
+  water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup
+}) {
   const newId = id || `u_${Date.now()}`;
   const isDevUserVal = (role === 'dev' || is_dev === 1 || nickname === 'มอส' || (nickname && nickname.toLowerCase().includes('dev')) || (email && email.toLowerCase().includes('moss'))) ? 1 : 0;
   const roleVal = isDevUserVal ? 'dev' : (role || 'user');
 
+  const numWeight = weight !== undefined ? (Number(weight) || 60) : 60;
+  const numHeight = height !== undefined ? (Number(height) || 165) : 165;
+  const numAge = age !== undefined ? (Number(age) || 25) : 25;
+  const genderVal = gender || 'female';
+
   const stmt = db.prepare(`
-    INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality, goal_type, goal_score, role, is_dev, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (
+      id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level,
+      google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, avatar_accessory, personality,
+      goal_type, goal_score, role, is_dev,
+      gender, age, height, weight, target_weight, activity_level,
+      carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
+      water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml, water_bottle_setup,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+
   stmt.run(
     newId,
     nickname || 'โมจิใหม่',
     avatar_color || '#FF9EB5',
     avatar_face || 'happy',
-    Math.max(1200, Number(calorie_goal) || 2000),
-    Math.max(10, Math.min(60, Number(sugar_goal) || 25)),
+    Math.max(1000, Number(calorie_goal) || 1800),
+    Math.max(5, Math.min(80, Number(sugar_goal) || 25)),
     privacy_level || 'full',
     google_id || null,
     email || null,
@@ -365,8 +386,32 @@ export function createUser({ id, nickname, avatar_color, avatar_face, calorie_go
     goal_score !== undefined ? Number(goal_score) : 150,
     roleVal,
     isDevUserVal,
+    genderVal,
+    numAge,
+    numHeight,
+    numWeight,
+    target_weight !== undefined ? Number(target_weight) : null,
+    activity_level || 'light',
+    carbs_goal !== undefined ? Number(carbs_goal) : 180,
+    protein_goal !== undefined ? Number(protein_goal) : 75,
+    fat_goal !== undefined ? Number(fat_goal) : 45,
+    sodium_goal !== undefined ? Number(sodium_goal) : 2000,
+    water_goal !== undefined ? Number(water_goal) : 8,
+    water_bottle_ml !== undefined ? Number(water_bottle_ml) : 500,
+    water_bottle_name || 'ขวดน้ำพกพา 500 ml',
+    water_bottle_icon || 'bottle_500',
+    water_daily_target_ml !== undefined ? Number(water_daily_target_ml) : 2000,
+    water_bottle_setup ? 1 : 0,
     Date.now()
   );
+
+  // Automatically record initial weight log if provided
+  if (numWeight > 0) {
+    try {
+      addWeightLog({ userId: newId, date: new Date().toISOString().slice(0, 10), weight: numWeight, note: 'น้ำหนักเริ่มต้นตอนเข้าแก๊ง 🍡' });
+    } catch (_) {}
+  }
+
   return getUser(newId);
 }
 
