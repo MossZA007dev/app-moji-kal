@@ -7452,8 +7452,11 @@ function renderToday() {
           แอปนับแคลอรีและคุมน้ำตาลสไตล์แก๊งโมจิสุดน่ารัก<br>
           เริ่มต้นสร้างตัวละครและตั้งเป้าหมายสุขภาพของคุณกันเลย!
         </p>
-        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 12px; font-size:15px; padding:12px 16px;" onclick="openOnboardingModal({ isNewUser: true })">
+        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px; font-size:15px; padding:12px 16px;" onclick="openOnboardingModal({ isNewUser: true })">
           ✨ สร้างตัวละครโมจิของคุณ ➜
+        </button>
+        <button class="btn s" style="width:100%; max-width:280px; margin:0 auto 12px; font-size:13.5px; padding:9px 16px;" onclick="openSelectExistingProfileModal()">
+          👤 มีตัวละครอยู่แล้ว: เลือกโปรไฟล์ของคุณ
         </button>
         <div>
           <button class="btn s sm" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</button>
@@ -11853,6 +11856,20 @@ async function renderSettings() {
         </div>
       </div>
 
+      <div class="settings-row" onclick="openSelectExistingProfileModal()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#EEF2FF; color:#4F46E5;">👥</div>
+          <div>
+            <span class="settings-label-title">สลับโปรไฟล์สมาชิก (Switch Profile)</span>
+            <span class="settings-label-sub">สลับไปเล่นตัวละครอื่นในแก๊งบนอุปกรณ์นี้</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">สลับตัว</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
       <!-- AI Quota Row with Progress Bar -->
       <div class="settings-row" style="cursor:default;">
         <div class="settings-row-left" style="flex:1;">
@@ -12417,7 +12434,8 @@ function renderOnboardingStep() {
 
         <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: สรีระร่างกาย (เพศ, อายุ, สส, นน) ➜</button>
 
-        <div style="text-align:center; margin-top:12px;">
+        <div style="text-align:center; margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+          <a style="font-size:12px; color:var(--pink); font-weight:700; cursor:pointer;" onclick="openSelectExistingProfileModal()">👤 มีตัวละครในแก๊งอยู่แล้ว? เลือกโปรไฟล์เดิมของคุณ</a>
           <a style="font-size:11px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</a>
         </div>
       </div>
@@ -13060,6 +13078,9 @@ function openMyProfileModal() {
       ` : ''}
 
       <button class="btn g" style="width:100%;" onclick="closeSheet()">เข้าใจแล้ว 🍡</button>
+      <button class="btn s sm" style="width:100%; margin-top:8px;" onclick="openSelectExistingProfileModal()">
+        👥 สลับโปรไฟล์สมาชิก (เลือกตัวละครอื่น)
+      </button>
       <button class="btn g sm" style="width:100%; margin-top:8px; color:#DC2626; border-color:#FCA5A5; background:#FEF2F2;" onclick="logoutThisDevice()">
         🚪 ออกจากระบบบนเครื่องนี้ (เพื่อสร้างตัวละครใหม่)
       </button>
@@ -13189,6 +13210,87 @@ function logoutThisDevice() {
     localStorage.removeItem('mochi_onboarded');
     window.location.reload();
   }
+}
+
+async function openSelectExistingProfileModal() {
+  await fetchUsers();
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  el.innerHTML = `
+    <div class="sh">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">👥</span>
+        <h2 class="hd" style="font-size:18px; margin-bottom:4px;">เลือกโปรไฟล์ของคุณในแก๊ง</h2>
+        <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+          แตะชื่อของคุณเพื่อเข้าสู่ระบบบนเครื่องนี้ ข้อมูลอาหาร น้ำ และคอยน์จะซิงก์ตรงกับในมือถือทันที
+        </span>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; margin-bottom:16px; padding:2px;">
+        ${!users.length ? `
+          <div style="text-align:center; padding:24px 12px; font-size:12.5px; color:var(--mute);">
+            ยังไม่มีสมาชิกในแก๊ง กรุณาสร้างตัวละครใหม่
+          </div>
+        ` : users.map(u => {
+          const isDev = u.role === 'dev' || u.nickname === 'มอส';
+          const isCurrent = currentUser && currentUser.id === u.id;
+          return `
+            <div class="settings-row" style="cursor:pointer; padding:10px 12px; border-radius:16px; border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; background:var(--card);" onclick="selectExistingProfile('${u.id}')">
+              <div class="settings-row-left" style="display:flex; align-items:center; gap:10px;">
+                <div style="width:44px; height:44px; border-radius:50%; overflow:hidden; background:var(--bg); border:1.5px solid var(--pink); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face || 'happy', u.avatar_color || '#FF9EB5', 40, u.avatar_hat)}
+                </div>
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <b style="font-size:14px; color:var(--ink);">${esc(u.nickname)}</b>
+                    ${isDev ? `<span class="badge ok" style="font-size:9.5px; padding:1px 6px;">👑 ผู้ดูแล</span>` : ''}
+                    ${isCurrent ? `<span style="font-size:9.5px; background:var(--pinkS); color:var(--pink); font-weight:700; padding:1px 6px; border-radius:8px;">ใช้งานอยู่</span>` : ''}
+                  </div>
+                  <div style="font-size:11px; color:var(--mute); margin-top:2px;">
+                    🎯 ${u.goal_type === 'sugar_cut' ? 'คุมน้ำตาล' : u.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดน้ำหนัก'} · 🪙 ${u.coins || 0} คอยน์
+                  </div>
+                </div>
+              </div>
+              <div class="settings-row-right">
+                <button class="btn sm" style="font-size:11px; padding:4px 10px; pointer-events:none;">
+                  ${isCurrent ? '✓ ตัวคุณ' : 'เลือกใช้ ➜'}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn s" style="flex:1;" onclick="openOnboardingModal({ isNewUser: true })">+ สร้างตัวละครใหม่</button>
+        <button class="btn g" style="flex:1;" onclick="closeSheet()">ปิด</button>
+      </div>
+    </div>
+  `;
+}
+
+async function selectExistingProfile(userId) {
+  const target = users.find(u => u.id === userId);
+  if (!target) return toast('ไม่พบสมาชิก');
+
+  // If selecting developer profile, require Dev PIN for security
+  if (target.role === 'dev' || target.nickname === 'มอส') {
+    openDevLoginModal();
+    return;
+  }
+
+  currentUser = target;
+  localStorage.setItem('mochi_user_id', currentUser.id);
+  localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+  localStorage.setItem('mochi_onboarded', 'true');
+  closeSheet();
+  updateUserHeader();
+  await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
+  render();
+  fireConfetti();
+  toast(`🎉 ยินดีต้อนรับ ${currentUser.nickname}! เข้าสู่ระบบบนเครื่องนี้เรียบร้อยแล้ว ✨`);
 }
 
 async function addNewMemberFromModal() {
