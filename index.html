@@ -2182,6 +2182,140 @@ textarea { resize: none; margin-bottom: 8px; }
   line-height: 1.4;
 }
 .checkbox-label input { width: auto; margin-top: 3px; }
+
+/* Onboarding Goal Questionnaire Styles */
+.onboard-step-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.onboard-step-dot {
+  width: 24px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: all 0.25s ease;
+}
+.onboard-step-dot.active {
+  background: var(--pink);
+  width: 44px;
+}
+.onboard-step-dot.done {
+  background: var(--mint);
+}
+.onboard-goal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.onboard-goal-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  text-align: left;
+}
+.onboard-goal-card:active {
+  transform: scale(0.98);
+}
+.onboard-goal-card.active {
+  border-color: var(--pink);
+  background: #FFF5F7;
+  box-shadow: 0 4px 14px rgba(255, 117, 140, 0.2);
+}
+.onboard-goal-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.onboard-goal-content {
+  flex: 1;
+}
+.onboard-goal-title {
+  font-family: "Mali", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.onboard-goal-desc {
+  font-size: 11.5px;
+  color: var(--mute);
+  margin: 3px 0 6px;
+  line-height: 1.4;
+}
+.onboard-goal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 117, 140, 0.12);
+  color: var(--pink-ink);
+}
+.onboard-adjust-box {
+  background: linear-gradient(135deg, rgba(255, 158, 181, 0.15), rgba(110, 203, 176, 0.15));
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.onboard-adjust-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+.onboard-adjust-row:last-child {
+  margin-bottom: 0;
+}
+.onboard-color-pick {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+.onboard-color-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+.onboard-color-circle:active {
+  transform: scale(0.9);
+}
+.onboard-color-circle.active {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.onboard-pers-pill {
+  transition: all 0.18s ease;
+}
+.onboard-pers-pill.active {
+  border-color: var(--pink) !important;
+  background: var(--pinkS) !important;
+  color: var(--pink-ink) !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 117, 140, 0.2);
+}
 </style>
 </head>
 <body>
@@ -4054,6 +4188,20 @@ async function renderSettings() {
     <!-- Category 1: สุขภาพและเป้าหมาย -->
     <div class="settings-sec-title">🎯 สุขภาพและเป้าหมายเฉพาะบุคคล</div>
     <div class="settings-group">
+      <div class="settings-row" onclick="openOnboardingModal({ isNewUser: false, initialStep: 2 })">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#EBF5FF; color:#0284C7;">📋</div>
+          <div>
+            <span class="settings-label-title">ทำแบบสอบถามปรับเป้าหมาย (Goal Quiz)</span>
+            <span class="settings-label-sub">ทำแบบสอบถามเพื่อให้ระบบประเมินและปรับเป้าแคล-น้ำตาลอัตโนมัติ</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">แนะนำ</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
       <div class="settings-row" onclick="openEditProfileModal()">
         <div class="settings-row-left">
           <div class="settings-icon-box" style="background:#FFE3EA; color:#D81B60;">🎯</div>
@@ -4290,6 +4438,402 @@ async function renderSettings() {
   `;
 }
 
+// ==========================================
+// Onboarding Goal Questionnaire Module
+// ==========================================
+let onboardingState = {
+  step: 1, // 1: Info & Mascot, 2: Goal Quiz, 3: Auto Adjust & Confirm
+  isNewUser: true,
+  nickname: '',
+  avatar_color: '#FF9EB5',
+  avatar_face: 'happy',
+  goal_type: 'weight_loss',
+  calorie_goal: 1600,
+  sugar_goal: 18,
+  personality: 'cheerful'
+};
+
+const ONBOARDING_GOAL_CONFIG = {
+  weight_loss: {
+    key: 'weight_loss',
+    icon: '🏃‍♂️',
+    title: 'ลดน้ำหนัก & เผาผลาญไขมัน',
+    shortTitle: 'ลดน้ำหนัก',
+    tagline: 'สร้าง Calorie Deficit ดึงไขมันสะสมมาใช้',
+    defaultCal: 1600,
+    defaultSugar: 18,
+    formulaDesc: 'จำกัดพลังงาน < 1,600 kcal และคุมน้ำตาล < 18g/วัน เพื่อกระตุ้นให้ร่างกายดึงไขมันสะสมมาใช้',
+    detail: 'คุมแคลอรี < 1,600 kcal · น้ำตาล < 18g/วัน',
+    whyUseful: 'เหมาะสำหรับผู้ที่ต้องการลดสัดส่วน สลายไขมันส่วนเกิน และควบคุมน้ำหนักให้ลดลงอย่างปลอดภัย',
+    badgeText: '🔥 เบิร์นไขมัน'
+  },
+  sugar_cut: {
+    key: 'sugar_cut',
+    icon: '🧋',
+    title: 'ลดน้ำตาล & บ๊ายบายของหวาน',
+    shortTitle: 'ลดน้ำตาล',
+    tagline: 'ชะลอวัย สุขภาพดี ป้องกันเบาหวานและไขมันพอกตับ',
+    defaultCal: 1900,
+    defaultSugar: 14,
+    formulaDesc: 'กินอาหารอิ่มได้ปกติ < 1,900 kcal แต่คุมน้ำตาลเข้มงวด < 14g/วัน (งดน้ำชง ของหวาน ชานม)',
+    detail: 'คุมน้ำตาลเข้มงวด < 14g/วัน · แคลสบายๆ < 1,900 kcal',
+    whyUseful: 'เหมาะสำหรับสายชานม ติดของหวาน หรือผู้ที่ต้องการชะลอวัย ลดการอักเสบ และตัดวงจรติดหวาน',
+    badgeText: '🧋 ตัดหวานเข้มข้น'
+  },
+  healthy_balance: {
+    key: 'healthy_balance',
+    icon: '🥗',
+    title: 'ลดหุ่น & สมดุลชีวิต ไม่เครียด',
+    shortTitle: 'สมดุลสุขภาพ',
+    tagline: 'ไม่อดอาหาร รักษาน้ำหนัก สุขภาพดีระยะยาว',
+    defaultCal: 1800,
+    defaultSugar: 20,
+    formulaDesc: 'แคลอรีสมดุล < 1,800 kcal และคุมน้ำตาลพอเหมาะ < 20g/วัน ไม่อดอาหาร ยืดหยุ่นแต่มีวินัย',
+    detail: 'แคลอรี < 1,800 kcal · น้ำตาล < 20g/วัน',
+    whyUseful: 'เหมาะสำหรับผู้ที่ต้องการรักษารูปร่างให้คงที่ สร้างนิสัยการกินที่ดีระยะยาว โดยไม่เครียด',
+    badgeText: '🥗 สุขภาพดีระยะยาว'
+  },
+  muscle_gain: {
+    key: 'muscle_gain',
+    icon: '💪',
+    title: 'สร้างกล้ามเนื้อ & ลีนหุ่น',
+    shortTitle: 'สร้างกล้ามเนื้อ',
+    tagline: 'พลังงานถึง โปรตีนเน้นๆ เสริมความแข็งแรง',
+    defaultCal: 2400,
+    defaultSugar: 25,
+    formulaDesc: 'ทานพลังงานให้เพียงพอ ≥ 2,400 kcal เพื่อสร้างกล้ามเนื้อ พร้อมคุมน้ำตาล < 25g ไม่ให้ไขมันเกิน',
+    detail: 'พลังงานถึงเกณฑ์ ≥ 2,400 kcal · น้ำตาล < 25g/วัน',
+    whyUseful: 'เหมาะสำหรับผู้ที่ออกกำลังกาย เล่นเวท หรือต้องการเพิ่มมวลกล้ามเนื้อและน้ำหนักตัวแบบลีนๆ',
+    badgeText: '💪 ลีนกล้ามเนื้อ'
+  }
+};
+
+const ONBOARD_COLORS = [
+  { hex: '#FF9EB5', name: 'ซากุระ' },
+  { hex: '#6FCBB0', name: 'มัทฉะ' },
+  { hex: '#FFB05C', name: 'ยุซุ' },
+  { hex: '#A78BFA', name: 'เผือก' },
+  { hex: '#D4A373', name: 'ชานม' }
+];
+
+function openOnboardingModal({ isNewUser = false, initialStep = null } = {}) {
+  onboardingState.isNewUser = isNewUser;
+  
+  if (!isNewUser && currentUser) {
+    onboardingState.nickname = currentUser.nickname || '';
+    onboardingState.avatar_color = currentUser.avatar_color || '#FF9EB5';
+    onboardingState.avatar_face = currentUser.avatar_face || 'happy';
+    onboardingState.goal_type = currentUser.goal_type || 'weight_loss';
+    onboardingState.calorie_goal = currentUser.calorie_goal || 1800;
+    onboardingState.sugar_goal = currentUser.sugar_goal || 20;
+    onboardingState.personality = currentUser.personality || 'cheerful';
+    onboardingState.step = initialStep || 2;
+  } else {
+    onboardingState.nickname = '';
+    onboardingState.avatar_color = '#FF9EB5';
+    onboardingState.avatar_face = 'happy';
+    onboardingState.goal_type = 'weight_loss';
+    onboardingState.calorie_goal = 1600;
+    onboardingState.sugar_goal = 18;
+    onboardingState.personality = 'cheerful';
+    onboardingState.step = initialStep || 1;
+  }
+
+  const el = $('#sheet');
+  if (el) el.hidden = false;
+  renderOnboardingStep();
+}
+
+function setOnboardColor(color) {
+  onboardingState.avatar_color = color;
+  document.querySelectorAll('.onboard-color-circle').forEach(c => {
+    c.classList.toggle('active', c.dataset.color === color);
+  });
+  const preview = $('#onboardMascotPreview');
+  if (preview) {
+    preview.innerHTML = mascotSVG(onboardingState.avatar_face, color, 80);
+  }
+}
+
+function selectOnboardingGoal(goalKey) {
+  if (!ONBOARDING_GOAL_CONFIG[goalKey]) return;
+  onboardingState.goal_type = goalKey;
+  const cfg = ONBOARDING_GOAL_CONFIG[goalKey];
+  onboardingState.calorie_goal = cfg.defaultCal;
+  onboardingState.sugar_goal = cfg.defaultSugar;
+
+  document.querySelectorAll('.onboard-goal-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.goal === goalKey);
+  });
+}
+
+function setOnboardPersonality(p) {
+  onboardingState.personality = p;
+  document.querySelectorAll('.onboard-pers-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.pers === p);
+  });
+}
+
+function nextOnboardingStep(targetStep) {
+  if (onboardingState.step === 1) {
+    const inputNick = $('#onboardNick')?.value.trim();
+    if (onboardingState.isNewUser && !inputNick) {
+      toast('กรุณาบอกชื่อเล่นให้โมจิรู้จักก่อนน้า 🍡');
+      return;
+    }
+    if (inputNick) onboardingState.nickname = inputNick;
+  }
+  onboardingState.step = targetStep;
+  renderOnboardingStep();
+}
+
+function prevOnboardingStep(targetStep) {
+  onboardingState.step = targetStep;
+  renderOnboardingStep();
+}
+
+function renderOnboardingStep() {
+  const el = $('#sheet');
+  if (!el) return;
+  const step = onboardingState.step;
+  const cfg = ONBOARDING_GOAL_CONFIG[onboardingState.goal_type] || ONBOARDING_GOAL_CONFIG.weight_loss;
+
+  let dotsHtml = `
+    <div class="onboard-step-dots">
+      <div class="onboard-step-dot ${step === 1 ? 'active' : step > 1 ? 'done' : ''}"></div>
+      <div class="onboard-step-dot ${step === 2 ? 'active' : step > 2 ? 'done' : ''}"></div>
+      <div class="onboard-step-dot ${step === 3 ? 'active' : ''}"></div>
+    </div>
+  `;
+
+  let bodyHtml = '';
+
+  if (step === 1) {
+    // Step 1: Identity & Color
+    bodyHtml = `
+      <div class="sh">
+        ${dotsHtml}
+        <div style="text-align:center; margin-bottom:12px;">
+          <div id="onboardMascotPreview" style="display:inline-block; margin-bottom:8px;">
+            ${mascotSVG(onboardingState.avatar_face, onboardingState.avatar_color, 80)}
+          </div>
+          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">ยินดีต้อนรับสู่แก๊งโมจิ! 🍡</h2>
+          <span style="font-size:12px; color:var(--mute);">บอกชื่อเล่นและเลือกสีประจำตัว เพื่อเริ่มต้นการบันทึกอาหาร</span>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">ชื่อเล่นของคุณ</label>
+          <input id="onboardNick" placeholder="เช่น น้องมายด์, โบ๊ท, พลอย" value="${esc(onboardingState.nickname)}" maxlength="20" style="background:var(--card); font-size:14px;">
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">เลือกสีโมจิประจำตัว</label>
+          <div class="onboard-color-pick">
+            ${ONBOARD_COLORS.map(c => `
+              <div class="onboard-color-circle ${onboardingState.avatar_color === c.hex ? 'active' : ''}" data-color="${c.hex}" style="background:${c.hex};" onclick="setOnboardColor('${c.hex}')" title="${c.name}"></div>
+            `).join('')}
+          </div>
+        </div>
+
+        <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: แบบสอบถามเป้าหมายสุขภาพ ➜</button>
+
+        ${users && users.length > 0 ? `
+          <div style="text-align:center; margin-top:12px;">
+            <a style="font-size:12px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openProfileModal()">👥 มีบัญชีอยู่แล้ว? กดที่นี่เพื่อสลับบัญชีเพื่อน</a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } else if (step === 2) {
+    // Step 2: Goal Quiz
+    bodyHtml = `
+      <div class="sh">
+        ${dotsHtml}
+        <div style="text-align:center; margin-bottom:14px;">
+          <span style="font-size:32px; display:block; margin-bottom:4px;">🎯</span>
+          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">เป้าหมายสุขภาพของคุณคืออะไร?</h2>
+          <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+            เลือกเป้าหมายที่ตรงกับคุณ ระบบจะคำนวณและปรับตัวเลขแคลและน้ำตาลให้เหมาะสมโดยอัตโนมัติ
+          </span>
+        </div>
+
+        <div class="onboard-goal-grid">
+          ${Object.values(ONBOARDING_GOAL_CONFIG).map(g => {
+            const isSelected = onboardingState.goal_type === g.key;
+            return `
+              <div class="onboard-goal-card ${isSelected ? 'active' : ''}" data-goal="${g.key}" onclick="selectOnboardingGoal('${g.key}')">
+                <span class="onboard-goal-icon">${g.icon}</span>
+                <div class="onboard-goal-content">
+                  <div class="onboard-goal-title">
+                    <span>${g.title}</span>
+                    ${isSelected ? '<span style="color:var(--pink); font-size:16px;">✓</span>' : ''}
+                  </div>
+                  <div class="onboard-goal-desc">${g.tagline}</div>
+                  <div class="onboard-goal-tag">${g.detail}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" onclick="nextOnboardingStep(3)">ดูเป้าหมายที่ระบบคำนวณให้ ➜</button>
+          ${onboardingState.isNewUser ? `
+            <button class="btn g" onclick="prevOnboardingStep(1)">ย้อนกลับ</button>
+          ` : `
+            <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
+          `}
+        </div>
+      </div>
+    `;
+  } else if (step === 3) {
+    // Step 3: Auto Adjust & Confirm
+    bodyHtml = `
+      <div class="sh">
+        ${dotsHtml}
+        <div style="text-align:center; margin-bottom:12px;">
+          <span style="font-size:32px; display:block; margin-bottom:4px;">✨</span>
+          <h2 class="hd" style="font-size:18px; margin-bottom:4px;">โมจิปรับเป้าหมายเฉพาะบุคคลให้แล้ว!</h2>
+          <span style="font-size:12px; color:var(--mute);">
+            ระบบคำนวณเกณฑ์โภชนาการที่เหมาะกับเป้าหมาย <b>"${cfg.title}"</b> เรียบร้อยแล้ว
+          </span>
+        </div>
+
+        <!-- Formula Highlight Box -->
+        <div class="onboard-adjust-box">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:20px;">${cfg.icon}</span>
+            <b style="font-size:13.5px; color:var(--ink);">${cfg.title}</b>
+            <span class="badge ok" style="margin-left:auto; font-size:10px;">${cfg.badgeText}</span>
+          </div>
+          <p style="font-size:11.5px; color:var(--mute); margin:0 0 10px; line-height:1.4;">
+            💡 <b>เกณฑ์แนะนำ:</b> ${cfg.formulaDesc}
+          </p>
+
+          <div class="g2" style="margin-top:10px;">
+            <div>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">⚡ แคลอรีต่อวัน (kcal)</label>
+              <input type="number" id="onboardCal" value="${onboardingState.calorie_goal}" min="1200" max="4000" style="background:#fff; font-weight:700; font-size:15px; color:var(--pink-ink);">
+              <small style="font-size:10.5px; color:var(--mute);">เกณฑ์แนะนำ: ${cfg.defaultCal} kcal</small>
+            </div>
+            <div>
+              <label style="font-size:11.5px; font-weight:700; color:var(--ink);">🍬 น้ำตาลต่อวัน (g)</label>
+              <input type="number" id="onboardSugar" value="${onboardingState.sugar_goal}" min="5" max="80" style="background:#fff; font-weight:700; font-size:15px; color:var(--mint);">
+              <small style="font-size:10.5px; color:var(--mute);">เกณฑ์แนะนำ: ${cfg.defaultSugar} g</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fair Play Box -->
+        <div style="background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:10px 12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="font-size:16px;">🏆</span>
+            <b style="font-size:12px; color:var(--ink);">ระบบแข่งวินัย Fair-Play ในแก๊งเพื่อน</b>
+          </div>
+          <p style="font-size:11px; color:var(--mute); margin:0; line-height:1.4;">
+            ไม่ว่าจะเลือกเป้าหมายใด ทุกคนสามารถแข่งกันได้อย่างยุติธรรม! เมื่อทำตามเป้าหมายของตนเองสำเร็จในแต่ละวัน รับทันที <b>+50 แต้มวินัย</b> เพื่อขึ้นสู่อันดับ 1 ของ Leaderboard 🌟
+          </p>
+        </div>
+
+        <!-- AI Personality Selection -->
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">💬 เลือกบุคลิกโมจิ AI คู่หูของคุณ:</label>
+          <div style="display:flex; gap:6px;">
+            <div class="onboard-pers-pill ${onboardingState.personality === 'cheerful' ? 'active' : ''}" data-pers="cheerful" onclick="setOnboardPersonality('cheerful')" style="flex:1; padding:8px 4px; text-align:center; font-size:11.5px; border-radius:12px; border:1.5px solid var(--line); cursor:pointer; background:var(--card);">
+              🌟 สดใส เชียร์อัพ
+            </div>
+            <div class="onboard-pers-pill ${onboardingState.personality === 'disciplined' ? 'active' : ''}" data-pers="disciplined" onclick="setOnboardPersonality('disciplined')" style="flex:1; padding:8px 4px; text-align:center; font-size:11.5px; border-radius:12px; border:1.5px solid var(--line); cursor:pointer; background:var(--card);">
+              📋 วินัยเป๊ะ โค้ชเข้ม
+            </div>
+            <div class="onboard-pers-pill ${onboardingState.personality === 'kind' ? 'active' : ''}" data-pers="kind" onclick="setOnboardPersonality('kind')" style="flex:1; padding:8px 4px; text-align:center; font-size:11.5px; border-radius:12px; border:1.5px solid var(--line); cursor:pointer; background:var(--card);">
+              💖 อบอุ่น สบายใจ
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" onclick="submitOnboarding()">${onboardingState.isNewUser ? '✨ เริ่มต้นใช้งานแอปโมจิ 🚀' : '💾 บันทึกเป้าหมายสุขภาพใหม่ ✨'}</button>
+          <button class="btn g" onclick="prevOnboardingStep(2)">ย้อนกลับไปเปลี่ยนเป้าหมาย</button>
+        </div>
+      </div>
+    `;
+  }
+
+  el.innerHTML = bodyHtml;
+}
+
+async function submitOnboarding() {
+  const calVal = Math.max(1200, Number($('#onboardCal')?.value) || onboardingState.calorie_goal);
+  const sugarVal = Math.max(5, Math.min(80, Number($('#onboardSugar')?.value) || onboardingState.sugar_goal));
+  onboardingState.calorie_goal = calVal;
+  onboardingState.sugar_goal = sugarVal;
+
+  if (onboardingState.isNewUser) {
+    const nick = (onboardingState.nickname || '').trim() || 'เพื่อนโมจิ';
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: nick,
+          avatar_color: onboardingState.avatar_color,
+          avatar_face: onboardingState.avatar_face || 'happy',
+          goal_type: onboardingState.goal_type,
+          calorie_goal: onboardingState.calorie_goal,
+          sugar_goal: onboardingState.sugar_goal,
+          personality: onboardingState.personality,
+          goal_score: 150,
+          privacy_level: 'full'
+        })
+      });
+      const data = await res.json();
+      if (data.user) {
+        currentUser = data.user;
+        localStorage.setItem('mochi_user_id', currentUser.id);
+        localStorage.setItem('mochi_onboarded', 'true');
+        closeSheet();
+        updateUserHeader();
+        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed()]);
+        render();
+        fireConfetti();
+        toast(`ยินดีต้อนรับคุณ ${nick}! ระบบปรับเป้าหมายเรียบร้อยแล้ว 🍡✨`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('เกิดข้อผิดพลาดในการสร้างสมาชิก');
+    }
+  } else {
+    // Existing user updating their goals
+    try {
+      const res = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goal_type: onboardingState.goal_type,
+          calorie_goal: onboardingState.calorie_goal,
+          sugar_goal: onboardingState.sugar_goal,
+          personality: onboardingState.personality
+        })
+      });
+      const data = await res.json();
+      if (data.user) {
+        currentUser = data.user;
+        localStorage.setItem('mochi_onboarded', 'true');
+        closeSheet();
+        updateUserHeader();
+        await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed()]);
+        render();
+        fireConfetti();
+        const goalTitle = ONBOARDING_GOAL_CONFIG[onboardingState.goal_type]?.title || 'เป้าหมายใหม่';
+        toast(`ปรับเป้าหมายเป็น "${goalTitle}" สำเร็จแล้ว 🎯✨`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast('เกิดข้อผิดพลาดในการบันทึกเป้าหมาย');
+    }
+  }
+}
+
 // Sub-Modal: Edit Profile Details & Personalized Goal Selection
 let selectedProfileGoalType = 'weight_loss';
 
@@ -4301,17 +4845,17 @@ function selectProfileGoalType(type) {
   const calInput = $('#editModalCal');
   const sugInput = $('#editModalSugar');
   if (type === 'weight_loss') {
-    if (calInput) calInput.value = 1800;
-    if (sugInput) sugInput.value = 25;
+    if (calInput) calInput.value = 1600;
+    if (sugInput) sugInput.value = 18;
   } else if (type === 'sugar_cut') {
-    if (calInput) calInput.value = 2000;
-    if (sugInput) sugInput.value = 20;
-  } else if (type === 'healthy_balance') {
     if (calInput) calInput.value = 1900;
+    if (sugInput) sugInput.value = 14;
+  } else if (type === 'healthy_balance') {
+    if (calInput) calInput.value = 1800;
     if (sugInput) sugInput.value = 20;
   } else if (type === 'muscle_gain') {
     if (calInput) calInput.value = 2400;
-    if (sugInput) sugInput.value = 30;
+    if (sugInput) sugInput.value = 25;
   }
 }
 
@@ -4322,6 +4866,9 @@ function openEditProfileModal() {
   el.innerHTML = `
     <div class="sh">
       <h2 class="hd" style="font-size:18px; margin-bottom:8px;">แก้ไขข้อมูล & เป้าหมายเฉพาะบุคคล ✏️</h2>
+      <button class="btn s sm" style="width:100%; margin-bottom:14px; background:#FFF5F7; border:1.5px solid var(--pink); color:var(--pink-ink); font-weight:700;" onclick="openOnboardingModal({ isNewUser: false, initialStep: 2 })">
+        📋 หรือทำแบบสอบถามให้ระบบช่วยคำนวณเป้าหมายอัตโนมัติ ➜
+      </button>
       <div style="margin-bottom:12px;">
         <label style="font-size:12px; color:var(--mute);">ชื่อเล่น</label>
         <input id="editModalNickname" value="${esc(currentUser?.nickname)}">
@@ -4447,33 +4994,11 @@ function openProfileModal() {
       </div>
 
       <!-- Add New Member Section -->
-      <div style="background:var(--pinkS); border:1px dashed var(--pink); border-radius:18px; padding:12px 14px; margin-bottom:14px;">
-        <b style="font-size:13px; color:var(--pink-ink); display:block; margin-bottom:6px;">+ ชวน / เพิ่มสมาชิกใหม่ในแก๊ง:</b>
-        <div style="margin-bottom:8px;">
-          <input id="newMemberNick" placeholder="ชื่อเล่นเพื่อนใหม่ เช่น น้องมายด์, คุณแบงค์" style="background:var(--card);">
-        </div>
-        <div class="g2" style="margin-bottom:10px;">
-          <div>
-            <label style="font-size:11px; color:var(--mute);">เป้าหมายหลัก</label>
-            <select id="newMemberGoalType" style="background:var(--card); width:100%; padding:8px; border-radius:10px; border:1px solid var(--line); font-size:12px; color:var(--ink);">
-              <option value="weight_loss">🏃‍♂️ ลดน้ำหนัก (&lt; 1,800 kcal)</option>
-              <option value="sugar_cut">🧋 ลดน้ำตาล (&lt; 20g)</option>
-              <option value="healthy_balance">🥗 สมดุล (&lt; 2,000 kcal, &lt; 25g)</option>
-              <option value="muscle_gain">💪 สร้างกล้าม (≥ 2,400 kcal)</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:11px; color:var(--mute);">สีโมจิประจำตัว</label>
-            <select id="newMemberColor" style="background:var(--card); width:100%; padding:8px; border-radius:10px; border:1px solid var(--line); font-size:12px; color:var(--ink);">
-              <option value="#FF9EB5">🌸 ชมพูซากุระ</option>
-              <option value="#6FCBB0">🍃 เขียวมัทฉะ</option>
-              <option value="#FFB05C">🍊 ส้มยุซุ</option>
-              <option value="#A78BFA">🍇 ม่วงเผือก</option>
-              <option value="#D4A373">🧋 ชานม</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn sm" onclick="addNewMemberFromModal()">เพิ่มเพื่อนเข้าแก๊งโมจิ 🍡</button>
+      <div style="background:var(--pinkS); border:1.5px dashed var(--pink); border-radius:18px; padding:14px; margin-bottom:14px; text-align:center;">
+        <span style="font-size:24px; display:block; margin-bottom:4px;">✨</span>
+        <b style="font-size:13.5px; color:var(--pink-ink); display:block; margin-bottom:4px;">ชวน / เพิ่มสมาชิกใหม่ในแก๊ง</b>
+        <span style="font-size:11.5px; color:var(--mute); display:block; margin-bottom:10px;">ทำแบบสอบถามสั้นๆ เพื่อให้ระบบประเมินและปรับเป้าหมายเฉพาะบุคคลอัตโนมัติ</span>
+        <button class="btn sm" style="width:100%; margin-bottom:8px;" onclick="openOnboardingModal({ isNewUser: true })">🎯 ทำแบบสอบถามเพิ่มเพื่อนใหม่ ➜</button>
       </div>
 
       <button class="btn g" onclick="closeSheet()">ปิดหน้าต่าง</button>
@@ -4739,6 +5264,11 @@ async function handleGoogleAuthCallback(response) {
       await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard()]);
       render();
       toast(`เข้าสู่ระบบ Google เรียบร้อย! ยินดีต้อนรับ ${currentUser.nickname} 🍡`);
+      if (!localStorage.getItem('mochi_onboarded')) {
+        setTimeout(() => {
+          openOnboardingModal({ isNewUser: false, initialStep: 2 });
+        }, 600);
+      }
     }
   } catch (err) {
     toast('เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
@@ -6374,6 +6904,15 @@ document.addEventListener('visibilitychange', () => {
     fetchLeaderboard()
   ]);
   render();
+
+  // If first-time visitor with no saved user or onboarding not yet completed
+  const savedId = localStorage.getItem('mochi_user_id');
+  const hasOnboarded = localStorage.getItem('mochi_onboarded');
+  if (!savedId && !hasOnboarded) {
+    setTimeout(() => {
+      openOnboardingModal({ isNewUser: true });
+    }, 400);
+  }
 })();
 </script>
 </body>

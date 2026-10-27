@@ -256,7 +256,7 @@ export function getUserByEmail(email) {
   return stmt.get(email);
 }
 
-export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score }) {
+export function createUser({ id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, goal_type, goal_score, personality, avatar_hat }) {
   const newId = id || `u_${Date.now()}`;
   const stmt = db.prepare(`
     INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, google_id, email, avatar_image, consent_pdpa, consent_at, avatar_hat, personality, goal_type, goal_score, created_at)
@@ -275,8 +275,8 @@ export function createUser({ id, nickname, avatar_color, avatar_face, calorie_go
     avatar_image || null,
     consent_pdpa ? 1 : 0,
     consent_pdpa ? Date.now() : null,
-    'none',
-    'kind',
+    avatar_hat || 'none',
+    personality || 'cheerful',
     goal_type || 'weight_loss',
     goal_score !== undefined ? Number(goal_score) : 150,
     Date.now()
