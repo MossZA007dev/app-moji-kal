@@ -1954,7 +1954,7 @@ nav button i { font-style: normal; font-size: 17px; line-height: 1.1; }
   margin-top: 8px;
 }
 
-input, textarea, select {
+input:not([type="checkbox"]):not([type="radio"]), textarea, select {
   width: 100%;
   font: inherit;
   color: var(--ink);
@@ -1962,6 +1962,85 @@ input, textarea, select {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 10px 12px;
+}
+input[type="checkbox"], input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+  accent-color: var(--pink);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+input[type="checkbox"] {
+  border-radius: 4px;
+}
+input[type="radio"] {
+  border-radius: 50%;
+}
+.privacy-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  width: 100%;
+  text-align: left;
+}
+.privacy-radio-card:hover {
+  border-color: var(--pink);
+  background: rgba(255, 158, 181, 0.05);
+}
+.privacy-radio-card:has(input[type="radio"]:checked),
+.privacy-radio-card.active {
+  border-color: var(--pink);
+  background: rgba(255, 158, 181, 0.12);
+  box-shadow: 0 2px 8px rgba(255, 158, 181, 0.16);
+}
+.privacy-radio-card input[type="radio"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  accent-color: var(--pink) !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+.privacy-radio-card .privacy-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.privacy-radio-card .privacy-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.privacy-radio-card .privacy-desc {
+  font-size: 11px;
+  color: var(--mute);
+  line-height: 1.35;
 }
 input:focus, textarea:focus, select:focus {
   outline: 2px solid var(--pink);
@@ -9724,19 +9803,33 @@ function openMyProfileModal() {
 
       <!-- Privacy Setting -->
       <div style="background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:12px; margin-bottom:12px;">
-        <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">🔒 ความเป็นส่วนตัวในฟีดเพื่อน:</label>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label style="font-size:12px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:5px; margin:0;">
+            <span>🔒</span> ความเป็นส่วนตัวในฟีดเพื่อน:
+          </label>
+          <span style="font-size:10.5px; color:var(--mute);">เลือกสิ่งที่แชร์</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label class="privacy-radio-card ${u.privacy_level === 'full' ? 'active' : ''}">
             <input type="radio" name="privacyOpt" value="full" ${u.privacy_level === 'full' ? 'checked' : ''} onchange="updatePrivacySetting('full')">
-            <span>📢 <b>แชร์ปกติ:</b> แสดงชื่อเมนูและสถิติให้เพื่อนในแก๊งเห็น</span>
+            <div class="privacy-info">
+              <div class="privacy-title"><span>📢</span> <b>แชร์ปกติ</b></div>
+              <div class="privacy-desc">แสดงชื่อเมนู รูปอาหาร และสถิติให้เพื่อนในแก๊งเห็น</div>
+            </div>
           </label>
-          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <label class="privacy-radio-card ${u.privacy_level === 'summary' ? 'active' : ''}">
             <input type="radio" name="privacyOpt" value="summary" ${u.privacy_level === 'summary' ? 'checked' : ''} onchange="updatePrivacySetting('summary')">
-            <span>📊 <b>เฉพาะตัวเลข:</b> ซ่อนชื่อเมนู แสดงเฉพาะแคลอรี่รวม</span>
+            <div class="privacy-info">
+              <div class="privacy-title"><span>📊</span> <b>เฉพาะตัวเลข</b></div>
+              <div class="privacy-desc">ซ่อนชื่อเมนู แสดงเฉพาะแคลอรี่รวมและสารอาหาร</div>
+            </div>
           </label>
-          <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <label class="privacy-radio-card ${u.privacy_level === 'private' ? 'active' : ''}">
             <input type="radio" name="privacyOpt" value="private" ${u.privacy_level === 'private' ? 'checked' : ''} onchange="updatePrivacySetting('private')">
-            <span>🔒 <b>ส่วนตัว 100%:</b> ไม่แชร์กิจกรรมลงฟีดแก๊ง</span>
+            <div class="privacy-info">
+              <div class="privacy-title"><span>🔒</span> <b>ส่วนตัว 100%</b></div>
+              <div class="privacy-desc">บันทึกดูคนเดียว ไม่แชร์กิจกรรมลงฟีดแก๊ง</div>
+            </div>
           </label>
         </div>
       </div>
@@ -9806,6 +9899,16 @@ async function saveNicknameChange() {
 
 async function updatePrivacySetting(level) {
   if (!currentUser) return;
+  // Instantly toggle active visual highlight across radio cards
+  document.querySelectorAll('.privacy-radio-card').forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio && radio.value === level) {
+      card.classList.add('active');
+      radio.checked = true;
+    } else {
+      card.classList.remove('active');
+    }
+  });
   try {
     const res = await fetch(`/api/users/${currentUser.id}`, {
       method: 'PUT',
