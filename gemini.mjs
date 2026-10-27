@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const settingsFile = path.join(__dirname, 'data', 'settings.json');
 
 // Centralized AI Model Name (Pillar 2: Easy single-place modification)
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
 const fmt = n => Math.round((Number(n) || 0) * 10) / 10;
 
@@ -315,7 +315,8 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
         contents: [{ parts }],
         generationConfig: {
           response_mime_type: 'application/json',
-          temperature: 0.2
+          temperature: 0.2,
+          maxOutputTokens: 2500
         }
       })
     });
@@ -327,7 +328,8 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     }
 
     const data = await response.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const candidateParts = data.candidates?.[0]?.content?.parts || [];
+    const candidateText = candidateParts.map(p => p.text).filter(Boolean).join('\n').trim();
     if (!candidateText) {
       const fb = fallbackAnalyze(text, sweetness, portion);
       fb.note = '⚠️ ผลการวิเคราะห์จาก AI ว่างเปล่า — ใช้ค่ามาตรฐานแทน คุณสามารถแก้ไขได้เลยน้า';
@@ -450,7 +452,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
         contents,
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 250
+          maxOutputTokens: 2000
         }
       })
     });
@@ -458,7 +460,8 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
     if (!response.ok) throw new Error('Gemini API error');
 
     const data = await response.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const replyText = parts.map(p => p.text).filter(Boolean).join('\n').trim();
     return {
       reply: replyText || 'โมจิรับฟังอยู่นะ ค่อยๆ ปรับการกินไปด้วยกันนะ 🍡',
       mochiMood: remSugar < 0 ? 'worry' : 'happy'
