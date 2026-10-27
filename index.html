@@ -3702,10 +3702,38 @@ async function fetchUsers() {
     const data = await res.json();
     users = data.users || [];
     const savedId = localStorage.getItem('mochi_user_id');
-    const foundUser = savedId ? users.find(u => u.id === savedId) : null;
+    let foundUser = savedId ? users.find(u => u.id === savedId) : null;
+
+    // Self-Healing: If user was saved locally but missing on server (e.g. server restart/redeploy)
+    if (!foundUser) {
+      const cachedProfileStr = localStorage.getItem('mochi_user_profile');
+      if (cachedProfileStr) {
+        try {
+          const cached = JSON.parse(cachedProfileStr);
+          if (cached && cached.nickname) {
+            console.log('[Auto-Sync] Restoring user profile to server:', cached.nickname);
+            const syncRes = await fetch('/api/users', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cached)
+            });
+            const syncData = await syncRes.json();
+            if (syncData.user) {
+              foundUser = syncData.user;
+              users.push(foundUser);
+            }
+          }
+        } catch (e) {
+          console.warn('[Auto-Sync] Restore user warning:', e);
+        }
+      }
+    }
+
     if (foundUser) {
       currentUser = foundUser;
       localStorage.setItem('mochi_user_id', currentUser.id);
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      localStorage.setItem('mochi_onboarded', 'true');
       updateUserHeader();
       checkPdpaConsent();
     } else {
@@ -3713,6 +3741,14 @@ async function fetchUsers() {
     }
   } catch (err) {
     console.error('Fetch users error:', err);
+    // Offline / Network glitch fallback: restore from cached profile so user is never logged out
+    const cachedProfileStr = localStorage.getItem('mochi_user_profile');
+    if (cachedProfileStr) {
+      try {
+        currentUser = JSON.parse(cachedProfileStr);
+        updateUserHeader();
+      } catch (_) {}
+    }
   }
 }
 
@@ -7720,6 +7756,7 @@ async function submitOnboarding() {
       if (data.user) {
         currentUser = data.user;
         localStorage.setItem('mochi_user_id', currentUser.id);
+        localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
         localStorage.setItem('mochi_onboarded', 'true');
         closeSheet();
         updateUserHeader();
@@ -7758,6 +7795,8 @@ async function submitOnboarding() {
       const data = await res.json();
       if (data.user) {
         currentUser = data.user;
+        localStorage.setItem('mochi_user_id', currentUser.id);
+        localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
         localStorage.setItem('mochi_onboarded', 'true');
         closeSheet();
         updateUserHeader();
@@ -11065,10 +11104,26 @@ function renderPwaBanner() {
   if (existing) existing.remove();
 
   const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  const isLine = /line\//i.test(navigator.userAgent);
 
   const banner = document.createElement('div');
   banner.id = 'pwaFloatingBanner';
   banner.className = 'pwa-floating-banner';
+
+  if (isLine) {
+    banner.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:24px;">💡</span>
+        <div>
+          <b style="font-size:12px; color:var(--ink); display:block; font-family:'Mali',sans-serif;">เปิดจากแอป LINE</b>
+          <span style="font-size:10.5px; color:var(--mute);">แตะจุด 3 จุดมุมขวาบน ➡️ เลือก 'เปิดในเบราว์เซอร์หลัก' เพื่อจำบัญชีถาวรน้า</span>
+        </div>
+      </div>
+      <button onclick="dismissPwaBanner()" style="background:none; border:none; color:var(--mute); font-size:16px; cursor:pointer; padding:2px 6px;">✕</button>
+    `;
+    document.body.appendChild(banner);
+    return;
+  }
   banner.innerHTML = `
     <div style="display:flex; align-items:center; gap:8px;">
       <span style="font-size:24px;">📲</span>
@@ -11126,9 +11181,10 @@ async function installPwaApp() {
   // Trigger PWA banner after initial load if not standalone
   setTimeout(renderPwaBanner, 1500);
 
-  // If first-time visitor with no saved user or onboarding not yet completed
+  // Only trigger onboarding if truly a first-time visitor who has never onboarded
+  const hasOnboarded = localStorage.getItem('mochi_onboarded') === 'true';
   const savedId = localStorage.getItem('mochi_user_id');
-  if (!savedId || !currentUser) {
+  if (!hasOnboarded && (!savedId || !currentUser)) {
     setTimeout(() => {
       openOnboardingModal({ isNewUser: true });
     }, 400);

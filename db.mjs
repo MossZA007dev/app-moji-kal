@@ -295,25 +295,10 @@ export function clearAllDemoData() {
     `).run(now);
   }
 
-  // Delete all legacy demo users and test accounts (keep only u1 / มอส)
-  db.prepare("DELETE FROM users WHERE id != 'u1' AND nickname != 'มอส'").run();
+  // Delete only legacy demo users and test accounts (preserve real friend accounts)
+  db.prepare("DELETE FROM users WHERE id IN ('u2', 'u3', 'u_1793104988179') OR nickname IN ('ต้นกล้า', 'แพรว', 'กานต์', 'โมจิจัง')").run();
 
   return { success: true, message: 'ล้างข้อมูลทดสอบทั้งหมดเรียบร้อยแล้ว' };
-}
-
-// Ensure clean production environment on startup (runs once per deployment or if legacy demo data detected)
-try {
-  const prodCleanMarker = path.join(dataDir, '.production_cleaned_v2');
-  if (!fs.existsSync(prodCleanMarker)) {
-    console.log('[PROD CLEANUP] Clearing all demo/test data for clean production launch...');
-    clearAllDemoData();
-    try {
-      fs.writeFileSync(prodCleanMarker, new Date().toISOString(), 'utf-8');
-    } catch (_) {}
-    console.log('[PROD CLEANUP] Clean production state initialized successfully!');
-  }
-} catch (e) {
-  console.warn('Production startup clean warning:', e.message);
 }
 
 export function getAllUsers() {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moji-cache-v6';
+const CACHE_NAME = 'moji-cache-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
