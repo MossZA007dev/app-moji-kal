@@ -172,7 +172,8 @@ const neededLogCols = [
   { name: 'components_json', type: 'TEXT' },
   { name: 'carbs', type: 'REAL' },
   { name: 'protein', type: 'REAL' },
-  { name: 'fat', type: 'REAL' }
+  { name: 'fat', type: 'REAL' },
+  { name: 'sodium', type: 'REAL' }
 ];
 
 for (const col of neededLogCols) {
@@ -418,8 +419,8 @@ export function getLogsSecure(targetUserId, requesterId, date) {
 
   // If targetUser set 'full', mask any meal marked is_private = 1
   const rawLogs = date
-    ? db.prepare('SELECT id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, created_at FROM logs WHERE user_id = ? AND date = ? ORDER BY created_at DESC').all(targetUserId, date)
-    : db.prepare('SELECT id, user_id, date, name, calorie, sugar, portion_size, sweetness_level, is_private, created_at FROM logs WHERE user_id = ? ORDER BY created_at DESC').all(targetUserId);
+    ? db.prepare('SELECT id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, created_at FROM logs WHERE user_id = ? AND date = ? ORDER BY created_at DESC').all(targetUserId, date)
+    : db.prepare('SELECT id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, created_at FROM logs WHERE user_id = ? ORDER BY created_at DESC').all(targetUserId);
 
   return rawLogs.map(l => {
     if (l.is_private) {
@@ -430,6 +431,10 @@ export function getLogsSecure(targetUserId, requesterId, date) {
         name: '🔒 เมนูส่วนตัว',
         calorie: l.calorie,
         sugar: l.sugar,
+        carbs: 0,
+        protein: 0,
+        fat: 0,
+        sodium: 0,
         portion_size: l.portion_size,
         sweetness_level: l.sweetness_level,
         is_private: 1,
@@ -440,7 +445,7 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
+export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const compStr = typeof components_json === 'string'
@@ -450,8 +455,8 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
 
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     id,
@@ -463,6 +468,7 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     carbs !== undefined && carbs !== null ? Number(carbs) : null,
     protein !== undefined && protein !== null ? Number(protein) : null,
     fat !== undefined && fat !== null ? Number(fat) : null,
+    sodium !== undefined && sodium !== null ? Number(sodium) : null,
     portion_size || 'normal',
     sweetness_level || 'normal',
     is_private ? 1 : 0,
@@ -509,8 +515,8 @@ export function deleteLog(id, userId) {
 export function restoreDeletedLog(log) {
   if (!log || !log.id) return null;
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     log.id,
@@ -519,15 +525,16 @@ export function restoreDeletedLog(log) {
     log.name,
     log.calorie,
     log.sugar,
-    log.carbs || null,
-    log.protein || null,
-    log.fat || null,
-    log.portion_size,
-    log.sweetness_level,
-    log.is_private,
+    log.carbs !== undefined && log.carbs !== null ? Number(log.carbs) : null,
+    log.protein !== undefined && log.protein !== null ? Number(log.protein) : null,
+    log.fat !== undefined && log.fat !== null ? Number(log.fat) : null,
+    log.sodium !== undefined && log.sodium !== null ? Number(log.sodium) : null,
+    log.portion_size || 'normal',
+    log.sweetness_level || 'normal',
+    log.is_private ? 1 : 0,
     log.image_url || null,
     log.components_json || null,
-    log.created_at
+    log.created_at || Date.now()
   );
   try {
     syncDailyGoalScore(log.user_id, log.date);

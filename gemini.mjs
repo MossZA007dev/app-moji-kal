@@ -71,6 +71,7 @@ export function enrichComponents(components, defaultName = 'มื้ออา�
     const cb = c.carbs !== undefined && c.carbs !== null ? Math.round(Number(c.carbs) * 10) / 10 : Math.round((k * 0.45 / 4) * 10) / 10;
     const pr = c.protein !== undefined && c.protein !== null ? Math.round(Number(c.protein) * 10) / 10 : Math.round((k * 0.2 / 4) * 10) / 10;
     const ft = c.fat !== undefined && c.fat !== null ? Math.round(Number(c.fat) * 10) / 10 : Math.round((k * 0.35 / 9) * 10) / 10;
+    const sd = c.sodium !== undefined && c.sodium !== null ? Math.round(Number(c.sodium)) : Math.round(k * 1.3);
 
     return {
       name,
@@ -79,6 +80,7 @@ export function enrichComponents(components, defaultName = 'มื้ออา�
       sugar: s,
       protein: pr,
       fat: ft,
+      sodium: sd,
       icon: c.icon || getFoodEmoji(name),
       x,
       y
@@ -108,18 +110,18 @@ export function saveSettings(settings) {
 
 // Built-in Thai food & drink baseline database
 const THAI_FOOD_DB = [
-  { keywords: ['ชานมไข่มุก', 'ชานม', 'boba'], name: 'ชานมไข่มุก', baseCal: 360, baseSugar: 28, isDrink: true, components: [{ name: 'ชาและนม', kcal: 220, sugar: 20, icon: '🧋', x: 50, y: 38 }, { name: 'ไข่มุกบราวน์ชูการ์', kcal: 140, sugar: 8, icon: '🧋', x: 50, y: 72 }] },
-  { keywords: ['ชาไทย', 'ชาเย็น'], name: 'ชาไทยเย็น', baseCal: 220, baseSugar: 24, isDrink: true, components: [{ name: 'ชาไทยสกัด', kcal: 20, sugar: 0, icon: '🧋', x: 50, y: 35 }, { name: 'นมข้นหวานและนมสด', kcal: 200, sugar: 24, icon: '🥛', x: 50, y: 65 }] },
-  { keywords: ['ชาเขียวเย็น', 'มัทฉะลาเต้', 'ชาเขียวนม'], name: 'ชาเขียวนมเย็น', baseCal: 240, baseSugar: 22, isDrink: true, components: [{ name: 'มัทฉะแท้', kcal: 30, sugar: 0, icon: '🍵', x: 50, y: 35 }, { name: 'นมสดและไซรัป', kcal: 210, sugar: 22, icon: '🥛', x: 50, y: 65 }] },
-  { keywords: ['กาแฟดำ', 'อเมริกาโน่', 'americano'], name: 'อเมริกาโน่เย็น (ไม่หวาน)', baseCal: 15, baseSugar: 0, isDrink: true, components: [{ name: 'เอสเพรสโซ่ช็อต + น้ำ', kcal: 15, sugar: 0, icon: '☕', x: 50, y: 50 }] },
-  { keywords: ['ลาเต้', 'latte', 'คาปูชิโน่', 'cappuccino'], name: 'ลาเต้เย็น', baseCal: 180, baseSugar: 12, isDrink: true, components: [{ name: 'กาแฟ', kcal: 15, sugar: 0, icon: '☕', x: 50, y: 35 }, { name: 'นมสด', kcal: 165, sugar: 12, icon: '🥛', x: 50, y: 65 }] },
-  { keywords: ['กะเพรา', 'ผัดกะเพรา'], name: 'ผัดกะเพราหมูสับ + ไข่ดาว', baseCal: 630, baseSugar: 3, components: [{ name: 'ข้าวสวย 1 จาน', kcal: 200, sugar: 0, icon: '🍚', x: 34, y: 58 }, { name: 'ผัดกะเพราหมูสับ', kcal: 310, sugar: 2.5, icon: '🥩', x: 68, y: 46 }, { name: 'ไข่ดาว', kcal: 120, sugar: 0.5, icon: '🍳', x: 48, y: 28 }] },
-  { keywords: ['ข้าวมันไก่'], name: 'ข้าวมันไก่ตอน', baseCal: 580, baseSugar: 1.5, components: [{ name: 'ข้าวมัน', kcal: 300, sugar: 0.5, icon: '🍚', x: 38, y: 60 }, { name: 'เนื้อไก่ตอน', kcal: 220, sugar: 0, icon: '🍗', x: 62, y: 45 }, { name: 'น้ำจิ้มและน้ำซุป', kcal: 60, sugar: 1, icon: '🥣', x: 50, y: 25 }] },
-  { keywords: ['ข้าวผัด'], name: 'ข้าวผัดหมู/ไก่', baseCal: 550, baseSugar: 2.5, components: [{ name: 'ข้าวผัดน้ำมัน', kcal: 420, sugar: 1.5, icon: '🍚', x: 45, y: 56 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 1, icon: '🥩', x: 65, y: 40 }] },
-  { keywords: ['ก๋วยเตี๋ยวต้มยำ'], name: 'ก๋วยเตี๋ยวต้มยำน้ำข้น', baseCal: 480, baseSugar: 9, components: [{ name: 'เส้นก๋วยเตี๋ยว', kcal: 180, sugar: 0, icon: '🍜', x: 42, y: 55 }, { name: 'หมูสับ/ลูกชิ้น', kcal: 160, sugar: 1, icon: '🥩', x: 68, y: 42 }, { name: 'น้ำซุปต้มยำปรุงรส', kcal: 140, sugar: 8, icon: '🥣', x: 50, y: 72 }] },
-  { keywords: ['ผัดไทย'], name: 'ผัดไทยกุ้งสด', baseCal: 550, baseSugar: 15, components: [{ name: 'เส้นจันท์และเต้าหู้', kcal: 320, sugar: 2, icon: '🍜', x: 42, y: 54 }, { name: 'กุ้งสดและไข่', kcal: 110, sugar: 0, icon: '🦐', x: 66, y: 38 }, { name: 'น้ำซอสผัดไทยน้ำมะขาม', kcal: 120, sugar: 13, icon: '🥣', x: 52, y: 72 }] },
-  { keywords: ['ส้มตำไทย'], name: 'ส้มตำไทย', baseCal: 120, baseSugar: 14, components: [{ name: 'มะละกอและผัก', kcal: 45, sugar: 2, icon: '🥗', x: 45, y: 45 }, { name: 'น้ำส้มตำน้ำตาลปี๊บ', kcal: 75, sugar: 12, icon: '🥣', x: 62, y: 60 }] },
-  { keywords: ['สุกี้'], name: 'สุกี้น้ำรวมมิตร', baseCal: 320, baseSugar: 6, components: [{ name: 'วุ้นเส้นและผักสด', kcal: 130, sugar: 1, icon: '🥗', x: 40, y: 50 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 0, icon: '🥩', x: 64, y: 42 }, { name: 'น้ำจิ้มสุกี้', kcal: 60, sugar: 5, icon: '🥣', x: 50, y: 70 }] },
+  { keywords: ['ชานมไข่มุก', 'ชานม', 'boba'], name: 'ชานมไข่มุก', baseCal: 360, baseSugar: 28, baseSodium: 75, isDrink: true, components: [{ name: 'ชาและนม', kcal: 220, sugar: 20, sodium: 55, icon: '🧋', x: 50, y: 38 }, { name: 'ไข่มุกบราวน์ชูการ์', kcal: 140, sugar: 8, sodium: 20, icon: '🧋', x: 50, y: 72 }] },
+  { keywords: ['ชาไทย', 'ชาเย็น'], name: 'ชาไทยเย็น', baseCal: 220, baseSugar: 24, baseSodium: 85, isDrink: true, components: [{ name: 'ชาไทยสกัด', kcal: 20, sugar: 0, sodium: 10, icon: '🧋', x: 50, y: 35 }, { name: 'นมข้นหวานและนมสด', kcal: 200, sugar: 24, sodium: 75, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['ชาเขียวเย็น', 'มัทฉะลาเต้', 'ชาเขียวนม'], name: 'ชาเขียวนมเย็น', baseCal: 240, baseSugar: 22, baseSodium: 80, isDrink: true, components: [{ name: 'มัทฉะแท้', kcal: 30, sugar: 0, sodium: 10, icon: '🍵', x: 50, y: 35 }, { name: 'นมสดและไซรัป', kcal: 210, sugar: 22, sodium: 70, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['กาแฟดำ', 'อเมริกาโน่', 'americano'], name: 'อเมริกาโน่เย็น (ไม่หวาน)', baseCal: 15, baseSugar: 0, baseSodium: 10, isDrink: true, components: [{ name: 'เอสเพรสโซ่ช็อต + น้ำ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 50 }] },
+  { keywords: ['ลาเต้', 'latte', 'คาปูชิโน่', 'cappuccino'], name: 'ลาเต้เย็น', baseCal: 180, baseSugar: 12, baseSodium: 110, isDrink: true, components: [{ name: 'กาแฟ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 35 }, { name: 'นมสด', kcal: 165, sugar: 12, sodium: 100, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['กะเพรา', 'ผัดกะเพรา'], name: 'ผัดกะเพราหมูสับ + ไข่ดาว', baseCal: 630, baseSugar: 3, baseSodium: 980, components: [{ name: 'ข้าวสวย 1 จาน', kcal: 200, sugar: 0, sodium: 15, icon: '🍚', x: 34, y: 58 }, { name: 'ผัดกะเพราหมูสับ', kcal: 310, sugar: 2.5, sodium: 820, icon: '🥩', x: 68, y: 46 }, { name: 'ไข่ดาว', kcal: 120, sugar: 0.5, sodium: 145, icon: '🍳', x: 48, y: 28 }] },
+  { keywords: ['ข้าวมันไก่'], name: 'ข้าวมันไก่ตอน', baseCal: 580, baseSugar: 1.5, baseSodium: 850, components: [{ name: 'ข้าวมัน', kcal: 300, sugar: 0.5, sodium: 280, icon: '🍚', x: 38, y: 60 }, { name: 'เนื้อไก่ตอน', kcal: 220, sugar: 0, sodium: 160, icon: '🍗', x: 62, y: 45 }, { name: 'น้ำจิ้มและน้ำซุป', kcal: 60, sugar: 1, sodium: 410, icon: '🥣', x: 50, y: 25 }] },
+  { keywords: ['ข้าวผัด'], name: 'ข้าวผัดหมู/ไก่', baseCal: 550, baseSugar: 2.5, baseSodium: 780, components: [{ name: 'ข้าวผัดน้ำมัน', kcal: 420, sugar: 1.5, sodium: 520, icon: '🍚', x: 45, y: 56 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 1, sodium: 260, icon: '🥩', x: 65, y: 40 }] },
+  { keywords: ['ก๋วยเตี๋ยวต้มยำ'], name: 'ก๋วยเตี๋ยวต้มยำน้ำข้น', baseCal: 480, baseSugar: 9, baseSodium: 1450, components: [{ name: 'เส้นก๋วยเตี๋ยว', kcal: 180, sugar: 0, sodium: 50, icon: '🍜', x: 42, y: 55 }, { name: 'หมูสับ/ลูกชิ้น', kcal: 160, sugar: 1, sodium: 450, icon: '🥩', x: 68, y: 42 }, { name: 'น้ำซุปต้มยำปรุงรส', kcal: 140, sugar: 8, sodium: 950, icon: '🥣', x: 50, y: 72 }] },
+  { keywords: ['ผัดไทย'], name: 'ผัดไทยกุ้งสด', baseCal: 550, baseSugar: 15, baseSodium: 980, components: [{ name: 'เส้นจันท์และเต้าหู้', kcal: 320, sugar: 2, sodium: 320, icon: '🍜', x: 42, y: 54 }, { name: 'กุ้งสดและไข่', kcal: 110, sugar: 0, sodium: 180, icon: '🦐', x: 66, y: 38 }, { name: 'น้ำซอสผัดไทยน้ำมะขาม', kcal: 120, sugar: 13, sodium: 480, icon: '🥣', x: 52, y: 72 }] },
+  { keywords: ['ส้มตำไทย'], name: 'ส้มตำไทย', baseCal: 120, baseSugar: 14, baseSodium: 890, components: [{ name: 'มะละกอและผัก', kcal: 45, sugar: 2, sodium: 20, icon: '🥗', x: 45, y: 45 }, { name: 'น้ำส้มตำน้ำตาลปี๊บ', kcal: 75, sugar: 12, sodium: 870, icon: '🥣', x: 62, y: 60 }] },
+  { keywords: ['สุกี้'], name: 'สุกี้น้ำรวมมิตร', baseCal: 320, baseSugar: 6, baseSodium: 1120, components: [{ name: 'วุ้นเส้นและผักสด', kcal: 130, sugar: 1, sodium: 60, icon: '🥗', x: 40, y: 50 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 0, sodium: 210, icon: '🥩', x: 64, y: 42 }, { name: 'น้ำจิ้มสุกี้', kcal: 60, sugar: 5, sodium: 850, icon: '🥣', x: 50, y: 70 }] },
 ];
 
 const BRAND_BASELINES = {
@@ -169,16 +171,21 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
       if (toppings.includes('jelly')) { baseSugar += 1; baseKcal += 15; }
     }
 
+    const fbSodiumDrink = Math.round(isSweetDrink ? 60 : (baseKcal * 1.3));
     return {
       name: text.trim() || 'มื้ออาหาร',
       kcal: Math.round(baseKcal),
+      carbs: Math.round((baseKcal * 0.45 / 4) * 10) / 10,
       sugar: Math.round(baseSugar * 10) / 10,
+      protein: Math.round((baseKcal * 0.2 / 4) * 10) / 10,
+      fat: Math.round((baseKcal * 0.35 / 9) * 10) / 10,
+      sodium: fbSodiumDrink,
       confidence: 'medium',
       needs_clarification: isSweetDrink && sweetness === 'normal',
       clarification_question: isSweetDrink ? 'แก้วนี้สั่งหวานระดับไหนคะ? เพื่อคำนวณน้ำตาลให้แม่นยำ' : 'ระบุขนาดหรือส่วนผสมเพิ่มเติมได้นะ',
       note: isSweetDrink ? `ประเมินตามสูตร ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}` : 'ประเมินจากฐานข้อมูลอาหารไทยเบื้องต้น',
       components: enrichComponents(
-        [{ name: text.trim() || 'มื้อหลัก', kcal: Math.round(baseKcal), sugar: Math.round(baseSugar * 10) / 10 }],
+        [{ name: text.trim() || 'มื้อหลัก', kcal: Math.round(baseKcal), sugar: Math.round(baseSugar * 10) / 10, sodium: fbSodiumDrink }],
         text.trim() || 'มื้ออาหาร',
         baseKcal,
         baseSugar
@@ -189,6 +196,7 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
 
   let cal = matched.baseCal;
   let sugar = matched.baseSugar;
+  let sodium = matched.baseSodium || (matched.isDrink ? 70 : 800);
 
   if (matched.isDrink) {
     const brandFactor = BRAND_BASELINES[brand]?.factor || 1.0;
@@ -208,17 +216,19 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
       cal += 40;
     }
 
-    if (toppings.includes('boba')) { sugar += 12; cal += 110; }
-    if (toppings.includes('whip')) { sugar += 2; cal += 85; }
-    if (toppings.includes('jelly')) { sugar += 1; cal += 15; }
+    if (toppings.includes('boba')) { sugar += 12; cal += 110; sodium += 20; }
+    if (toppings.includes('whip')) { sugar += 2; cal += 85; sodium += 30; }
+    if (toppings.includes('jelly')) { sugar += 1; cal += 15; sodium += 10; }
   }
 
   if (portion === 'small') {
     cal = Math.round(cal * 0.75);
     sugar = Math.round(sugar * 0.8 * 10) / 10;
+    sodium = Math.round(sodium * 0.8);
   } else if (portion === 'large') {
     cal = Math.round(cal * 1.35);
     sugar = Math.round(sugar * 1.25 * 10) / 10;
+    sodium = Math.round(sodium * 1.3);
   }
 
   const needsClarification = matched.isDrink && sweetness === 'normal' && !lower.includes('หวาน');
@@ -234,6 +244,7 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
     sugar: Math.round(sugar * 10) / 10,
     protein: fbProtein,
     fat: fbFat,
+    sodium: Math.round(sodium),
     confidence: 'high',
     needs_clarification: needsClarification,
     clarification_question: needsClarification ? `สั่ง "${matched.name}" ระดับความหวานเท่าไหร่? (ค่านี้คิดจากหวานปกติ 100%)` : null,
@@ -304,6 +315,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
    - "sugar": ปริมาณน้ำตาลรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "protein": ปริมาณโปรตีนรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "fat": ปริมาณไขมันรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "sodium": ปริมาณโซเดียมรวมทั้งจานเป็นมิลลิกรัม mg (เช่น อาหารไทย/ก๋วยเตี๋ยว/แกง มักมี 600-1400mg, ข้าวจานเดียว 500-900mg, สลัด/ผลไม้ 10-150mg, เครื่องดื่ม 20-120mg) (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "confidence": "high" | "medium" | "low"
    - "needs_clarification": true ถ้าเป็นเครื่องดื่มหรือของหวานที่ข้อมูลความหวานหรือไซส์ไม่ชัดเจน
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
@@ -311,18 +323,18 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
    - "components": อาเรย์แจกแจงแยกชิ้นส่วนของอาหารแต่ละอย่างในจาน เพื่อนำไปปักหมุด AR Pin บนรูปภาพ เช่น ขนมปังโทสต์อะโวคาโด, ไข่ต้ม, เห็ดผัด, มะเขือเทศ:
      ตัวอย่าง:
      [
-       {"name":"โทสต์อะโวคาโด","icon":"🥑","kcal":240,"carbs":22,"sugar":1.5,"protein":4.5,"fat":15,"x":25,"y":45},
-       {"name":"เห็ดผัดซอส","icon":"🍄","kcal":170,"carbs":24,"sugar":2.0,"protein":6.0,"fat":5.5,"x":65,"y":35},
-       {"name":"ไข่ต้มผ่าซีก","icon":"🥚","kcal":216,"carbs":1.2,"sugar":0.5,"protein":18.0,"fat":14.0,"x":40,"y":68},
-       {"name":"มะเขือเทศราชินี","icon":"🍅","kcal":20,"carbs":4.0,"sugar":2.6,"protein":0.9,"fat":0.2,"x":78,"y":52}
+       {"name":"โทสต์อะโวคาโด","icon":"🥑","kcal":240,"carbs":22,"sugar":1.5,"protein":4.5,"fat":15,"sodium":280,"x":25,"y":45},
+       {"name":"เห็ดผัดซอส","icon":"🍄","kcal":170,"carbs":24,"sugar":2.0,"protein":6.0,"fat":5.5,"sodium":360,"x":65,"y":35},
+       {"name":"ไข่ต้มผ่าซีก","icon":"🥚","kcal":216,"carbs":1.2,"sugar":0.5,"protein":18.0,"fat":14.0,"sodium":140,"x":40,"y":68},
+       {"name":"มะเขือเทศราชินี","icon":"🍅","kcal":20,"carbs":4.0,"sugar":2.6,"protein":0.9,"fat":0.2,"sodium":8,"x":78,"y":52}
      ]
      *** ข้อกำหนดสำหรับ AR Object Detection & Calorie Pin ***:
      1. ถ้ามีรูปภาพ ให้ตรวจจับตำแหน่งของแต่ละวัตถุดิบ/อาหารบนรูป และระบุพิกัดตรงกลางของอาหารชิ้นนั้นเป็นเปอร์เซ็นต์ (15 ถึง 85):
         - "x": พิกัดแนวนอน (15 ถึง 85)
         - "y": พิกัดแนวตั้ง (15 ถึง 85)
      2. ใส่ "icon" เป็น emoji อาหารที่ตรงที่สุด เช่น 🥑, 🍄, 🥚, 🍅, 🍳, 🥩, 🍚, 🍗, 🥬, 🍜, 🧋, 🥣, 🍞
-     3. แจกแจง "kcal" (แคลอรี), "carbs" (แป้ง g), "sugar" (น้ำตาล g), "protein" (โปรตีน g), "fat" (ไขมัน g) ของแต่ละชิ้นส่วนในจานให้สมเหตุสมผล โดยผลรวมใกล้เคียงกับค่ารวมทั้งจาน
-   - "note": คำอธิบายสั้นๆ 1-2 ประโยค สรุปโภชนาการ สัดส่วนแป้งและน้ำตาล หรือคำแนะนำสุขภาพที่เป็นมิตร
+     3. แจกแจง "kcal" (แคลอรี), "carbs" (แป้ง g), "sugar" (น้ำตาล g), "protein" (โปรตีน g), "fat" (ไขมัน g), "sodium" (โซเดียม mg) ของแต่ละชิ้นส่วนในจานให้สมเหตุสมผล โดยผลรวมใกล้เคียงกับค่ารวมทั้งจาน
+   - "note": คำอธิบายสั้นๆ 1-2 ประโยค สรุปโภชนาการ สัดส่วนแป้ง โซเดียม และน้ำตาล หรือคำแนะนำสุขภาพที่เป็นมิตร
 `;
 
   try {
@@ -406,6 +418,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     const parsedCarbs = parsed.carbs !== undefined && parsed.carbs !== null ? Math.round(Number(parsed.carbs) * 10) / 10 : null;
     const parsedProtein = parsed.protein !== undefined && parsed.protein !== null ? Math.round(Number(parsed.protein) * 10) / 10 : null;
     const parsedFat = parsed.fat !== undefined && parsed.fat !== null ? Math.round(Number(parsed.fat) * 10) / 10 : null;
+    const parsedSodium = parsed.sodium !== undefined && parsed.sodium !== null ? Math.round(Number(parsed.sodium)) : null;
     const parsedName = String(parsed.name || text || 'มื้ออาหาร');
 
     const components = enrichComponents(parsed.components, parsedName, parsedKcal, parsedSugar, parsedCarbs, parsedProtein, parsedFat);
@@ -413,6 +426,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     const finalCarbs = parsedCarbs !== null ? parsedCarbs : Math.round(components.reduce((a, b) => a + (b.carbs || 0), 0) * 10) / 10;
     const finalProtein = parsedProtein !== null ? parsedProtein : Math.round(components.reduce((a, b) => a + (b.protein || 0), 0) * 10) / 10;
     const finalFat = parsedFat !== null ? parsedFat : Math.round(components.reduce((a, b) => a + (b.fat || 0), 0) * 10) / 10;
+    const finalSodium = parsedSodium !== null ? parsedSodium : Math.round(components.reduce((a, b) => a + (b.sodium || 0), 0));
 
     return {
       name: parsedName,
@@ -421,6 +435,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
       sugar: parsedSugar,
       protein: finalProtein,
       fat: finalFat,
+      sodium: finalSodium,
       is_food: true,
       confidence: parsed.confidence || 'medium',
       needs_clarification: Boolean(parsed.needs_clarification),
