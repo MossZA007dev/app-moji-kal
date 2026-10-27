@@ -269,20 +269,51 @@ export function clearAllDemoData() {
   db.prepare('DELETE FROM daily_goals').run();
   db.prepare('DELETE FROM favorites').run();
   db.prepare('DELETE FROM challenge_participants').run();
+  db.prepare('DELETE FROM verified_dishes').run();
   db.prepare('DELETE FROM ai_usage').run();
 
   // Reset primary user stats to clean initial production state while preserving personal health profile
-  db.prepare(`
-    UPDATE users 
-    SET coins = 120, 
-        goal_score = 150, 
-        avatar_hat = 'none', 
-        avatar_accessory = 'none', 
-        unlocked_items = '[]'
-    WHERE id = 'u1'
-  `).run();
+  const existingU1 = db.prepare("SELECT * FROM users WHERE id = 'u1' OR nickname = 'มอส'").get();
+  if (existingU1) {
+    db.prepare(`
+      UPDATE users 
+      SET nickname = 'มอส',
+          coins = 120, 
+          goal_score = 150, 
+          avatar_hat = 'none', 
+          avatar_accessory = 'none', 
+          unlocked_items = '[]',
+          role = 'dev',
+          is_dev = 1
+      WHERE id = ?
+    `).run(existingU1.id);
+  } else {
+    const now = Date.now();
+    db.prepare(`
+      INSERT INTO users (id, nickname, avatar_color, avatar_face, calorie_goal, sugar_goal, privacy_level, avatar_hat, personality, coins, goal_type, goal_score, role, is_dev, created_at)
+      VALUES ('u1', 'มอส', '#FF9EB5', 'happy', 2000, 25, 'full', 'none', 'kind', 120, 'weight_loss', 150, 'dev', 1, ?)
+    `).run(now);
+  }
+
+  // Delete all legacy demo users and test accounts (keep only u1 / มอส)
+  db.prepare("DELETE FROM users WHERE id != 'u1' AND nickname != 'มอส'").run();
 
   return { success: true, message: 'ล้างข้อมูลทดสอบทั้งหมดเรียบร้อยแล้ว' };
+}
+
+// Ensure clean production environment on startup (runs once per deployment or if legacy demo data detected)
+try {
+  const prodCleanMarker = path.join(dataDir, '.production_cleaned_v2');
+  if (!fs.existsSync(prodCleanMarker)) {
+    console.log('[PROD CLEANUP] Clearing all demo/test data for clean production launch...');
+    clearAllDemoData();
+    try {
+      fs.writeFileSync(prodCleanMarker, new Date().toISOString(), 'utf-8');
+    } catch (_) {}
+    console.log('[PROD CLEANUP] Clean production state initialized successfully!');
+  }
+} catch (e) {
+  console.warn('Production startup clean warning:', e.message);
 }
 
 export function getAllUsers() {

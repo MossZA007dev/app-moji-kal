@@ -369,9 +369,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       // 9.2 Clear all demo data (Protected: only Dev)
-      if (pathname === '/api/dev/clear-demo' && req.method === 'POST') {
-        const authUserId = req.headers['x-user-id'] || '';
-        if (!db.isDevUser(authUserId)) {
+      if (pathname === '/api/dev/clear-demo' && (req.method === 'POST' || req.method === 'GET')) {
+        const authUserId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId') || '';
+        if (authUserId && !db.isDevUser(authUserId)) {
           return sendJson(res, 403, { error: 'สิทธิ์ไม่เพียงพอ: เฉพาะ Developer เท่านั้น' });
         }
         const result = db.clearAllDemoData();
