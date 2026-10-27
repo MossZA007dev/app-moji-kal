@@ -6274,7 +6274,8 @@ async function fetchStreak() {
       headers: { 'x-user-id': currentUser.id }
     });
     userStreak = await res.json();
-    $('#streakDays').textContent = `${userStreak.current} วันติด`;
+    const streakEl = $('#streakDays');
+    if (streakEl) streakEl.textContent = `${userStreak.current || 0} วันติด`;
   } catch (err) {
     console.error('Fetch streak error:', err);
   }
@@ -7429,14 +7430,15 @@ function render() {
 
 function go(t) {
   tab = t;
-  if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges()]).then(render);
-  else if (t === 'quests') Promise.all([fetchQuests(), fetchLeaderboard(), fetchStreak()]).then(render);
-  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs()]).then(render);
-  else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).then(render);
-  else if (t === 'chat') fetchChatHistory().then(render);
-  else if (t === 'fashion') Promise.all([fetchUsers(), fetchStreak(), fetchLogs()]).then(render);
-  else render();
+  render();
   window.scrollTo(0, 0);
+
+  if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges()]).catch(console.error).then(render);
+  else if (t === 'quests') Promise.all([fetchQuests(), fetchLeaderboard(), fetchStreak()]).catch(console.error).then(render);
+  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs()]).catch(console.error).then(render);
+  else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).catch(console.error).then(render);
+  else if (t === 'chat') fetchChatHistory().catch(console.error).then(render);
+  else if (t === 'fashion') Promise.all([fetchUsers(), fetchStreak(), fetchLogs()]).catch(console.error).then(render);
 }
 
 // 1. TODAY VIEW
@@ -9279,7 +9281,8 @@ function openLeaderboardInfoModal() {
 
 // ----------------- QUESTS VIEW -----------------
 function renderQuests() {
-  if (!currentUser) {
+  try {
+    if (!currentUser) {
     $('#main').innerHTML = `
       <div class="card" style="text-align:center; padding:36px 18px; margin:20px 0; border:2px dashed var(--pink); border-radius:24px;">
         <div style="font-size:50px; margin-bottom:12px;">🎯✨</div>
@@ -9334,7 +9337,7 @@ function renderQuests() {
               <span style="font-size:10px; background:var(--pinkS); color:var(--pink); font-weight:800; padding:1px 6px; border-radius:8px;">Adventurer</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--mute); margin-top:3px;">
-              <span>🔥 สตรีค <b>${streakData?.streak || 0}</b> วัน</span>
+              <span>🔥 สตรีค <b>${userStreak?.current || 0}</b> วัน</span>
               <span>•</span>
               <span style="color:#6D28D9; font-weight:700;">🏆 <b>${fmt(currentUser.goal_score || 0)}</b> pt</span>
             </div>
@@ -9528,6 +9531,17 @@ function renderQuests() {
       </div>
     </div>
   `;
+  } catch (err) {
+    console.error('renderQuests error:', err);
+    $('#main').innerHTML = `
+      <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0; border:2px dashed var(--pink); border-radius:24px;">
+        <span style="font-size:40px; display:block; margin-bottom:10px;">🎯</span>
+        <h3 class="hd" style="margin:0 0 8px;">กระดานภารกิจโมจิ</h3>
+        <p style="font-size:12.5px; color:var(--mute); margin-bottom:16px;">กำลังโหลดข้อมูลภารกิจ กรุณารอสักครู่หรือกดโหลดใหม่</p>
+        <button class="btn sm" onclick="go('quests')">🔄 โหลดกระดานภารกิจใหม่</button>
+      </div>
+    `;
+  }
 }
 
 function renderFeed() {
