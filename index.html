@@ -4008,9 +4008,82 @@ textarea { resize: none; margin-bottom: 8px; }
 }
 .chat-input-bar {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   padding-top: 8px;
 }
+.chat-tool-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+}
+.chat-tool-btn:hover {
+  border-color: var(--pink);
+  transform: scale(1.06);
+}
+.chat-tool-btn.listening {
+  background: #FFE4E6;
+  border-color: #F43F5E;
+  color: #E11D48;
+  animation: voicePulse 1.2s infinite;
+}
+@keyframes voicePulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); transform: scale(1.08); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); transform: scale(1); }
+}
+
+.chat-meal-suggestions {
+  margin-top: 10px;
+  background: #FFFBF7;
+  border: 1.5px dashed #FDBA74;
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+.chat-suggested-meal-card {
+  background: var(--card);
+  border: 1px solid #FED7AA;
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+.chat-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+.chat-typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pink);
+  display: inline-block;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+.chat-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.chat-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
 .chat-chips {
   display: flex;
   gap: 6px;
@@ -4024,10 +4097,18 @@ textarea { resize: none; margin-bottom: 8px; }
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   font-size: 11.5px;
+  font-weight: 600;
   cursor: pointer;
   color: var(--ink);
+  transition: all 0.15s ease;
+}
+.chip-btn:hover {
+  border-color: var(--pink);
+  background: var(--pinkS);
+  color: var(--pink-ink);
+  transform: translateY(-1px);
 }
 
 /* Monthly Calendar Grid */
@@ -8445,49 +8526,153 @@ async function deleteWeightEntry(id) {
   }
 }
 
+let currentMochiChatMood = 'happy';
+let isChatListening = false;
+let chatSpeechRecognition = null;
+
+function renderChatMarkdown(text) {
+  if (!text) return '';
+  let clean = esc(text);
+
+  // Bold: **text**
+  clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  // Italic: *text*
+  clean = clean.replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+  // Headers: ### Header
+  clean = clean.replace(/^###\s+(.*$)/gim, '<div style="font-weight:800; font-size:13.5px; margin:8px 0 2px; color:var(--ink);">$1</div>');
+  clean = clean.replace(/^##\s+(.*$)/gim, '<div style="font-weight:800; font-size:14.5px; margin:10px 0 4px; color:var(--ink);">$1</div>');
+
+  // Bullet items: * or -
+  clean = clean.replace(/^[\*\-]\s+(.*$)/gim, '<div style="display:flex; align-items:flex-start; gap:6px; margin:2px 0 2px 2px;"><span style="color:var(--pink); font-size:11px; margin-top:2px;">●</span><span>$1</span></div>');
+
+  // Numbered list items: 1.
+  clean = clean.replace(/^(\d+)\.\s+(.*$)/gim, '<div style="display:flex; align-items:flex-start; gap:6px; margin:2px 0 2px 2px;"><b style="color:var(--pink); font-size:12px; margin-top:1px;">$1.</b><span>$2</span></div>');
+
+  // Line breaks
+  clean = clean.replace(/\n\n+/g, '<div style="height:6px;"></div>');
+  clean = clean.replace(/\n/g, '<br>');
+
+  return clean;
+}
+
+function getSmartChatChips(user, logs = []) {
+  const now = new Date();
+  const hour = now.getHours();
+  const totalSugar = logs.reduce((a, b) => a + (Number(b.sugar) || 0), 0);
+  const sugarGoal = Number(user?.sugar_goal) || 25;
+  const remSugar = Math.round((sugarGoal - totalSugar) * 10) / 10;
+
+  const chips = [];
+
+  // Time based chips
+  if (hour >= 5 && hour < 11) {
+    chips.push({ text: '🍳 มื้อเช้ากินอะไรดีคุมน้ำตาล', label: '🍳 มื้อเช้ากินอะไรดี?' });
+    chips.push({ text: '☕ แนะนำกาแฟยามเช้าหวานน้อย', label: '☕ กาแฟหวานน้อย' });
+  } else if (hour >= 11 && hour < 15) {
+    chips.push({ text: '🍱 เที่ยงนี้ตามสั่งเมนูไหนไม่อ้วน', label: '🍱 เที่ยงนี้ตามสั่งอะไรดี?' });
+    chips.push({ text: '🍜 ก๋วยเตี๋ยวสั่งยังไงให้ลีนและน้ำตาลต่ำ', label: '🍜 ก๋วยเตี๋ยวสายลีน' });
+  } else if (hour >= 15 && hour < 21) {
+    chips.push({ text: '🍲 มื้อเย็นกินอะไรดีตามโควต้าที่เหลือ', label: '🍲 มื้อเย็นกินอะไรดี?' });
+    chips.push({ text: '🥗 แนะนำอาหารย่อยง่ายไม่อึดอัดตอนนอน', label: '🥗 เมนูย่อยง่ายมื้อเย็น' });
+  } else {
+    chips.push({ text: '🌙 หิวดึกกินอะไรไม่ให้อ้วนและหลับสบาย', label: '🌙 หิวดึกกินอะไรดี?' });
+    chips.push({ text: '🥛 นมหรือของว่างก่อนนอนที่น้ำตาลต่ำ', label: '🥛 ของว่างก่อนนอน' });
+  }
+
+  // Sugar status chip
+  if (remSugar < 0) {
+    chips.push({ text: 'น้ำตาลวันนี้เกินเป้าแล้ว ช่วยแนะนำวิธีปรับสมดุลหน่อย', label: '🚨 น้ำตาลเกิน ทำไงดี?' });
+  } else if (remSugar <= 6) {
+    chips.push({ text: 'น้ำตาลใกล้เต็มโควตาแล้ว แนะนำของว่างหวาน 0% หน่อย', label: '🍬 ของว่างหวาน 0%' });
+  } else {
+    chips.push({ text: 'อยากกินของหวาน มีอะไรแนะนำไม่ให้น้ำตาลเกินไหม', label: '🍨 อยากกินของหวาน' });
+  }
+
+  // Quick calorie inquiries
+  chips.push({ text: 'ชานมไข่มุก 1 แก้วมีกี่แคลและน้ำตาลเท่าไหร่', label: '🧋 ชานมกี่แคล?' });
+  chips.push({ text: 'ข้าวกะเพราหมูสับไข่ดาวกี่แคล', label: '🍳 กะเพราไข่ดาวกี่แคล?' });
+  chips.push({ text: '📊 ช่วยสรุปภาพรวมโภชนาการวันนี้ของฉันหน่อย', label: '📊 สรุปภาพรวมวันนี้' });
+
+  return chips;
+}
+
 // 2. CHAT WITH MOCHI VIEW (Phase 3)
 function renderChat() {
-  const remCal = Math.max(0, (currentUser?.calorie_goal || 2000) - currentLogs.reduce((a,b)=>a+b.calorie,0));
-  const remSugar = Math.round(((currentUser?.sugar_goal || 25) - currentLogs.reduce((a,b)=>a+b.sugar,0))*10)/10;
+  const calGoal = Number(currentUser?.calorie_goal) || 2000;
+  const sugarGoal = Number(currentUser?.sugar_goal) || 25;
+  const totalCal = currentLogs.reduce((a,b) => a + (Number(b.calorie) || 0), 0);
+  const totalSugar = currentLogs.reduce((a,b) => a + (Number(b.sugar) || 0), 0);
+  const remCal = Math.max(0, calGoal - totalCal);
+  const remSugar = Math.round((sugarGoal - totalSugar) * 10) / 10;
+
+  const chips = getSmartChatChips(currentUser, currentLogs);
 
   $('#main').innerHTML = `
-    <div class="top">
-      <h1>คุยกับโมจิ 💬</h1>
-      <span>เหลือ ${remSugar}g น้ำตาล</span>
-    </div>
-
-    <div class="card" style="padding:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px;">
-      <div style="width:48px; height:48px; flex-shrink:0;">
-        ${mascotSVG('happy', currentUser?.avatar_color, 48, currentUser?.avatar_hat)}
+    <div class="top" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h1 style="display:flex; align-items:center; gap:6px;">คุยกับโมจิ AI 💬</h1>
+        <span style="font-size:12px;">เหลือ <b>${remSugar}g</b> น้ำตาล · <b>${fmt(remCal)}</b> kcal</span>
       </div>
-      <div style="font-size:12px; line-height:1.4;">
-        <b>โมจิพร้อมช่วยคิดเมนู!</b> ปรึกษาได้เลยว่ามื้อต่อไปกินอะไรดีเพื่อไม่ให้น้ำตาลเกินโควตา
+      <button class="btn g sm" style="font-size:11px; padding:4px 9px; color:var(--mute); border-radius:12px;" onclick="promptClearChatHistory()" title="ล้างประวัติการคุยทั้งหมด">
+        🗑️ ล้างแชท
+      </button>
+    </div>
+
+    <!-- Moji AI Live Status Hero Card -->
+    <div class="card" style="padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; border:1.5px solid var(--line); border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+      <div id="chatHeaderAvatar" style="width:52px; height:52px; flex-shrink:0;">
+        ${mascotSVG(currentMochiChatMood, currentUser?.avatar_color, 52, currentUser?.avatar_hat)}
       </div>
-    </div>
-
-    <!-- Quick Question Chips -->
-    <div class="chat-chips">
-      <button class="chip-btn" onclick="sendQuickMessage('มื้อเย็นกินอะไรดี น้ำตาลเหลือไม่เยอะ')">🍲 มื้อเย็นกินอะไรดี?</button>
-      <button class="chip-btn" onclick="sendQuickMessage('วันนี้น้ำตาลเหลืออีกกี่กรัม?')">🍬 น้ำตาลเหลือเท่าไหร่?</button>
-      <button class="chip-btn" onclick="sendQuickMessage('อยากกินของหวาน มีอะไรแนะนำไม่ให้น้ำตาลเกินไหม')">🍨 อยากกินของหวาน</button>
-      <button class="chip-btn" onclick="sendQuickMessage('ช่วยแนะนำเครื่องดื่มหวานน้อยสดชื่นหน่อย')">🧋 แนะนำเครื่องดื่ม</button>
-    </div>
-
-    <div class="card chat-container">
-      <div class="chat-messages" id="chatMsgList">
-        <div class="chat-msg mochi">
-          สวัสดีจ้า ${esc(currentUser?.nickname)}! วันนี้กินน้ำตาลไปแล้ว ${fmt(currentLogs.reduce((a,b)=>a+b.sugar,0))}g (เหลือโควตาอีก ${remSugar}g น้า) มีอะไรอยากปรึกษาโมจิถามได้เลย 🍡
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <b style="font-size:13.5px; color:var(--ink); font-family:'Mali',sans-serif;">น้องโมจิ (Mochi AI) 🍡</b>
+          <span style="font-size:10px; padding:1px 6px; border-radius:10px; background:#DCF6EE; color:#065F46; font-weight:700;">พร้อมช่วยตอบ 24 ชม.</span>
         </div>
+        <div style="font-size:11.5px; color:var(--mute); margin-top:2px; line-height:1.4;">
+          ปรึกษาได้ทุกอย่าง: คิดเมนูมื้อถัดไป ถามแคลอรี่อาหาร คำนวณน้ำตาล หรือขอกำลังใจ
+        </div>
+      </div>
+    </div>
+
+    <!-- Context-Aware Smart Question Chips -->
+    <div class="chat-chips">
+      ${chips.map(c => `
+        <button class="chip-btn" onclick="sendQuickMessage('${esc(c.text)}')">
+          ${esc(c.label)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="card chat-container" style="border-radius:22px; padding:12px 14px;">
+      <div class="chat-messages" id="chatMsgList">
+        <!-- Initial Greeting Message from Moji -->
+        <div class="chat-msg mochi">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <b style="font-size:11.5px; color:var(--pink); font-family:'Mali',sans-serif;">น้องโมจิ 🍡</b>
+          </div>
+          สวัสดีจ้า ${esc(currentUser?.nickname || 'เพื่อน')}! วันนี้ทานน้ำตาลไปแล้ว <b>${fmt(totalSugar)}g</b> (เหลือโควตาอีก <b>${remSugar}g</b> น้า) แคลอรีเหลืออีก <b>${fmt(remCal)} kcal</b> มีคำถามเรื่องอาหาร ขอกำลังใจ หรืออยากรู้ว่ามื้อต่อไปกินอะไรดี พิมพ์หรือกดปุ่มไมค์ 🎙️ คุยกับโมจิได้เลยจ้า ✨
+        </div>
+
+        <!-- Historical Messages -->
         ${chatHistory.map(m => `
           <div class="chat-msg ${m.role === 'user' ? 'user' : 'mochi'}">
-            ${esc(m.content)}
+            ${m.role === 'mochi' ? `
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <b style="font-size:11.5px; color:var(--pink); font-family:'Mali',sans-serif;">น้องโมจิ 🍡</b>
+              </div>
+            ` : ''}
+            <div>${renderChatMarkdown(m.content)}</div>
           </div>
         `).join('')}
       </div>
 
       <div class="chat-input-bar">
-        <input id="chatInput" placeholder="ถามโมจิ เช่น มื้อเย็นกินอะไรดี..." onkeydown="if(event.key==='Enter')sendChatMessage()">
-        <button class="btn s sm" style="width:auto; padding:0 16px;" onclick="sendChatMessage()">ส่ง</button>
+        <button id="chatVoiceBtn" class="chat-tool-btn" onclick="toggleChatVoiceInput()" title="แตะเพื่อพูดภาษาไทย (Speech to Text)">
+          🎙️
+        </button>
+        <input id="chatInput" placeholder="ถามโมจิ เช่น มื้อเย็นกินอะไรดี, ชานมกี่แคล..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex:1; border-radius:18px; padding:10px 14px; font-size:13.5px; border:1.5px solid var(--line); background:var(--bg); color:var(--ink);">
+        <button class="btn s sm" style="width:auto; padding:0 18px; border-radius:18px; font-weight:700;" onclick="sendChatMessage()">ส่ง</button>
       </div>
     </div>
   `;
@@ -8498,8 +8683,11 @@ function renderChat() {
 }
 
 function sendQuickMessage(text) {
-  $('#chatInput').value = text;
-  sendChatMessage();
+  const input = $('#chatInput');
+  if (input) {
+    input.value = text;
+    sendChatMessage();
+  }
 }
 
 async function sendChatMessage() {
@@ -8514,30 +8702,215 @@ async function sendChatMessage() {
 
   const msgList = document.getElementById('chatMsgList');
   // Append user message immediately
-  msgList.innerHTML += `<div class="chat-msg user">${esc(msg)}</div>`;
+  msgList.innerHTML += `
+    <div class="chat-msg user">
+      ${renderChatMarkdown(msg)}
+    </div>
+  `;
   input.value = '';
   msgList.scrollTop = msgList.scrollHeight;
 
-  // Typing placeholder
+  // Typing placeholder with jumping animated dots
   const typingId = 'typing_' + Date.now();
-  msgList.innerHTML += `<div class="chat-msg mochi" id="${typingId}">โมจิกำลังคิดเมนูให้... 🍡</div>`;
+  msgList.innerHTML += `
+    <div class="chat-msg mochi" id="${typingId}">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <b style="font-size:11.5px; color:var(--pink); font-family:'Mali',sans-serif;">น้องโมจิ 🍡</b>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:12px; color:var(--mute);">โมจิกำลังคิดคำตอบให้...</span>
+        <div class="chat-typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  `;
   msgList.scrollTop = msgList.scrollHeight;
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
       body: JSON.stringify({ userId: currentUser.id, message: msg })
     });
     const data = await res.json();
     const typingEl = document.getElementById(typingId);
     if (typingEl) {
-      typingEl.textContent = data.reply;
+      if (data.mochiMood) {
+        currentMochiChatMood = data.mochiMood;
+        const avatarEl = document.getElementById('chatHeaderAvatar');
+        if (avatarEl) {
+          avatarEl.innerHTML = mascotSVG(currentMochiChatMood, currentUser?.avatar_color, 52, currentUser?.avatar_hat);
+        }
+      }
+
+      let mealCardsHtml = '';
+      if (Array.isArray(data.suggestedMeals) && data.suggestedMeals.length > 0) {
+        mealCardsHtml = `
+          <div class="chat-meal-suggestions">
+            <div style="font-size:11.5px; font-weight:700; color:#C2410C; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+              <span>🍱</span> <span>เมนูแนะนำโดยโมจิ (แตะบันทึกลงสมุดทันที):</span>
+            </div>
+            ${data.suggestedMeals.map((m, idx) => `
+              <div class="chat-suggested-meal-card" id="sugMeal_${idx}_${Date.now()}">
+                <div style="flex:1; min-width:0;">
+                  <b style="font-size:13px; color:var(--ink); display:block;">${esc(m.name)}</b>
+                  <div style="font-size:11px; color:var(--mute); margin-top:2px;">
+                    🔥 ${fmt(m.calorie)} kcal · 🍬 น้ำตาล ${fmt(m.sugar || 0)}g
+                    ${m.protein ? ` · 🥩 โปรตีน ${fmt(m.protein)}g` : ''}
+                  </div>
+                </div>
+                <button class="btn sm" onclick="logSuggestedMeal('${esc(m.name)}', ${m.calorie}, ${m.sugar || 0}, ${m.carbs || 0}, ${m.protein || 0}, ${m.fat || 0}, ${m.sodium || 0}, this)" style="font-size:11px; padding:5px 11px; border-radius:12px; white-space:nowrap; flex-shrink:0;">
+                  + บันทึกมื้อนี้
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      typingEl.innerHTML = `
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <b style="font-size:11.5px; color:var(--pink); font-family:'Mali',sans-serif;">น้องโมจิ 🍡</b>
+        </div>
+        <div>${renderChatMarkdown(data.reply || '')}</div>
+        ${mealCardsHtml}
+      `;
     }
     await fetchChatHistory();
+    msgList.scrollTop = msgList.scrollHeight;
   } catch (e) {
     const typingEl = document.getElementById(typingId);
-    if (typingEl) typingEl.textContent = 'โมจิมึนนิดหน่อย ลองถามใหม่อีกครั้งนะ 🍡';
+    if (typingEl) {
+      typingEl.innerHTML = `
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <b style="font-size:11.5px; color:var(--pink); font-family:'Mali',sans-serif;">น้องโมจิ 🍡</b>
+        </div>
+        <div>โมจิมึนนิดหน่อย ลองถามใหม่อีกครั้งนะจ๊ะ 🍡</div>
+      `;
+    }
+  }
+}
+
+async function logSuggestedMeal(name, cal, sugar, carbs = 0, protein = 0, fat = 0, sodium = 0, btnEl = null) {
+  if (!currentUser) return;
+  try {
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.textContent = 'กำลังบันทึก...';
+    }
+    await fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        date: key(),
+        name: name,
+        calorie: Number(cal) || 0,
+        sugar: Number(sugar) || 0,
+        carbs: Number(carbs) || 0,
+        protein: Number(protein) || 0,
+        fat: Number(fat) || 0,
+        sodium: Number(sodium) || 0,
+        portion_size: 'ปกติ',
+        sweetness_level: 'normal',
+        is_private: 0
+      })
+    });
+    fireConfetti();
+    await fetchLogs();
+    await fetchStreak();
+    toast(`บันทึก ${name} (+${cal} kcal) เรียบร้อยแล้ว 🍡 (+5 🪙)`);
+    if (btnEl) {
+      btnEl.textContent = '✓ บันทึกแล้ว';
+      btnEl.style.background = '#DCF6EE';
+      btnEl.style.color = '#065F46';
+      btnEl.style.borderColor = '#10B981';
+    }
+  } catch (err) {
+    console.error('Log suggested meal error:', err);
+    toast('บันทึกไม่สำเร็จ');
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = '+ บันทึกมื้อนี้';
+    }
+  }
+}
+
+function toggleChatVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    toast('เบราว์เซอร์นี้ไม่รองรับการพิมพ์ด้วยเสียง (Speech-to-Text)');
+    return;
+  }
+
+  const voiceBtn = document.getElementById('chatVoiceBtn');
+  const chatInput = document.getElementById('chatInput');
+
+  if (isChatListening && chatSpeechRecognition) {
+    chatSpeechRecognition.stop();
+    isChatListening = false;
+    if (voiceBtn) voiceBtn.classList.remove('listening');
+    return;
+  }
+
+  try {
+    chatSpeechRecognition = new SpeechRecognition();
+    chatSpeechRecognition.lang = 'th-TH';
+    chatSpeechRecognition.interimResults = true;
+    chatSpeechRecognition.maxAlternatives = 1;
+
+    chatSpeechRecognition.onstart = () => {
+      isChatListening = true;
+      if (voiceBtn) voiceBtn.classList.add('listening');
+      toast('กำลังฟังเสียงภาษาไทย... 🎙️ พูดคำถามได้เลยจ้า');
+    };
+
+    chatSpeechRecognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      if (chatInput) {
+        chatInput.value = transcript;
+      }
+    };
+
+    chatSpeechRecognition.onerror = (event) => {
+      console.warn('Voice recognition error:', event.error);
+      isChatListening = false;
+      if (voiceBtn) voiceBtn.classList.remove('listening');
+      if (event.error !== 'no-speech') {
+        toast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error);
+      }
+    };
+
+    chatSpeechRecognition.onend = () => {
+      isChatListening = false;
+      if (voiceBtn) voiceBtn.classList.remove('listening');
+    };
+
+    chatSpeechRecognition.start();
+  } catch (err) {
+    console.error('Start voice input error:', err);
+    toast('ไม่สามารถเริ่มระบบฟังเสียงได้');
+  }
+}
+
+async function promptClearChatHistory() {
+  if (!confirm('ต้องการล้างประวัติการคุยกับโมจิทั้งหมดใช่ไหม?')) return;
+  try {
+    const res = await fetch(`/api/chat?userId=${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    if (data.success) {
+      chatHistory = [];
+      renderChat();
+      toast('ล้างประวัติการสนทนาเรียบร้อยแล้ว ✨');
+    }
+  } catch (err) {
+    console.error('Clear chat error:', err);
+    toast('ล้างประวัติไม่สำเร็จ');
   }
 }
 

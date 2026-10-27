@@ -468,6 +468,10 @@ export function generateSmartMochiReply(message = '', userContext = {}) {
     today_protein = 0,
     today_fat = 0,
     today_meals = [],
+    today_water_ml = 0,
+    water_daily_target_ml = 2000,
+    weight = 0,
+    target_weight = 0,
     streak = 0
   } = userContext;
 
@@ -479,110 +483,192 @@ export function generateSmartMochiReply(message = '', userContext = {}) {
   if (cleanName === 'โมจิจัง' || cleanName === 'โมจิ') cleanName = 'เพื่อน';
   const userDisplayName = cleanName.startsWith('คุณ') ? cleanName : `คุณ${cleanName}`;
 
+  const makeMeal = (name, cal, sugar, carbs = 0, protein = 0, fat = 0, sodium = 0) => ({
+    name, calorie: Math.round(cal), sugar: Math.round(sugar * 10) / 10, carbs: Math.round(carbs * 10) / 10, protein: Math.round(protein * 10) / 10, fat: Math.round(fat * 10) / 10, sodium: Math.round(sodium)
+  });
+
   // 1. GREETING INTENT
   if (/^(สวัสดี|หวัดดี|ดีจ้า|ดีครับ|ดีค่ะ|ฮัลโหล|hello|hi|hey|โย่ว|ว่าไง|อรุณสวัสดิ์)/i.test(q) || q === 'สวัสดี' || q === 'หวัดดี') {
+    const currentHour = new Date().getHours();
+    const timeGreeting = currentHour >= 5 && currentHour < 11 ? 'มอร์นิ่งยามเช้าค่า' : currentHour >= 11 && currentHour < 15 ? 'เที่ยงแล้วน้า' : currentHour >= 15 && currentHour < 21 ? 'สวัสดีตอนเย็นค่า' : 'ดึกแล้วน้า';
     if (personality === 'cheerful') {
       return {
-        reply: `สวัสดีค่า${userDisplayName}! 🌟 วันนี้โมจิพร้อมลุยช่วยดูแลความสดชื่นและสุขภาพให้แล้วน้า มีอะไรอยากปรึกษาหรือหิวมื้อไหนพิมพ์บอกโมจิได้เลยจ้า 🍡✨`,
-        mochiMood: 'happy'
+        reply: `${timeGreeting} ${userDisplayName}! 🌟 โมจิพร้อมลุยช่วยดูแลสุขภาพและความสดชื่นให้แล้วน้า วันนี้เป็นยังไงบ้าง มีอะไรอยากปรึกษาหรือหิวมื้อไหนพิมพ์บอกโมจิได้เลยจ้า 🍡✨`,
+        mochiMood: 'happy',
+        suggestedMeals: []
       };
     }
     if (personality === 'disciplined') {
       return {
-        reply: `สวัสดีครับ${userDisplayName} 📋 วันนี้เป้าหมายคุมน้ำตาลอยู่ที่ < ${sugar_goal}g พร้อมบันทึกมื้ออาหารอย่างมีวินัยไปด้วยกันครับ มีคำถามเรื่องอาหารปรึกษาได้เลยครับ!`,
-        mochiMood: 'ok'
+        reply: `${timeGreeting} ${userDisplayName} 📋 วันนี้เป้าหมายคุมน้ำตาลอยู่ที่ < ${sugar_goal}g พร้อมบันทึกมื้ออาหารอย่างมีวินัยไปด้วยกันครับ มีคำถามเรื่องโภชนาการปรึกษาได้เลยครับ!`,
+        mochiMood: 'ok',
+        suggestedMeals: []
       };
     }
     return {
-      reply: `สวัสดีค่า${userDisplayName} 💖 ดีใจที่ได้คุยกันนะคะ วันนี้เป็นยังไงบ้างเอ่ย มีอะไรอยากให้โมจิช่วยดูแลเรื่องอาหารหรือสุขภาพ บอกได้เลยน้า 🍡`,
-      mochiMood: 'happy'
+      reply: `${timeGreeting} ${userDisplayName} 💖 ดีใจที่ได้คุยกันนะคะ วันนี้เป็นยังไงบ้างเอ่ย มีอะไรอยากให้โมจิช่วยดูแลเรื่องอาหารหรือสุขภาพ บอกได้เลยน้า 🍡`,
+      mochiMood: 'happy',
+      suggestedMeals: []
     };
   }
 
-  // 2. FOOD RECOMMENDATION / HUNGER INTENT
+  // 2. CALORIE & NUTRITION LOOKUP INTENT (ถามแคลอรี่อาหารยอดฮิต)
+  if (q.includes('กี่แคล') || q.includes('แคลอรี่เท่าไหร่') || q.includes('แคลเท่าไหร่') || q.includes('มีกี่แคล') || q.includes('กี่ kcal')) {
+    if (q.includes('ชานม') || q.includes('ชาไข่มุก') || q.includes('ไข่มุก')) {
+      const meal = makeMeal('ชานมไข่มุก (หวาน 100%)', 360, 34, 58, 2, 12, 60);
+      return {
+        reply: `**ชานมไข่มุก 1 แก้ว** (หวานปกติ) พลังงานประมาณ **~360 kcal** น้ำตาลสูงถึง **~34g** เลยน้า (เกินโควตาน้ำตาลประจำวัน 25g แล้ว)\n💡 *ทริคโมจิ:* สั่งหวาน 25% หรือหวาน 0% และลดไข่มุก จะลดน้ำตาลเหลือเพียง ~6-10g เท่านั้นจ้า 🧋✨`,
+        mochiMood: 'worry',
+        suggestedMeals: [meal, makeMeal('ชาเขียวมะลิหวาน 0% (ไม่มุก)', 0, 0, 0, 0, 0, 10)]
+      };
+    }
+    if (q.includes('กะเพรา') || q.includes('กระเพรา')) {
+      const meal = makeMeal('ข้าวกะเพราหมูสับ + ไข่ดาว', 580, 2, 60, 24, 28, 850);
+      return {
+        reply: `**ข้าวกะเพราหมูสับไข่ดาว** จานมาตรฐานพลังงานประมาณ **~580 - 620 kcal** (ไข่ดาวทอดน้ำมันเยอะ ~120 kcal, กะเพรา ~460 kcal)\n💡 *ทริคโมจิ:* สั่งกะเพราอกไก่ ไม่ใส่น้ำตาล ใช้น้ำมันน้อย และเปลี่ยนเป็นไข่ต้ม จะเหลือเพียง ~380 kcal เท่านั้นจ้า 🍳`,
+        mochiMood: 'happy',
+        suggestedMeals: [meal, makeMeal('ข้าวกะเพราอกไก่ลีน + ไข่ต้ม', 380, 1, 48, 34, 6, 520)]
+      };
+    }
+    if (q.includes('ข้าวมันไก่')) {
+      const meal = makeMeal('ข้าวมันไก่ต้ม (เนื้อน่อง/สะโพก)', 590, 1, 68, 22, 26, 750);
+      return {
+        reply: `**ข้าวมันไก่ต้ม** 1 จานพลังงานประมาณ **~590 kcal** ไขมันส่วนใหญ่อยู่ที่หนังไก่และข้าวที่หุงด้วยน้ำมันไก่\n💡 *ทริคโมจิ:* สั่ง "เนื้ออกล้วน ไม่เอาหนัง" และใส่น้ำจิ้มน้อยลงนิดนึง จะลดเหลือ ~420 kcal ได้โปรตีนแน่นๆ เลยจ้า 🍗`,
+        mochiMood: 'happy',
+        suggestedMeals: [meal, makeMeal('ข้าวมันไก่อกล้วนไม่หนัง', 420, 1, 58, 32, 8, 550)]
+      };
+    }
+    if (q.includes('ส้มตำ')) {
+      const meal = makeMeal('ส้มตำไทย', 140, 14, 26, 3, 2, 980);
+      return {
+        reply: `**ส้มตำไทย** 1 จานแคลอรี่เบาๆ ประมาณ **~140 kcal** แต่ต้องระวังน้ำตาลปี๊บ (~14g) และโซเดียม (~980mg)\n💡 *ทริคโมจิ:* สั่ง "ส้มตำหวานน้อย ไม่ใส่ผงชูรส" ทานคู่กับไก่ย่างไม่หนัง จะได้มื้อคลีนที่แซ่บฟินมากจ้า 🥗🌶️`,
+        mochiMood: 'ok',
+        suggestedMeals: [meal, makeMeal('ส้มตำไทยหวานน้อย + ไก่ย่างไม่หนัง', 280, 4, 16, 28, 6, 650)]
+      };
+    }
+    if (q.includes('ไข่ต้ม') || q.includes('ไข่ดาว') || q.includes('ไข่เจียว')) {
+      return {
+        reply: `เทียบพลังงานเมนูไข่ 1 ฟองให้เลยน้า 🥚✨\n• **ไข่ต้ม:** ~75 kcal (โปรตีน 6.5g, ไขมัน 5g, น้ำตาล 0g) 🌟 ดีที่สุด!\n• **ไข่ดาวน้ำ:** ~80 kcal\n• **ไข่ดาวทอดกรอบ:** ~140 - 160 kcal (ดูดน้ำมันเยอะ)\n• **ไข่เจียวฟูกรอบ:** ~220 - 250 kcal`,
+        mochiMood: 'happy',
+        suggestedMeals: [makeMeal('ไข่ต้ม 2 ฟอง', 150, 0, 1, 13, 10, 140)]
+      };
+    }
+    if (q.includes('หมูกระทะ') || q.includes('ชาบู') || q.includes('บุฟเฟต์')) {
+      return {
+        reply: `**หมูกระทะ 1 มื้ออิ่มจุกๆ** พลังงานเฉลี่ย **~1,200 - 1,800 kcal** น้ำตาลในน้ำจิ้ม ~18-25g และโซเดียมสูงถึง ~2,500mg\n💡 *ทริคโมจิ:* เน้นหมูหมัก/สันใน/กุ้ง ไม่กินหมูสามชั้น และจิ้มน้ำจิ้มถ้วยเดียวพอ อย่าซดน้ำซุปก้นกระทะเยอะน้า 🥩🍲`,
+        mochiMood: 'worry',
+        suggestedMeals: [makeMeal('หมูกระทะมื้อเน้นโปรตีนและผัก', 850, 12, 35, 65, 38, 1600)]
+      };
+    }
+  }
+
+  // 3. FOOD RECOMMENDATION / HUNGER INTENT (กินอะไรดี?)
   if (q.includes('มื้อเย็น') || q.includes('กินอะไรดี') || q.includes('กินไรดี') || q.includes('หิว') || q.includes('แนะนำอาหาร') || q.includes('มื้อเที่ยง') || q.includes('มื้อเช้า') || q.includes('เมนู')) {
     if (isOverSugar) {
+      const meal1 = makeMeal('ต้มยำอกไก่น้ำใส', 150, 1, 4, 26, 3, 580);
+      const meal2 = makeMeal('แกงจืดเต้าหู้หมูสับผักกาดขาว', 160, 1.2, 5, 16, 5, 520);
       return {
-        reply: `ตอนนี้น้ำตาลเกินโควตาไปนิดหน่อย (${fmt(Math.abs(remSugar))}g) ไม่ต้องกังวลน้า! โมจิแนะนำมื้อนี้เน้นอาหารไม่ใส่น้ำตาล เช่น แกงจืดเต้าหู้หมูสับ ต้มยำน้ำใสไม่หวาน หรือไข่ต้มผักลวก อิ่มท้องสบายใจแน่นอน 🍲🥬`,
-        mochiMood: 'worry'
+        reply: `ตอนนี้น้ำตาลเกินโควตาไปนิดหน่อย (${fmt(Math.abs(remSugar))}g) ไม่ต้องกังวลน้า! โมจิแนะนำมื้อนี้เน้นอาหารไม่ใส่น้ำตาล ย่อยง่าย สบายท้องตามด้านล่างนี้เลย แตะบันทึกได้เลยน้า 🍲🥬`,
+        mochiMood: 'worry',
+        suggestedMeals: [meal1, meal2]
       };
     }
     if (goal_type === 'muscle_gain') {
+      const meal1 = makeMeal('ข้าวกล้องอกไก่ย่างพริกไทยดำ', 380, 1, 45, 38, 5, 480);
+      const meal2 = makeMeal('สเต็กปลาแซลมอนย่าง + ผักสลัด', 420, 0.8, 8, 36, 18, 420);
       return {
-        reply: `สำหรับสายสร้างกล้ามเนื้อ โมจิแนะนำมื้อเน้นโปรตีนแน่นๆ เช่น ข้าวกล้องอกไก่ย่าง ไข่ต้ม 2 ฟอง หรือสเต็กปลาแซลมอน/อกไก่พริกไทยดำ เติมพลังงานได้ดีและน้ำตาลน้อยมากจ้า 💪🍗`,
-        mochiMood: 'happy'
+        reply: `สำหรับสายสร้างกล้ามเนื้อ โมจิแนะนำมื้อเน้นโปรตีนแน่นๆ คาร์บเชิงซ้อน เติมพลังงานได้ดีและน้ำตาลน้อยมากจ้า แตะบันทึกได้ทันทีเลยน้า 💪🍗`,
+        mochiMood: 'happy',
+        suggestedMeals: [meal1, meal2]
       };
     }
     if (remSugar <= 6) {
+      const meal1 = makeMeal('สุกี้น้ำรวมมิตร (น้ำจิ้มน้อย)', 240, 2.5, 18, 22, 5, 620);
+      const meal2 = makeMeal('ปลากะพงนึ่งมะนาว + ข้าวสวย 1 ทัพพี', 260, 2, 28, 26, 3, 550);
       return {
-        reply: `ตอนนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g น้า แนะนำเมนูเบาหวานน้อย เช่น สุกี้น้ำไม่หวาน (ใส่น้ำจิ้มน้อยๆ) ปลานึ่งมะนาว หรือเกาเหลาหมูตุ๋นไม่ปรุงน้ำตาลเพิ่มนะจ๊ะ 🐟🍲`,
-        mochiMood: 'ok'
+        reply: `ตอนนี้เหลือน้ำตาลอีก ${fmt(remSugar)}g น้า แนะนำเมนูเบาหวานน้อย โซเดียมไม่สูงมาก แตะเพื่อบันทึกลงสมุดได้เลยจ้า 🐟🍲`,
+        mochiMood: 'ok',
+        suggestedMeals: [meal1, meal2]
       };
     }
+    const meal1 = makeMeal('ข้าวกะเพราอกไก่น้ำมันน้อย', 370, 1.5, 48, 32, 6, 540);
+    const meal2 = makeMeal('สุกี้แห้งอกไก่ใส่ผักเยอะๆ', 290, 3, 22, 28, 7, 650);
     return {
-      reply: `วันนี้น้ำตาลเหลือสบายๆ อีก ${fmt(remSugar)}g (แคลเหลือ ${Math.round(remCal)} kcal) แนะนำข้าวกะเพราไก่ไม่หวานคู่ไข่ดาว หรือส้มตำไทยหวานน้อยคู่ไก่ย่างได้เลย อิ่มอร่อยกำลังดีจ้า 😋✨`,
-      mochiMood: 'happy'
+      reply: `วันนี้น้ำตาลเหลือสบายๆ อีก ${fmt(remSugar)}g (แคลเหลือ ${Math.round(remCal)} kcal) โมจิแนะนำ 2 เมนูอร่อย อิ่มท้อง แตะปุ่มเพื่อบันทึกมื้อนี้ได้ทันทีเลยจ้า 😋✨`,
+      mochiMood: 'happy',
+      suggestedMeals: [meal1, meal2]
     };
   }
 
-  // 3. SWEET CRAVINGS INTENT
+  // 4. SWEET CRAVINGS INTENT (อยากกินหวาน / ชานม / ของหวาน)
   if (q.includes('ของหวาน') || q.includes('ชานม') || q.includes('ขนม') || q.includes('อยากกินหวาน') || q.includes('ไอติม') || q.includes('เค้ก') || q.includes('บิงซู') || q.includes('ชาเขียว') || q.includes('โกโก้')) {
     if (remSugar < 6) {
+      const snack1 = makeMeal('ฝรั่งสดกรอบ 1 ผล', 45, 6, 10, 1, 0.2, 5);
+      const snack2 = makeMeal('ชาเขียวมะลิหวาน 0% แช่เย็น', 0, 0, 0, 0, 0, 10);
       return {
-        reply: `เข้าใจเลยว่าอยากกินของหวาน 💕 แต่วันนี้น้ำตาลเหลือแค่ ${fmt(remSugar)}g ลองจิบชาผลไม้หวาน 0% ชาเขียวร้อน หรือผลไม้ฉ่ำน้ำอย่างฝรั่งหรือชมพู่แทนก่อนน้า ดับความอยากได้ดีมากจ้า 🍎🍵`,
-        mochiMood: 'worry'
+        reply: `เข้าใจเลยว่าอยากกินของหวาน 💕 แต่วันนี้น้ำตาลเหลือแค่ ${fmt(remSugar)}g ลองของว่างสดชื่นหวานธรรมชาติอย่างฝรั่งกรอบ หรือจิบชาเขียวมะลิเย็นฉ่ำหวาน 0% แทนก่อนน้า ดับความอยากได้ฟินมากจ้า 🍏🍵`,
+        mochiMood: 'worry',
+        suggestedMeals: [snack1, snack2]
       };
     }
+    const drink = makeMeal('ชานมไต้หวันหวาน 25% (ไม่มุก)', 140, 8, 22, 2, 4, 45);
     return {
-      reply: `ถ้าอยากทานชานมหรือของหวาน โมจิแนะนำสั่งระดับหวาน 25% หรือแชร์กับเพื่อนคนละครึ่งแก้ว จะได้รับความฟินแบบโควตาน้ำตาลยังปลอดภัยหายห่วงน้า 🧋✨`,
-      mochiMood: 'wink'
+      reply: `ถ้าอยากทานชานมหรือของหวาน โมจิแนะนำสั่งระดับ **หวาน 25% หรือหวานน้อย** และไม่ใส่ไข่มุก จะได้รับความฟินแบบโควตาน้ำตาลยังปลอดภัยหายห่วง แตะบันทึกได้เลยน้า 🧋✨`,
+      mochiMood: 'happy',
+      suggestedMeals: [drink]
     };
   }
 
-  // 4. PROGRESS & NUTRIENTS STATUS
+  // 5. PROGRESS & NUTRIENTS STATUS (สรุปวันนี้)
   if (q.includes('น้ำตาล') || q.includes('แคล') || q.includes('เหลือ') || q.includes('สถานะ') || q.includes('วันนี้เป็นไง') || q.includes('สรุป')) {
-    const statusNote = isOverSugar ? 'เกินโควตาไปนิดหน่อย มื้อถัดไปเน้นผักโปรตีนน้า' : 'ยังอยู่ในเกณฑ์ที่ยอดเยี่ยม!';
+    const statusNote = isOverSugar ? 'เกินโควตาไปนิดหน่อย มื้อถัดไปเน้นผักและโปรตีนน้า' : 'ยังอยู่ในเกณฑ์ที่ยอดเยี่ยมมาก!';
     return {
-      reply: `วันนี้คุณ ${nickname} ทานแคลไป ${Math.round(today_cal)} / ${calorie_goal} kcal (เหลือ ${Math.round(remCal)}) และน้ำตาล ${fmt(today_sugar)} / ${sugar_goal}g (เหลือ ${fmt(remSugar)}g) ${statusNote} 🔥 ติดต่อกัน ${streak} วันแล้ว สู้ๆ น้า!`,
-      mochiMood: isOverSugar ? 'worry' : 'happy'
+      reply: `📊 **สรุปภาพรวมวันนี้ของ ${userDisplayName}:**\n• แคลอรี: **${Math.round(today_cal)} / ${calorie_goal} kcal** (เหลืออีก ${Math.round(remCal)} kcal)\n• น้ำตาล: **${fmt(today_sugar)} / ${sugar_goal} g** (เหลือโควตา ${fmt(remSugar)} g)\n• น้ำเปล่า: **${fmt(today_water_ml)} / ${fmt(water_daily_target_ml)} ml** 💧\n${statusNote} 🔥 รักษาสถิติ Streak ได้ ${streak} วันแล้ว เก่งมากเลยจ้า!`,
+      mochiMood: isOverSugar ? 'worry' : 'happy',
+      suggestedMeals: []
     };
   }
 
-  // 5. SODIUM & WATER
+  // 6. SODIUM & WATER
   if (q.includes('โซเดียม') || q.includes('เค็ม') || q.includes('บวม') || q.includes('ไต') || q.includes('ดื่มน้ำ') || q.includes('น้ำเปล่า')) {
     if (today_sodium > 1500) {
       return {
-        reply: `วันนี้รับโซเดียมไปแล้ว ${Math.round(today_sodium)} mg (เริ่มแตะระดับเกณฑ์ 2,000 mg) แนะนำจิบน้ำเปล่าบ่อยๆ ตลอดวัน เพื่อช่วยให้ไตขับโซเดียมส่วนเกินและลดอาการบวมน้ำน้า 💧🥒`,
-        mochiMood: 'worry'
+        reply: `วันนี้รับโซเดียมไปแล้ว **${Math.round(today_sodium)} mg** (เริ่มแตะเกณฑ์ควบคุม 2,000 mg) แนะนำจิบน้ำเปล่าเพิ่มอีก 2-3 แก้วตลอดบ่าย เพื่อช่วยให้ไตขับโซเดียมส่วนเกินและลดอาการบวมน้ำน้า 💧🥒`,
+        mochiMood: 'worry',
+        suggestedMeals: []
       };
     }
     return {
-      reply: `การดื่มน้ำวันละ 7-8 แก้ว (ประมาณ 2 ลิตร) ช่วยระบบเผาผลาญและช่วยลดความอยากหวานได้ดีมากๆ เลยน้า อย่าลืมจิบน้ำเรื่อยๆ นะจ๊ะ 💧✨`,
-      mochiMood: 'happy'
+      reply: `การดื่มน้ำวันละ 7-8 แก้ว (~2,000 ml) ช่วยระบบเผาผลาญและช่วยลดความอยากหวานได้ดีมากเลย วันนี้ดื่มไปแล้ว ${fmt(today_water_ml)} ml อย่าลืมจิบน้ำเรื่อยๆ นะจ๊ะ 💧✨`,
+      mochiMood: 'happy',
+      suggestedMeals: []
     };
   }
 
-  // 6. CHEAT MEAL / GUILT / MOTIVATION
+  // 7. CHEAT MEAL / GUILT / MOTIVATION (หลุดกิน / บุฟเฟต์ / รู้สึกผิด)
   if (q.includes('หลุด') || q.includes('กินเยอะ') || q.includes('อ้วน') || q.includes('ท้อ') || q.includes('เครียด') || q.includes('ผิดไหม') || q.includes('กังวล')) {
     return {
-      reply: `ไม่เป็นไรเลยน้าคุณ ${nickname}! มื้ออร่อยคือความสุขของชีวิต การหลุดกินบ้างเป็นเรื่องธรรมชาติมาก ไม่ต้องอดอาหารหรือรู้สึกผิดเลย แค่มื้อต่อไปดื่มน้ำเยอะๆ แล้วค่อยปรับสมดุลไปด้วยกัน โมจิอยู่ข้างๆ เสมอนะ 💖🍡`,
-      mochiMood: 'love'
+      reply: `ไม่เป็นไรเลยน้า ${userDisplayName}! มื้ออร่อยคือความสุขของชีวิต การหลุดกินบ้างเป็นเรื่องธรรมชาติมากๆ มื้อเดียวไม่ได้ทำให้เราอ้วนขึ้นหรอกน้า 💖 ไม่ต้องอดอาหารชดเชยเลย แค่ดื่มน้ำเปล่าเยอะๆ แล้วมื้อต่อไปค่อยๆ กลับมาบาลานซ์ด้วยกัน โมจิอยู่เคียงข้างเสมอนะคะ 🍡✨`,
+      mochiMood: 'love',
+      suggestedMeals: []
     };
   }
 
-  // 7. THANKS & PRAISE
+  // 8. THANKS & PRAISE
   if (q.includes('ขอบคุณ') || q.includes('แต๊ง') || q.includes('น่ารัก') || q.includes('เก่งมาก') || q.includes('รัก')) {
     return {
-      reply: `ยินดีเสมอเลยจ้า! 💕 มีคุณ ${nickname} มาดูแลสุขภาพด้วยกันแบบนี้ โมจิมีความสุขที่สุดเลย ปรึกษาได้ตลอดเวลาเลยน้า 🍡✨`,
-      mochiMood: 'love'
+      reply: `ยินดีเสมอเลยค่า! 💕 มี ${userDisplayName} มาดูแลสุขภาพด้วยกันแบบนี้ โมจิมีความสุขที่สุดเลย ปรึกษาได้ตลอด 24 ชม. เลยน้า 🍡✨`,
+      mochiMood: 'love',
+      suggestedMeals: []
     };
   }
 
-  // 8. DEFAULT DYNAMIC MOCHI RESPONSE
+  // 9. DEFAULT SMART MOCHI RESPONSE
   const toneEnd = personality === 'disciplined' ? 'พร้อมบันทึกและลุยเป้าหมายไปด้วยกันครับ 📋' : 'อยากปรึกษาเรื่องอาหารหรือระบายอะไร พิมพ์บอกโมจิได้เลยน้า 🍡';
   return {
     reply: `โมจิรับฟังอยู่น้า! วันนี้คุมน้ำตาลไป ${fmt(today_sugar)}g (เหลือ ${fmt(remSugar)}g จากเป้า ${sugar_goal}g) ${toneEnd}`,
-    mochiMood: isOverSugar ? 'worry' : 'happy'
+    mochiMood: isOverSugar ? 'worry' : 'happy',
+    suggestedMeals: []
   };
 }
 
@@ -591,7 +677,26 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   const settings = getSettings();
   const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
 
-  const { nickname, personality, goal_type, calorie_goal, sugar_goal, today_cal, today_sugar, today_carbs, today_sodium, today_protein, today_fat, today_meals, streak } = userContext;
+  const {
+    nickname,
+    personality,
+    goal_type,
+    calorie_goal,
+    sugar_goal,
+    today_cal,
+    today_sugar,
+    today_carbs,
+    today_sodium,
+    today_protein,
+    today_fat,
+    today_meals,
+    today_water_ml,
+    water_daily_target_ml,
+    weight,
+    target_weight,
+    streak
+  } = userContext;
+
   const remCal = Math.max(0, calorie_goal - today_cal);
   const remSugar = Math.round((sugar_goal - today_sugar) * 10) / 10;
   let cleanName = (nickname || 'เพื่อน').trim();
@@ -610,7 +715,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
     : 'อบอุ่น ใจดี เป็นมิตร ปลอบประโลม ไม่กดดัน และไม่ตำหนิผู้ใช้';
 
   const systemPrompt = `
-คุณคือ "น้องโมจิ" (Mochi 🍡) AI ผู้ช่วยน่ารักประจำตัวที่คอยดูแลอาหาร โภชนาการ และการคุมน้ำตาล
+คุณคือ "น้องโมจิ" (Mochi 🍡) AI ผู้ช่วยน่ารักประจำตัวที่คอยดูแลอาหาร โภชนาการ และการคุมน้ำตาลของแอป Mochi
 คู่สนทนาของคุณคือ: "${userDisplayName}"
 
 ข้อมูลสุขภาพและมื้ออาหารของผู้ใช้ในวันนี้ (ใช้อ้างอิงเมื่อผู้ใช้ถามเรื่องอาหารหรือสุขภาพ):
@@ -622,6 +727,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
   • โซเดียม: ${fmt(today_sodium || 0)} mg (เกณฑ์แนะนำไม่ควรเกิน 2,000 mg/วัน)
   • โปรตีน: ${fmt(today_protein || 0)} g
   • ไขมัน: ${fmt(today_fat || 0)} g
+  • น้ำดื่ม: ${fmt(today_water_ml || 0)} / ${fmt(water_daily_target_ml || 2000)} ml
 - มื้ออาหารที่กินไปแล้ววันนี้ (${today_meals?.length || 0} มื้อ):
   ${today_meals && today_meals.length ? today_meals.map(m => `• ${m.name} (${Math.round(m.calorie)} kcal, น้ำตาล ${fmt(m.sugar)}g, แป้ง ${fmt(m.carbs||0)}g, โซเดียม ${fmt(m.sodium||0)}mg, โปรตีน ${fmt(m.protein||0)}g)`).join('\n  ') : 'ยังไม่มีการบันทึกมื้ออาหารใดในวันนี้'}
 
@@ -632,21 +738,31 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
    - ⚠️ ห้ามเด็ดขาด: อย่าวิเคราะห์แคลอรี น้ำตาล หรือยัดเยียดแนะนำเมนูอาหารในคำทักทายเด็ดขาด! ผู้ใช้ยังไม่ได้ถามหาเมนูอาหาร!
 2. **การเรียกชื่อและตัวตน (Identity):**
    - ตัวคุณคือ "น้องโมจิ" (AI ผู้ช่วย) แทนตัวเองว่า "โมจิ"
-   - ห้ามเรียกผู้ใช้ว่า "โมจิ" หรือ "โมจิจัง" เป็นอันขาด เพราะนั่นคือชื่อของคุณเอง! ให้เรียกผู้ใช้ว่า "${userDisplayName}" หรือ "คุณ"
-3. **เมื่อผู้ใช้ถามเรื่องอาหาร / ขอมื้อเย็น / หิว / ปรึกษาโภชนาการ:**
-   - ค่อยนำสถิติอาหารวันนี้และโควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g) มาแนะนำเมนูอาหารไทยที่อร่อย อิ่มท้อง และดีต่อสุขภาพ หากโซเดียมสูงให้เตือนจิบน้ำเปล่าเพิ่ม
+   - ห้ามเรียกผู้ใช้ว่า "โมจิ" หรือ "โมจิจัง" เป็นอันขาด! ให้เรียกผู้ใช้ว่า "${userDisplayName}" หรือ "คุณ"
+3. **เมื่อผู้ใช้ถามเรื่องอาหาร / ขอมื้อเย็น / หิว / ปรึกษาโภชนาการ / ถามแคลอรี่:**
+   - นำสถิติอาหารวันนี้และโควตาน้ำตาลที่เหลือ (${fmt(remSugar)}g) มาแนะนำเมนูอาหารไทยที่อร่อย อิ่มท้อง และดีต่อสุขภาพ
+   - หากผู้ใช้ถามแคลอรี่อาหาร ให้บอกตัวเลขโดยประมาณพร้อมทริคสั่งแบบลีน
+   - 🌟 สำคัญ: หากมีการแนะนำเมนูอาหาร ให้ปิดท้ายข้อความด้วย JSON block รูปแบบนี้เสมอ (ระบบจะแปลงเป็นปุ่มกดบันทึกให้อัตโนมัติ):
+\`\`\`json
+{
+  "mochiMood": "happy",
+  "suggestedMeals": [
+    {"name": "ชื่อเมนูภาษาไทย", "calorie": 250, "sugar": 2, "carbs": 20, "protein": 24, "fat": 5, "sodium": 550}
+  ]
+}
+\`\`\`
 4. **เมื่อผู้ใช้บ่นหลุดกิน / เครียด / ท้อ:**
    - ปลอบใจอย่างอ่อนโยน ให้กำลังใจแบบเพื่อนสนิท ไม่ตัดสิน ไม่ซ้ำเติม
 5. **ความยาวและโทนเสียง:**
    - บุคลิก: ${personalityDesc}
-   - ตอบเป็นภาษาไทย สั้น กระชับ เป็นกันเอง น่ารัก ไม่เกิน 2-4 ประโยค ไม่ใช้ภาษาทางการแข็งทื่อเหมือนหุ่นยนต์
+   - ตอบเป็นภาษาไทย สั้น กระชับ เป็นกันเอง น่ารัก จัดข้อความเป็น bullet points ให้อ่านง่าย
 `;
 
   // Build conversational context with history
   let conversationText = systemPrompt + '\n\n';
   if (Array.isArray(history) && history.length > 0) {
     conversationText += 'ประวัติการสนทนาก่อนหน้านี้:\n';
-    for (const h of history.slice(-6)) {
+    for (const h of history.slice(-8)) {
       conversationText += `${h.role === 'mochi' ? 'น้องโมจิ' : userDisplayName}: ${h.content}\n`;
     }
     conversationText += `\nข้อความล่าสุดจากผู้ใช้ (${userDisplayName}): ${message}`;
@@ -654,14 +770,13 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
     conversationText += `ข้อความล่าสุดจากผู้ใช้ (${userDisplayName}): ${message}`;
   }
 
-  // Candidate models to attempt in case of model retirement or quota limits
+  // Fast & highly available candidate models in priority order
   const candidateModels = [
-    GEMINI_MODEL,
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-latest',
     'gemini-flash-lite-latest',
-    'gemini-3.1-flash-lite'
+    'gemini-3.1-flash-lite-preview',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-latest',
+    GEMINI_MODEL
   ];
 
   for (const model of candidateModels) {
@@ -674,12 +789,12 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(9000),
         body: JSON.stringify({
           contents,
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 1000
+            maxOutputTokens: 1200
           }
         })
       });
@@ -687,16 +802,34 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
       if (response.ok) {
         const data = await response.json();
         const parts = data.candidates?.[0]?.content?.parts || [];
-        const replyText = parts.map(p => p.text).filter(Boolean).join('\n').trim();
-        if (replyText) {
+        const fullReply = parts.map(p => p.text).filter(Boolean).join('\n').trim();
+        if (fullReply) {
+          let cleanReply = fullReply;
+          let suggestedMeals = [];
+          let mochiMood = remSugar < 0 ? 'worry' : 'happy';
+
+          // Extract trailing JSON block if present
+          const jsonMatch = cleanReply.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[1]);
+              if (parsed.mochiMood) mochiMood = parsed.mochiMood;
+              if (Array.isArray(parsed.suggestedMeals) && parsed.suggestedMeals.length > 0) {
+                suggestedMeals = parsed.suggestedMeals;
+              }
+            } catch (_) {}
+            cleanReply = cleanReply.replace(/```(?:json)?\s*[\s\S]*?\s*```/, '').trim();
+          }
+
           return {
-            reply: replyText,
-            mochiMood: remSugar < 0 ? 'worry' : 'happy'
+            reply: cleanReply,
+            mochiMood: mochiMood,
+            suggestedMeals: suggestedMeals
           };
         }
       } else if (response.status === 429) {
-        console.warn(`[Mochi AI] Gemini API key quota exceeded (429) on model ${model}. Switching to Smart Mochi Engine.`);
-        break;
+        console.warn(`[Mochi AI] Gemini API quota limit (429) on model ${model}, trying next...`);
+        continue;
       } else {
         console.warn(`[Mochi AI] Model ${model} returned status ${response.status}`);
       }
@@ -705,7 +838,7 @@ export async function chatWithMochi({ message, userContext, history = [] }) {
     }
   }
 
-  // If all Gemini API models fail or quota is exhausted (429), fall back smoothly to smart conversational engine
+  // If all Gemini API models fail or timeout, fall back smoothly to rich smart conversational engine
   return generateSmartMochiReply(message, userContext);
 }
 

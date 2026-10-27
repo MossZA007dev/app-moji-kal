@@ -285,6 +285,8 @@ const server = http.createServer(async (req, res) => {
         const totalSodium = Math.round(logs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
         const totalProtein = Math.round(logs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
         const totalFat = Math.round(logs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
+        const waterBottleMl = Number(user?.water_bottle_ml) || 500;
+        const totalWaterMl = logs.filter(l => l.name && l.name.includes('น้ำเปล่า')).reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
 
         const userContext = {
           nickname: user?.nickname || 'เพื่อน',
@@ -299,6 +301,10 @@ const server = http.createServer(async (req, res) => {
           today_protein: totalProtein,
           today_fat: totalFat,
           today_meals: logs,
+          today_water_ml: totalWaterMl,
+          water_daily_target_ml: Number(user?.water_daily_target_ml) || 2000,
+          weight: user?.weight || 0,
+          target_weight: user?.target_weight || 0,
           streak: streak.current
         };
 
