@@ -188,6 +188,97 @@ h1, h2, h3, .hd {
 .top h1 { font-size: 22px; }
 .top span { color: var(--mute); font-size: 13px; }
 
+/* Date Navigator Bar */
+.date-navigator-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 8px 12px;
+  margin: 4px 0 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+.date-nav-btn {
+  background: #FFF5F7;
+  border: 1.2px solid var(--pink);
+  color: var(--pink-ink);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.date-nav-btn:hover {
+  background: var(--pink);
+  color: #fff;
+}
+.date-nav-btn:active {
+  transform: scale(0.95);
+}
+.date-nav-btn.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  background: var(--bg);
+  border-color: var(--line);
+  color: var(--mute);
+}
+.date-nav-btn.today-jump {
+  background: linear-gradient(135deg, #FF6B8B, #FFA07A);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(255,107,139,0.3);
+}
+.date-nav-center {
+  text-align: center;
+  flex: 1;
+  padding: 0 6px;
+}
+.date-nav-title {
+  font-family: 'Mali', sans-serif;
+  font-weight: 800;
+  font-size: 15.5px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.date-nav-subtitle {
+  font-size: 11.5px;
+  color: var(--mute);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.viewing-past-alert {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFF7ED;
+  border: 1.5px solid #FDBA74;
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #9A3412;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.1);
+  animation: pulsePast 2s infinite ease-in-out;
+}
+.viewing-past-return {
+  font-weight: 800;
+  color: #EA580C;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+@keyframes pulsePast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
 /* Disclaimer Alert */
 .disclaimer {
   display: flex;
@@ -6192,6 +6283,7 @@ let challenges = [];
 let chatHistory = [];
 let userStreak = { current: 0, best: 0 };
 let tab = 'today';
+let currentViewingDate = key();
 let feedSubTab = 'activities'; // 'activities' | 'leaderboard' | 'members'
 let activitiesData = [];
 let leaderboardData = [];
@@ -6515,6 +6607,7 @@ async function fetchUsers() {
       localStorage.setItem('mochi_onboarded', 'true');
       updateUserHeader();
       checkPdpaConsent();
+      await autoRestoreAllCachedLogs();
     } else {
       currentUser = null;
     }
@@ -6531,33 +6624,116 @@ async function fetchUsers() {
   }
 }
 
-async function fetchLogs() {
+async function autoRestoreAllCachedLogs() {
   if (!currentUser) return;
-  const storageKey = `mochi_logs_${currentUser.id}_${key()}`;
+  const prefix = `mochi_logs_${currentUser.id}_`;
+  const cachedDates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(prefix)) {
+      const d = k.replace(prefix, '');
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        cachedDates.push(d);
+      }
+    }
+  }
+
   try {
-    const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${key()}`, {
+    const res = await fetch(`/api/logs?userId=${currentUser.id}`);
+    const data = await res.json();
+    const serverLogs = data.logs || [];
+    const serverLogIds = new Set(serverLogs.map(l => l.id));
+
+    // 1. Restore missing logs from localStorage up to server across all historical dates
+    for (const d of cachedDates) {
+      if (sessionStorage.getItem('mochi_user_deleted_' + d)) continue;
+      const raw = localStorage.getItem(prefix + d);
+      if (!raw) continue;
+      let list = [];
+      try { list = JSON.parse(raw); } catch (_) {}
+      if (Array.isArray(list) && list.length > 0) {
+        for (const item of list) {
+          if (item && item.name && (!item.id || !serverLogIds.has(item.id))) {
+            console.log(`[Auto-Restore] Syncing meal '${item.name}' (${d}) to server`);
+            try {
+              await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+                body: JSON.stringify({
+                  id: item.id || undefined,
+                  userId: currentUser.id,
+                  date: item.date || d,
+                  name: item.name,
+                  calorie: item.calorie,
+                  sugar: item.sugar,
+                  carbs: item.carbs || 0,
+                  protein: item.protein || 0,
+                  fat: item.fat || 0,
+                  sodium: item.sodium || 0,
+                  portion_size: item.portion_size || 'normal',
+                  sweetness_level: item.sweetness_level || 'normal',
+                  is_private: item.is_private ? 1 : 0,
+                  image_url: item.image_url || null,
+                  components_json: item.components_json || null,
+                  water_ml: item.water_ml || null
+                })
+              });
+              if (item.id) serverLogIds.add(item.id);
+            } catch (postErr) {
+              console.warn('[Auto-Restore Post Error]', postErr);
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Bidirectional sync: cache server logs into localStorage for offline/speed
+    const logsByDate = {};
+    for (const sl of serverLogs) {
+      if (!logsByDate[sl.date]) logsByDate[sl.date] = [];
+      logsByDate[sl.date].push(sl);
+    }
+    for (const [dateStr, sLogs] of Object.entries(logsByDate)) {
+      const storageKey = prefix + dateStr;
+      const localStr = localStorage.getItem(storageKey);
+      if (!localStr || localStr === '[]') {
+        localStorage.setItem(storageKey, JSON.stringify(sLogs));
+      }
+    }
+  } catch (err) {
+    console.warn('[Auto-Restore Logs Warning]', err);
+  }
+}
+
+async function fetchLogs(targetDate) {
+  if (!currentUser) return;
+  const d = targetDate || currentViewingDate || key();
+  currentViewingDate = d;
+  const storageKey = `mochi_logs_${currentUser.id}_${d}`;
+  try {
+    const res = await fetch(`/api/logs?userId=${currentUser.id}&date=${d}`, {
       headers: { 'x-user-id': currentUser.id }
     });
     const data = await res.json();
     const serverLogs = data.logs || [];
 
-    // Self-Healing: If server redeployed and has empty logs, but client has cached logs today, restore them (only if user did not intentionally delete)
-    const userDeletedToday = sessionStorage.getItem('mochi_user_deleted_' + key());
-    if (serverLogs.length === 0 && !userDeletedToday) {
+    // Self-Healing for this specific date if server has 0 logs but client has cached logs
+    const userDeleted = sessionStorage.getItem('mochi_user_deleted_' + d);
+    if (serverLogs.length === 0 && !userDeleted) {
       const cachedLogsStr = localStorage.getItem(storageKey);
       if (cachedLogsStr) {
         try {
           const cached = JSON.parse(cachedLogsStr);
           if (Array.isArray(cached) && cached.length > 0) {
-            console.log('[Auto-Sync] Restoring cached logs to fresh server:', cached.length);
+            console.log(`[Auto-Sync] Restoring cached logs for ${d}:`, cached.length);
             for (const item of cached) {
               await fetch('/api/logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
-                body: JSON.stringify({ ...item, userId: currentUser.id, date: key() })
+                body: JSON.stringify({ ...item, userId: currentUser.id, date: d })
               });
             }
-            const refetched = await fetch(`/api/logs?userId=${currentUser.id}&date=${key()}`, {
+            const refetched = await fetch(`/api/logs?userId=${currentUser.id}&date=${d}`, {
               headers: { 'x-user-id': currentUser.id }
             });
             const refData = await refetched.json();
@@ -6578,6 +6754,13 @@ async function fetchLogs() {
       try { currentLogs = JSON.parse(cached); } catch (_) {}
     }
   }
+}
+
+async function changeViewingDate(targetDate) {
+  if (!targetDate) return;
+  currentViewingDate = targetDate;
+  await fetchLogs(currentViewingDate);
+  render();
 }
 
 function updateQuestNavBadge() {
@@ -8493,7 +8676,23 @@ function renderToday() {
     msg = 'มึนตึ้บเลยย! 🤡 โดนเพื่อนในแก๊งสาปหน้ามึนตึ้บอยู่นะเนี่ย!';
   }
 
-  const dateTh = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
+  const isToday = currentViewingDate === key();
+  const yDate = new Date();
+  yDate.setDate(yDate.getDate() - 1);
+  const yesterdayStr = key(yDate);
+  const isYesterday = currentViewingDate === yesterdayStr;
+
+  const viewingDateObj = new Date(currentViewingDate + 'T12:00:00');
+  const dateTh = viewingDateObj.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
+
+  const prevDateObj = new Date(viewingDateObj);
+  prevDateObj.setDate(prevDateObj.getDate() - 1);
+  const prevDateStr = key(prevDateObj);
+
+  const nextDateObj = new Date(viewingDateObj);
+  nextDateObj.setDate(nextDateObj.getDate() + 1);
+  const nextDateStr = key(nextDateObj);
+  const isFuture = nextDateStr > key();
 
   // Goal & Nutrition Targets
   const goalType = currentUser?.goal_type || 'weight_loss';
@@ -8586,15 +8785,47 @@ function renderToday() {
   }
 
   $('#main').innerHTML = `
-    <div class="top" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <h1>โมจิวันนี้ 🍡</h1>
-        <span>${dateTh}</span>
-      </div>
-      <button class="btn s sm" style="font-size:11.5px; padding:6px 12px; border-radius:14px; background:#FFF0F5; border:1.5px solid var(--pink); color:var(--pink-ink); font-weight:700; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 8px rgba(255,117,140,0.15);" onclick="openShareModal()">
-        <span>📸</span> <span>สรุป & แชร์การ์ด</span>
+    <!-- Date Navigator Bar -->
+    <div class="date-navigator-card">
+      <button class="date-nav-btn prev" onclick="changeViewingDate('${prevDateStr}')" title="ย้อนดูวันก่อนหน้า">
+        ◀ ${isToday ? 'เมื่อวาน' : 'วันก่อน'}
       </button>
+
+      <div class="date-nav-center">
+        <div class="date-nav-title">
+          ${isToday ? 'โมจิวันนี้ 🍡' : isYesterday ? 'โมจิเมื่อวาน ⏪' : 'บันทึกย้อนหลัง 📅'}
+        </div>
+        <div class="date-nav-subtitle">
+          <input type="date" id="viewingDateInput" value="${currentViewingDate}" max="${key()}" onchange="changeViewingDate(this.value)" style="position:absolute; opacity:0; pointer-events:none; width:0; height:0;" />
+          <span onclick="const inp = document.getElementById('viewingDateInput'); if (inp.showPicker) inp.showPicker(); else inp.click();" style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="แตะเพื่อเลือกวันที่">
+            <span>${dateTh}</span>
+            <span style="font-size:12px;">📅</span>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:4px;">
+        ${!isToday ? `
+          <button class="date-nav-btn today-jump" onclick="changeViewingDate(key())" title="กลับสู่วันนี้">
+            วันนี้ ⚡
+          </button>
+          <button class="date-nav-btn next ${isFuture ? 'disabled' : ''}" ${isFuture ? 'disabled' : `onclick="changeViewingDate('${nextDateStr}')"`} title="วันถัดไป">
+            ▶
+          </button>
+        ` : `
+          <button class="btn s sm" style="font-size:11px; padding:6px 10px; border-radius:12px; background:#FFF0F5; border:1.5px solid var(--pink); color:var(--pink-ink); font-weight:700; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(255,117,140,0.12);" onclick="openShareModal()">
+            <span>📸</span> <span>การ์ด</span>
+          </button>
+        `}
+      </div>
     </div>
+
+    ${!isToday ? `
+      <div class="viewing-past-alert" onclick="changeViewingDate(key())">
+        <span>⏪ กำลังดูประวัติมื้ออาหารของวันที่ <b>${dateTh}</b></span>
+        <span class="viewing-past-return">แตะเพื่อกลับสู่วันนี้ ➜</span>
+      </div>
+    ` : ''}
 
     <div class="card mo" style="cursor:pointer; position:relative; overflow:visible;" onclick="tapHomeMascot(event)" title="แตะพุงน้องโมจิเพื่อเล่นด้วยกัน! 🍡✨">
       <div class="mo-svg-wrap" id="homeMascotWrap">${mascotSVG(mood, currentUser?.avatar_color, 88, currentUser?.avatar_hat)}</div>
@@ -8858,7 +9089,7 @@ function renderToday() {
 
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h2 class="hd" style="font-size:16px;">วันนี้กินอะไรไปบ้าง (${currentLogs.length} มื้อ)</h2>
+        <h2 class="hd" style="font-size:16px;">${isToday ? 'วันนี้กินอะไรไปบ้าง' : 'มื้ออาหารวันที่ ' + dateTh} (${currentLogs.length} มื้อ)</h2>
         <button class="btn s sm" onclick="openShareModal()">💌 แชร์การ์ดรูป</button>
       </div>
       ${currentLogs.length ? currentLogs.map(l => {
@@ -8885,7 +9116,7 @@ function renderToday() {
           <button class="x" onclick="deleteMeal('${l.id}')" style="margin-top:2px;">×</button>
         </div>
       `;
-      }).join('') : '<p style="color:var(--mute); margin: 6px 0;">ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย</p>'}
+      }).join('') : `<p style="color:var(--mute); margin: 6px 0;">${isToday ? 'ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย' : 'ไม่มีบันทึกมื้ออาหารในวันที่เลือก'}</p>`}
     </div>
   `;
 }
@@ -9404,13 +9635,14 @@ async function triggerWaterLog() {
 
   const bottleMl = Number(currentUser.water_bottle_ml) || 500;
   const bottleName = currentUser.water_bottle_name || 'ขวดน้ำ 500 ml';
+  const targetD = currentViewingDate || key();
 
   await fetch('/api/water', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
     body: JSON.stringify({ 
       userId: currentUser.id, 
-      date: key(),
+      date: targetD,
       ml: bottleMl,
       bottleName: bottleName
     })
@@ -9426,7 +9658,7 @@ async function triggerWaterLog() {
   }
   spawnMojiParticles(document.getElementById('homeMascotWrap') || document.body, ['💧', '💦', '✨', '🫧'], 6);
   playMojiAction('bounce', '#homeMascotWrap');
-  await fetchLogs();
+  await fetchLogs(targetD);
   await fetchStreak();
   render();
   sendPushNotification('โมจิชื่นใจจัง 💧', `ดื่มน้ำ ${bottleName} (+${fmt(bottleMl)} ml) แล้ว! สดชื่นและดีต่อผิวมากเลย`);
@@ -9434,19 +9666,20 @@ async function triggerWaterLog() {
 }
 
 async function undoWaterLog() {
-  sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+  const targetD = currentViewingDate || key();
+  sessionStorage.setItem('mochi_user_deleted_' + targetD, 'true');
   const res = await fetch('/api/water/undo', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
-    body: JSON.stringify({ userId: currentUser.id, date: key() })
+    body: JSON.stringify({ userId: currentUser.id, date: targetD })
   });
   const data = await res.json();
   if (data.success) {
     if (data.removedId) {
       currentLogs = (currentLogs || []).filter(l => l.id !== data.removedId);
-      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${targetD}`, JSON.stringify(currentLogs));
     }
-    await fetchLogs();
+    await fetchLogs(targetD);
     render();
     toast('ยกเลิกบันทึกรอบน้ำล่าสุดแล้ว 💧');
   } else {
@@ -9456,8 +9689,9 @@ async function undoWaterLog() {
 
 async function deleteWaterLogItem(logId) {
   if (!confirm('ต้องการลบประวัติการดื่มน้ำรายการนี้ใช่ไหม?')) return;
+  const targetD = currentViewingDate || key();
   try {
-    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+    sessionStorage.setItem('mochi_user_deleted_' + targetD, 'true');
     const res = await fetch(`/api/water/${logId}?userId=${currentUser.id}`, {
       method: 'DELETE',
       headers: { 'x-user-id': currentUser.id }
@@ -9465,8 +9699,8 @@ async function deleteWaterLogItem(logId) {
     const data = await res.json();
     if (data.success) {
       currentLogs = (currentLogs || []).filter(l => l.id !== logId);
-      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
-      await fetchLogs();
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${targetD}`, JSON.stringify(currentLogs));
+      await fetchLogs(targetD);
       render();
       toast('ลบรายการดื่มน้ำเรียบร้อยแล้ว 💧');
       renderWaterHistoryModalContent();
@@ -9481,18 +9715,19 @@ async function deleteWaterLogItem(logId) {
 
 async function resetTodayWater() {
   if (!confirm('⚠️ ยืนยันการรีเซ็ตประวัติดื่มน้ำของวันนี้ทั้งหมดใช่ไหม?')) return;
+  const targetD = currentViewingDate || key();
   try {
-    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+    sessionStorage.setItem('mochi_user_deleted_' + targetD, 'true');
     const res = await fetch('/api/water/reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
-      body: JSON.stringify({ userId: currentUser.id, date: key() })
+      body: JSON.stringify({ userId: currentUser.id, date: targetD })
     });
     const data = await res.json();
     if (data.success) {
       currentLogs = (currentLogs || []).filter(l => !l.water_ml && !l.name.includes('น้ำ'));
-      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
-      await fetchLogs();
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${targetD}`, JSON.stringify(currentLogs));
+      await fetchLogs(targetD);
       render();
       toast(data.message || 'รีเซ็ตประวัติดื่มน้ำเรียบร้อยแล้ว');
       closeSheet();
@@ -14801,6 +15036,7 @@ async function submitDevPinLogin() {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
+      await autoRestoreAllCachedLogs();
       await Promise.all([
         fetchUsers(),
         fetchLogs(),
@@ -15186,6 +15422,7 @@ async function submitUserPinLogin(userId, hasPin) {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
+      await autoRestoreAllCachedLogs();
       await Promise.all([
         fetchUsers(),
         fetchLogs(),
@@ -15362,6 +15599,7 @@ async function submitSecurityRecovery(userId) {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
+      await autoRestoreAllCachedLogs();
       await Promise.all([
         fetchUsers(),
         fetchLogs(),
@@ -15413,6 +15651,7 @@ async function submitDevPinRecovery(userId) {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
+      await autoRestoreAllCachedLogs();
       await Promise.all([
         fetchUsers(),
         fetchLogs(),
@@ -18636,6 +18875,7 @@ function openSheet() {
   const yDate = new Date();
   yDate.setDate(yDate.getDate() - 1);
   const yesterdayStr = yDate.toISOString().slice(0, 10);
+  const initialDate = currentViewingDate || todayStr;
 
   draft = {
     name: '',
@@ -18653,7 +18893,7 @@ function openSheet() {
     sweetPercent: null,
     portion: 'normal',
     toppings: [],
-    date: todayStr,
+    date: initialDate,
     isLateNight,
     todayStr,
     yesterdayStr,
@@ -19599,7 +19839,8 @@ async function saveMeal() {
   const finalName = name || 'มื้ออาหาร';
 
   try {
-    const mealDate = draft.date || key();
+    const mealDate = draft.date || currentViewingDate || key();
+    currentViewingDate = mealDate;
     const drinkWaterMl = (draft.isDrink && draft.autoTrackWater && draft.waterMl > 0) ? Number(draft.waterMl) : null;
     await fetch('/api/logs', {
       method: 'POST',
@@ -19641,7 +19882,7 @@ async function saveMeal() {
 
     fireConfetti();
     closeSheet();
-    await fetchLogs();
+    await fetchLogs(mealDate);
     await fetchStreak();
     render();
 
@@ -19668,9 +19909,10 @@ async function saveMeal() {
 
 async function deleteMeal(id) {
   if (!confirm('ต้องการลบมื้อนี้ใช่ไหม?')) return;
+  const targetD = currentViewingDate || key();
   try {
-    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
-    const storageKey = `mochi_logs_${currentUser.id}_${key()}`;
+    sessionStorage.setItem('mochi_user_deleted_' + targetD, 'true');
+    const storageKey = `mochi_logs_${currentUser.id}_${targetD}`;
     currentLogs = (currentLogs || []).filter(l => l.id !== id);
     localStorage.setItem(storageKey, JSON.stringify(currentLogs));
 
@@ -19679,7 +19921,7 @@ async function deleteMeal(id) {
       headers: { 'x-user-id': currentUser.id }
     });
     const data = await res.json();
-    await fetchLogs();
+    await fetchLogs(targetD);
     await fetchStreak();
     render();
 
@@ -19691,7 +19933,7 @@ async function deleteMeal(id) {
             headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
             body: JSON.stringify({ log: data.deletedLog })
           });
-          await fetchLogs();
+          await fetchLogs(targetD);
           await fetchStreak();
           render();
           toast('กู้คืนมื้ออาหารเรียบร้อยแล้ว ✨');
@@ -20126,6 +20368,9 @@ async function installPwaApp() {
 (async () => {
   await fetchSettings();
   await fetchUsers();
+  if (currentUser) {
+    await autoRestoreAllCachedLogs();
+  }
   await Promise.all([
     fetchLogs(),
     fetchFavorites(),

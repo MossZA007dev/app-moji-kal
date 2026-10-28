@@ -1041,9 +1041,9 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json, water_ml }) {
+export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json, water_ml }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
-  const id = `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const logId = id || `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const compStr = typeof components_json === 'string'
     ? components_json
     : (Array.isArray(components) || (typeof components === 'object' && components !== null))
@@ -1051,11 +1051,11 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
 
   const stmt = db.prepare(`
-    INSERT INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, water_ml, created_at)
+    INSERT OR REPLACE INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, water_ml, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
-    id,
+    logId,
     userId,
     targetDate,
     name,
@@ -1094,7 +1094,7 @@ export function addLog({ userId, date, name, calorie, sugar, carbs, protein, fat
     console.error('Goal sync error on addLog:', err);
   }
 
-  return db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
+  return db.prepare('SELECT * FROM logs WHERE id = ?').get(logId);
 }
 
 export function deleteLog(id, userId) {
