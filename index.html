@@ -12417,11 +12417,19 @@ async function commentFoodPostFromDetail(mealId) {
 }
 
 async function deleteMemberFromGang(userId, name) {
-  if (!isCurrentUserDev()) {
-    toast('สิทธิ์ไม่เพียงพอ: เฉพาะ Developer เท่านั้นที่สามารถลบสมาชิกได้ 🛡️');
+  const isSelf = currentUser && currentUser.id === userId;
+  const isDev = isCurrentUserDev();
+
+  if (isSelf) {
+    return deleteMyAccount();
+  }
+
+  if (!isDev) {
+    toast('สิทธิ์ไม่เพียงพอ: เฉพาะ Developer หรือผู้ดูแลแก๊งเท่านั้นที่สามารถลบสมาชิกได้ 🛡️');
     return;
   }
-  if (!confirm(`[สิทธิ์ Dev] คุณต้องการลบสมาชิก "${name}" ออกจากแก๊งโมจิใช่หรือไม่?\n\n💡 สมาชิกนี้และข้อมูลบันทึกทั้งหมดจะถูกนำออกจากแก๊งทันที`)) return;
+
+  if (!confirm(`[สิทธิ์ Dev] คุณต้องการลบสมาชิก "${name}" ออกจากแก๊งโมจิใช่หรือไม่?\n\n💡 สมาชิกนี้และข้อมูลบันทึกทั้งหมดจะถูกลบออกจากแก๊งทันที`)) return;
   try {
     const res = await fetch(`/api/users/${userId}`, {
       method: 'DELETE',
@@ -14823,6 +14831,131 @@ function logoutThisDevice() {
   }
 }
 
+// -------------------------------------------------------------
+// Delete Account & All Data (PDPA Self-Deletion) 🗑️⚠️
+// -------------------------------------------------------------
+function deleteMyAccount() {
+  if (!currentUser) return toast('กรุณาเลือกโปรไฟล์ก่อนน้า');
+  openDeleteAccountModal();
+}
+
+function openDeleteAccountModal() {
+  if (!currentUser) return;
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  const hasPin = Boolean(currentUser.pin);
+
+  el.innerHTML = `
+    <div class="sh" style="text-align:center;">
+      <div style="width:58px; height:58px; border-radius:20px; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; font-size:30px; margin:0 auto 12px; box-shadow:0 4px 12px rgba(220,38,38,0.15);">
+        🗑️
+      </div>
+      <h2 class="hd" style="font-size:18px; color:#991B1B; margin-bottom:6px; font-family:'Mali',sans-serif;">ลบบัญชีและประวัติทั้งหมดถาวร ⚠️</h2>
+      <p style="font-size:12px; color:var(--mute); line-height:1.45; margin-bottom:14px;">
+        คุณกำลังจะลบบัญชี <b>"${esc(currentUser.nickname)}"</b><br>
+        ข้อมูลทั้งหมดด้านล่างนี้จะถูกลบออกจากเซิร์ฟเวอร์ทันทีตามสิทธิ์ PDPA และ<b style="color:#DC2626;">ไม่สามารถกู้คืนได้</b>
+      </p>
+
+      <div style="background:#FEF2F2; border:1px solid #FECDD3; border-radius:14px; padding:10px 14px; text-align:left; font-size:11.5px; color:#9F1239; margin-bottom:14px; line-height:1.5;">
+        • บันทึกมื้ออาหาร, แคลอรี และน้ำตาลทั้งหมด 🍱<br>
+        • บันทึกการดื่มน้ำ และประวัติน้ำหนัก 💧⚖️<br>
+        • คอยน์ 🪙, สกิน 3D และไอเทมแต่งตัวทั้งหมด 🛍️<br>
+        • ประวัติการสนทนากับน้องโมจิ AI 💬<br>
+        • ตราเกียรติยศ 34 รายการ และ Streak ทั้งหมด 🏆
+      </div>
+
+      ${hasPin ? `
+        <div style="margin-bottom:14px; text-align:left;">
+          <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">
+            ใส่รหัส PIN 4 หลักของคุณเพื่อยืนยัน:
+          </label>
+          <input type="password" id="deleteAccountPinInput" class="ipt" placeholder="ใส่รหัส PIN 4 หลัก..." maxlength="4" style="text-align:center; font-size:18px; letter-spacing:4px; font-weight:800; border-color:#FCA5A5; width:100%; box-sizing:border-box;">
+        </div>
+      ` : `
+        <div style="margin-bottom:14px; text-align:left;">
+          <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">
+            พิมพ์ชื่อเล่น <b>"${esc(currentUser.nickname)}"</b> เพื่อยืนยัน:
+          </label>
+          <input type="text" id="deleteAccountNameInput" class="ipt" placeholder="พิมพ์ '${esc(currentUser.nickname)}'..." style="border-color:#FCA5A5; width:100%; box-sizing:border-box;">
+        </div>
+      `}
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn g sm" style="flex:1;" onclick="closeSheet()">ยกเลิก</button>
+        <button class="btn sm" style="flex:1.6; background:#DC2626; color:#fff; border:none; font-weight:800; box-shadow:0 3px 10px rgba(220,38,38,0.3);" onclick="executeDeleteMyAccount()">
+          🗑️ ยืนยันลบบัญชีถาวร
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function executeDeleteMyAccount() {
+  if (!currentUser) return;
+  const hasPin = Boolean(currentUser.pin);
+
+  if (hasPin) {
+    const pinInput = $('#deleteAccountPinInput');
+    const pin = pinInput ? pinInput.value.trim() : '';
+    if (!pin) {
+      return toast('กรุณาใส่รหัส PIN 4 หลักเพื่อยืนยัน');
+    }
+    if (pin !== String(currentUser.pin)) {
+      return toast('รหัส PIN ไม่ถูกต้อง!');
+    }
+  } else {
+    const nameInput = $('#deleteAccountNameInput');
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (name !== currentUser.nickname) {
+      return toast(`กรุณาพิมพ์ชื่อ "${currentUser.nickname}" ให้ถูกต้อง`);
+    }
+  }
+
+  try {
+    const targetId = currentUser.id;
+    const res = await fetch(`/api/users/${targetId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': targetId }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return toast(data.error || 'ลบบัญชีไม่สำเร็จ');
+    }
+
+    // Clean local storage
+    localStorage.removeItem('mochi_user_id');
+    localStorage.removeItem('mochi_user');
+    localStorage.removeItem('mochi_user_profile');
+    localStorage.removeItem('mochi_current_user_pin');
+    localStorage.removeItem('mochi_onboarded');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('mochi_logs_' + targetId) || k.startsWith('mochi_favs_' + targetId))) {
+        localStorage.removeItem(k);
+      }
+    }
+
+    currentUser = null;
+    closeSheet();
+    playMojiSound('alert');
+    toast('ลบบัญชีและข้อมูลทั้งหมดเรียบร้อยแล้ว บ๊ายบายนะน้องโมจิ 🍡👋');
+    await fetchUsers();
+    render();
+    setTimeout(() => {
+      if (users && users.length > 0) {
+        openWelcomeGateModal();
+      } else {
+        openOnboardingModal({ isNewUser: true });
+      }
+    }, 350);
+  } catch (err) {
+    console.error('executeDeleteMyAccount error:', err);
+    toast('เกิดข้อผิดพลาดในการลบบัญชี');
+  }
+}
+
 // Prompt for Welcome Gate or Onboarding based on existing user accounts
 function promptLoginOrOnboard() {
   if (users && users.length > 0) {
@@ -14935,10 +15068,15 @@ async function openSelectExistingProfileModal() {
                     </div>
                   </div>
                 </div>
-                <div class="settings-row-right">
+                <div class="settings-row-right" style="display:flex; align-items:center; gap:6px;">
                   <button class="btn sm" style="font-size:11px; padding:4px 10px; pointer-events:none;">
                     ${isCurrent ? '✓ ตัวคุณ' : 'เลือกใช้ ➜'}
                   </button>
+                  ${isCurrentUserDev() && !isCurrent ? `
+                    <button type="button" class="btn g sm" style="color:#DC2626; border-color:#FCA5A5; padding:4px 8px; font-size:12px; cursor:pointer;" onclick="event.stopPropagation(); deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')" title="[สิทธิ์ Dev] ลบสมาชิกนี้">
+                      🗑️
+                    </button>
+                  ` : ''}
                 </div>
               </div>
             `;

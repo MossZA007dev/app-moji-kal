@@ -924,6 +924,13 @@ export function deleteUserAndData(userId) {
   db.prepare('DELETE FROM favorites WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM challenge_participants WHERE user_id = ?').run(userId);
   db.prepare('DELETE FROM chat_messages WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM activities WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM cheers WHERE from_user_id = ? OR to_user_id = ?').run(userId, userId);
+  db.prepare('DELETE FROM post_reactions WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM quest_claims WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM daily_goals WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM notifications WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM pranks WHERE from_user_id = ? OR to_user_id = ?').run(userId, userId);
   return db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 }
 

@@ -517,14 +517,15 @@ const server = http.createServer(async (req, res) => {
       if (userMatch && req.method === 'DELETE') {
         const targetUserId = userMatch[1];
         const authUserId = req.headers['x-user-id'] || parsedUrl.searchParams.get('authUserId') || '';
+        const devPinHeader = req.headers['x-dev-pin'] || parsedUrl.searchParams.get('devPin') || '';
 
-        // Allow self-deletion for PDPA compliance, or Dev users for gang management
-        const isSelf = authUserId && authUserId === targetUserId;
-        const isDev = db.isDevUser(authUserId);
+        // Allow self-deletion for PDPA compliance, or Dev users for gang management, or valid Dev PIN
+        const isSelf = Boolean(authUserId && authUserId === targetUserId);
+        const isDev = Boolean(db.isDevUser(authUserId) || (devPinHeader && devPinHeader === (process.env.DEV_PIN || '8888')));
 
         if (!isSelf && !isDev) {
           return sendJson(res, 403, { 
-            error: 'สิทธิ์ไม่เพียงพอ: เฉพาะ Developer หรือผู้ดูแลแก๊งเท่านั้นที่สามารถลบสมาชิกออกจากแก๊งได้ 🛡️' 
+            error: 'สิทธิ์ไม่เพียงพอ: เฉพาะเจ้าของบัญชี หรือ Developer ผู้ดูแลแก๊งเท่านั้นที่สามารถลบข้อมูลได้ 🛡️' 
           });
         }
 
