@@ -158,19 +158,28 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
   // Auto-detect sweetness percentage from text/detail if present
   let effectiveSweetness = sweetness;
   let customSweetPercent = null;
-  if (lower.includes('หวาน 50%') || lower.includes('50%') || lower.includes('หวานครึ่ง')) {
+  const pctMatch = lower.match(/(\d{1,3})\s*%/);
+  if (pctMatch) {
+    customSweetPercent = parseInt(pctMatch[1], 10);
+    if (customSweetPercent === 0) effectiveSweetness = 'none';
+    else if (customSweetPercent <= 35) effectiveSweetness = 'less';
+    else if (customSweetPercent <= 60) effectiveSweetness = 'half';
+    else if (customSweetPercent <= 85) effectiveSweetness = 'sweet75';
+    else if (customSweetPercent <= 110) effectiveSweetness = 'normal';
+    else effectiveSweetness = 'sweet';
+  } else if (lower.includes('หวานครึ่ง') || lower.includes('ปานกลาง')) {
     effectiveSweetness = 'half';
     customSweetPercent = 50;
-  } else if (lower.includes('หวาน 25%') || lower.includes('25%') || lower.includes('หวานน้อย')) {
+  } else if (lower.includes('หวานน้อย')) {
     effectiveSweetness = 'less';
     customSweetPercent = 25;
-  } else if (lower.includes('0%') || lower.includes('ไม่หวาน') || lower.includes('ไม่ใส่น้ำตาล')) {
+  } else if (lower.includes('ไม่หวาน') || lower.includes('ไม่ใส่น้ำตาล')) {
     effectiveSweetness = 'none';
     customSweetPercent = 0;
-  } else if (lower.includes('หวานมาก') || lower.includes('120%')) {
+  } else if (lower.includes('หวานมาก')) {
     effectiveSweetness = 'sweet';
     customSweetPercent = 120;
-  } else if (lower.includes('100%') || lower.includes('ปกติ')) {
+  } else if (lower.includes('ปกติ')) {
     effectiveSweetness = 'normal';
     customSweetPercent = 100;
   }
@@ -208,6 +217,7 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
       if (effectiveSweetness === 'none') { baseSugar = 0.5; baseKcal -= 60; }
       else if (effectiveSweetness === 'less') { baseSugar *= 0.35; baseKcal -= 40; }
       else if (effectiveSweetness === 'half') { baseSugar *= 0.55; baseKcal -= 25; }
+      else if (effectiveSweetness === 'sweet75') { baseSugar *= 0.75; baseKcal -= 15; }
       else if (effectiveSweetness === 'sweet') { baseSugar *= 1.25; baseKcal += 35; }
 
       if (toppings.includes('boba') || lower.includes('ไข่มุก')) { baseSugar += 12; baseKcal += 110; }
@@ -232,6 +242,7 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
       sodium: fbSodiumDrink,
       is_drink: isSweetDrink,
       water_ml: finalWaterMl,
+      sweetness_level: effectiveSweetness,
       sweetness_percent: customSweetPercent,
       confidence: 'medium',
       needs_clarification: isSweetDrink && effectiveSweetness === 'normal' && customSweetPercent === null,
@@ -264,6 +275,9 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
     } else if (effectiveSweetness === 'half') {
       sugar = Math.round(sugar * 0.5 * 10) / 10;
       cal -= 25;
+    } else if (effectiveSweetness === 'sweet75') {
+      sugar = Math.round(sugar * 0.75 * 10) / 10;
+      cal -= 15;
     } else if (effectiveSweetness === 'sweet') {
       sugar = Math.round(sugar * 1.25 * 10) / 10;
       cal += 40;
@@ -304,6 +318,7 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
     sodium: Math.round(sodium),
     is_drink: Boolean(matched.isDrink),
     water_ml: finalWaterMl,
+    sweetness_level: effectiveSweetness,
     sweetness_percent: customSweetPercent,
     confidence: 'high',
     needs_clarification: needsClarification,
@@ -382,6 +397,8 @@ export async function analyzeFoodWithGemini({ text = '', detail = '', imageBase6
        * หากผู้ใช้ระบุขนาด/ปริมาตร เช่น 500 ml, 350 ml, แก้วใหญ่ ให้ใช้ค่านั้น
        * หากไม่ทราบหรือไม่ระบุ ให้ AI ประมาณการมาตรฐาน: กาแฟแก้วปกติ ~350 ml, น้ำหวาน/ชา/โซดา/ชานมแก้วทั่วไป ~500 ml, แก้วใหญ่ ~650 ml, ขวด/กระป๋อง ~325-600 ml
        * ถ้าไม่ใช่น้ำ/เครื่องดื่มให้ใส่ null)
+   - "sweetness_percent": number หรือ null (เปอร์เซ็นต์ระดับความหวานที่ผู้ใช้สั่ง เช่น 0, 25, 50, 75, 100 โดยเฉพาะหากมีในคำอธิบายหรือรายละเอียด เช่น "หวาน 75%" หรือ "75%" ให้ตอบ 75)
+   - "sweetness_level": "none" | "less" | "half" | "sweet75" | "normal" | "sweet"
    - "confidence": "high" | "medium" | "low"
    - "needs_clarification": true ถ้าเป็นเครื่องดื่มหรือของหวานที่ข้อมูลความหวานหรือไซส์ไม่ชัดเจน
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
@@ -496,6 +513,34 @@ export async function analyzeFoodWithGemini({ text = '', detail = '', imageBase6
       combinedText.includes('อเมริกาโน่') || combinedText.includes('สมูทตี้')
     );
 
+    let sweetPercent = null;
+    if (parsed.sweetness_percent !== undefined && parsed.sweetness_percent !== null) {
+      sweetPercent = parseInt(parsed.sweetness_percent, 10);
+    } else {
+      const pctMatch = combinedText.match(/(\d{1,3})\s*%/);
+      if (pctMatch) {
+        sweetPercent = parseInt(pctMatch[1], 10);
+      } else if (combinedText.includes('ไม่หวาน') || combinedText.includes('ไม่ใส่น้ำตาล')) {
+        sweetPercent = 0;
+      } else if (combinedText.includes('หวานน้อย')) {
+        sweetPercent = 25;
+      } else if (combinedText.includes('หวานครึ่ง') || combinedText.includes('ปานกลาง')) {
+        sweetPercent = 50;
+      }
+    }
+
+    let sweetnessLevel = parsed.sweetness_level || 'normal';
+    if (sweetPercent !== null) {
+      if (sweetPercent === 0) sweetnessLevel = 'none';
+      else if (sweetPercent <= 35) sweetnessLevel = 'less';
+      else if (sweetPercent <= 60) sweetnessLevel = 'half';
+      else if (sweetPercent <= 85) sweetnessLevel = 'sweet75';
+      else if (sweetPercent <= 110) sweetnessLevel = 'normal';
+      else sweetnessLevel = 'sweet';
+    } else if (sweetness) {
+      sweetnessLevel = sweetness;
+    }
+
     let finalWaterMl = null;
     if (isDrink) {
       if (parsed.water_ml && Number(parsed.water_ml) > 0) {
@@ -529,6 +574,8 @@ export async function analyzeFoodWithGemini({ text = '', detail = '', imageBase6
       sodium: finalSodium,
       is_drink: isDrink,
       water_ml: finalWaterMl,
+      sweetness_level: sweetnessLevel,
+      sweetness_percent: sweetPercent,
       is_food: true,
       confidence: parsed.confidence || 'medium',
       needs_clarification: Boolean(parsed.needs_clarification),

@@ -18650,6 +18650,7 @@ function openSheet() {
     status: '',
     brand: 'standard',
     sweetness: 'normal',
+    sweetPercent: null,
     portion: 'normal',
     toppings: [],
     date: todayStr,
@@ -18753,6 +18754,7 @@ function renderSheet() {
         </div>
         <div class="fast-chips-scroll" style="margin-top:6px; gap:4px; padding-bottom:2px;">
           ${[
+            '🍯 หวาน 75%',
             '🍯 หวาน 50%',
             '🍃 หวานน้อย 25%',
             '🚫 ไม่หวาน 0%',
@@ -18977,21 +18979,25 @@ function renderSheet() {
           ${isDrink ? `
             <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--line);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:11.5px; font-weight:700; color:var(--ink);">🍯 ระดับความหวาน:</span>
+                <span style="font-size:11.5px; font-weight:700; color:var(--ink);">🍯 ระดับความหวาน${draft.sweetPercent !== null && draft.sweetPercent !== undefined ? ` (${draft.sweetPercent}%)` : ''}:</span>
                 <span style="font-size:11px; color:var(--mint); font-weight:700;">น้ำตาล ${fmt(draft.sugar || 0)}g</span>
               </div>
               <div class="drink-sweet-pills">
                 ${[
-                  { id: 'none', label: '0%', sub: 'ไม่หวาน', g: 0 },
-                  { id: 'less', label: '25%', sub: 'หวานน้อย', g: 8 },
-                  { id: 'half', label: '50%', sub: 'ปานกลาง', g: 15 },
-                  { id: 'normal', label: '100%', sub: 'ปกติ', g: 24 }
-                ].map(s => `
-                  <div class="sweet-pill-btn ${draft.sweetness === s.id ? 'active' : ''}" onclick="setQuickSweetness('${s.id}', ${s.g})">
-                    <span>${s.label}</span>
-                    <small style="display:block; font-size:9px; opacity:0.8;">${s.sub}</small>
-                  </div>
-                `).join('')}
+                  { id: 'none', label: '0%', sub: 'ไม่หวาน', g: 0, pct: 0 },
+                  { id: 'less', label: '25%', sub: 'หวานน้อย', g: 8, pct: 25 },
+                  { id: 'half', label: '50%', sub: 'ปานกลาง', g: 15, pct: 50 },
+                  { id: 'sweet75', label: '75%', sub: 'หวาน 75%', g: 20, pct: 75 },
+                  { id: 'normal', label: '100%', sub: 'ปกติ', g: 24, pct: 100 }
+                ].map(s => {
+                  const isActive = draft.sweetness === s.id || (draft.sweetPercent !== null && draft.sweetPercent !== undefined && draft.sweetPercent === s.pct);
+                  return `
+                    <div class="sweet-pill-btn ${isActive ? 'active' : ''}" onclick="setQuickSweetness('${s.id}', ${s.g}, ${s.pct})">
+                      <span>${s.label}</span>
+                      <small style="display:block; font-size:9px; opacity:0.8;">${s.sub}</small>
+                    </div>
+                  `;
+                }).join('')}
               </div>
             </div>
 
@@ -19186,10 +19192,24 @@ function onFoodSearchInput(val) {
   }
 }
 
-function setQuickSweetness(val, grams) {
+function setQuickSweetness(val, grams, pct) {
   if (!draft) return;
   draft.sweetness = val;
+  draft.sweetPercent = pct !== undefined ? pct : (val === 'none' ? 0 : val === 'less' ? 25 : val === 'half' ? 50 : val === 'sweet75' ? 75 : 100);
   draft.sugar = grams;
+
+  // Keep detail in sync
+  const labelMap = { none: 'หวาน 0%', less: 'หวาน 25%', half: 'หวาน 50%', sweet75: 'หวาน 75%', normal: 'หวาน 100%' };
+  const newSweetLabel = labelMap[val] || `${draft.sweetPercent}%`;
+  if (draft.detail) {
+    if (draft.detail.match(/หวาน\s*\d{1,3}%|\d{1,3}%|ไม่หวาน|หวานน้อย|หวานมาก/)) {
+      draft.detail = draft.detail.replace(/หวาน\s*\d{1,3}%|\d{1,3}%|ไม่หวาน|หวานน้อย|หวานมาก/, newSweetLabel).trim();
+    } else {
+      draft.detail = (draft.detail + ' ' + newSweetLabel).trim();
+    }
+  } else {
+    draft.detail = newSweetLabel;
+  }
   renderSheet();
 }
 
@@ -19197,10 +19217,33 @@ function onFoodDetailInput(val) {
   if (!draft) return;
   draft.detail = val;
   const lower = val.toLowerCase();
-  if (lower.includes('50%') || lower.includes('ครึ่ง')) draft.sweetness = 'half';
-  else if (lower.includes('25%') || lower.includes('น้อย')) draft.sweetness = 'less';
-  else if (lower.includes('0%') || lower.includes('ไม่หวาน')) draft.sweetness = 'none';
-  else if (lower.includes('100%') || lower.includes('ปกติ')) draft.sweetness = 'normal';
+
+  const pctMatch = lower.match(/(\d{1,3})\s*%/);
+  if (pctMatch) {
+    const pct = parseInt(pctMatch[1], 10);
+    draft.sweetPercent = pct;
+    if (pct === 0) draft.sweetness = 'none';
+    else if (pct <= 35) draft.sweetness = 'less';
+    else if (pct <= 60) draft.sweetness = 'half';
+    else if (pct <= 85) draft.sweetness = 'sweet75';
+    else if (pct <= 110) draft.sweetness = 'normal';
+    else draft.sweetness = 'sweet';
+  } else if (lower.includes('ไม่หวาน') || lower.includes('ไม่ใส่น้ำตาล')) {
+    draft.sweetness = 'none';
+    draft.sweetPercent = 0;
+  } else if (lower.includes('หวานน้อย')) {
+    draft.sweetness = 'less';
+    draft.sweetPercent = 25;
+  } else if (lower.includes('หวานครึ่ง') || lower.includes('ปานกลาง')) {
+    draft.sweetness = 'half';
+    draft.sweetPercent = 50;
+  } else if (lower.includes('หวานมาก')) {
+    draft.sweetness = 'sweet';
+    draft.sweetPercent = 120;
+  } else if (lower.includes('ปกติ')) {
+    draft.sweetness = 'normal';
+    draft.sweetPercent = 100;
+  }
 
   const mlMatch = lower.match(/(\d{2,4})\s*(ml|มล|ซีซี)?/);
   if (mlMatch) {
@@ -19216,8 +19259,13 @@ function appendFoodDetail(tag) {
   if (!draft) return;
   if (!draft.detail) {
     draft.detail = tag;
-  } else if (!draft.detail.includes(tag)) {
-    draft.detail = (draft.detail + ' ' + tag).trim();
+  } else {
+    const isSweetTag = tag.includes('%') || tag.includes('หวาน');
+    if (isSweetTag && draft.detail.match(/หวาน\s*\d{1,3}%|\d{1,3}%|ไม่หวาน|หวานน้อย|หวานมาก/)) {
+      draft.detail = draft.detail.replace(/หวาน\s*\d{1,3}%|\d{1,3}%|ไม่หวาน|หวานน้อย|หวานมาก/, tag).trim();
+    } else if (!draft.detail.includes(tag)) {
+      draft.detail = (draft.detail + ' ' + tag).trim();
+    }
   }
   onFoodDetailInput(draft.detail);
   renderSheet();
@@ -19506,6 +19554,12 @@ async function analyzeMeal() {
 
     if (result.is_drink) {
       draft.isDrink = true;
+    }
+    if (result.sweetness_level) {
+      draft.sweetness = result.sweetness_level;
+    }
+    if (result.sweetness_percent !== undefined && result.sweetness_percent !== null) {
+      draft.sweetPercent = Number(result.sweetness_percent);
     }
     if (result.water_ml && Number(result.water_ml) > 0) {
       draft.waterMl = Number(result.water_ml);
