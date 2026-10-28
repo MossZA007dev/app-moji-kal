@@ -214,6 +214,86 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, user: updated });
       }
 
+      // 1.4 User Recover / Reset PIN
+      if (pathname === '/api/auth/recover-pin' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { userId, method, devPin, securityAnswer, newPin } = body;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+
+        const targetUser = db.getUser(userId);
+        if (!targetUser) return sendJson(res, 404, { error: 'ไม่พบผู้ใช้ในระบบ' });
+
+        const cleanNewPin = newPin ? String(newPin).trim() : '';
+
+        // Method A: Reset with Master Dev PIN
+        if (method === 'dev_pin') {
+          const correctDevPin = String(process.env.DEV_PIN || '7788').trim();
+          if (!devPin || String(devPin).trim() !== correctDevPin) {
+            return sendJson(res, 401, { success: false, error: 'รหัส Master Dev PIN ไม่ถูกต้อง' });
+          }
+          if (!cleanNewPin || cleanNewPin.length < 4) {
+            return sendJson(res, 400, { success: false, error: 'รหัส PIN ใหม่ต้องมีอย่างน้อย 4 หลัก' });
+          }
+          const updated = db.updateUser(userId, { pin: cleanNewPin });
+          return sendJson(res, 200, { success: true, user: updated, message: 'ยืนยันรหัสผู้ดูแลสำเร็จ ตั้งรหัส PIN ใหม่เรียบร้อยแล้ว' });
+        }
+
+        // Method B: Reset by Logged-in Dev from Gang Management
+        if (method === 'dev_reset') {
+          const reqUserId = req.headers['x-user-id'] || body.adminUserId;
+          const reqUser = reqUserId ? db.getUser(reqUserId) : null;
+          const isDev = reqUser && (reqUser.role === 'dev' || reqUser.is_dev === 1 || reqUser.nickname === 'มอส');
+          const hasDevPin = devPin && String(devPin).trim() === String(process.env.DEV_PIN || '7788').trim();
+
+          if (!isDev && !hasDevPin) {
+            return sendJson(res, 403, { success: false, error: 'เฉพาะผู้ดูแลเท่านั้นที่มีสิทธิ์รีเซ็ตรหัส PIN สมาชิก' });
+          }
+          const updated = db.updateUser(userId, { pin: cleanNewPin || null });
+          return sendJson(res, 200, { success: true, user: updated, message: cleanNewPin ? `ตั้งรหัส PIN ใหม่ให้ ${targetUser.nickname} เรียบร้อยแล้ว` : `ล้างรหัส PIN ของ ${targetUser.nickname} เรียบร้อยแล้ว (สามารถเข้าสู่ระบบได้ทันที)` });
+        }
+
+        // Method C: Security verification by answering profile stats (Height or Weight)
+        if (method === 'security_verify') {
+          if (!cleanNewPin || cleanNewPin.length < 4) {
+            return sendJson(res, 400, { success: false, error: 'รหัส PIN ใหม่ต้องมีอย่างน้อย 4 หลัก' });
+          }
+
+          const ans = securityAnswer || {};
+          let matched = false;
+
+          // Check height (within +/- 3 cm tolerance)
+          if (ans.height !== undefined && ans.height !== '' && targetUser.height) {
+            const hDiff = Math.abs(Number(ans.height) - Number(targetUser.height));
+            if (hDiff <= 3) matched = true;
+          }
+
+          // Check weight (within +/- 3 kg tolerance)
+          if (!matched && ans.weight !== undefined && ans.weight !== '' && targetUser.weight) {
+            const wDiff = Math.abs(Number(ans.weight) - Number(targetUser.weight));
+            if (wDiff <= 3) matched = true;
+          }
+
+          // Check goal type
+          if (!matched && ans.goal_type && targetUser.goal_type) {
+            if (String(ans.goal_type).trim() === String(targetUser.goal_type).trim()) {
+              matched = true;
+            }
+          }
+
+          if (!matched) {
+            return sendJson(res, 400, { 
+              success: false, 
+              error: 'ข้อมูลยืนยันตัวตนไม่ตรงกับที่เคยบันทึกไว้ กรุณาตรวจสอบส่วนสูงหรือน้ำหนักอีกครั้ง' 
+            });
+          }
+
+          const updated = db.updateUser(userId, { pin: cleanNewPin });
+          return sendJson(res, 200, { success: true, user: updated, message: 'ยืนยันข้อมูลความปลอดภัยถูกต้อง ตั้งรหัส PIN ใหม่เรียบร้อยแล้ว' });
+        }
+
+        return sendJson(res, 400, { success: false, error: 'รูปแบบวิธีกู้คืนรหัส PIN ไม่ถูกต้อง' });
+      }
+
       // 2. PDPA Consent
       if (pathname === '/api/auth/consent' && req.method === 'POST') {
         const body = await parseJsonBody(req);

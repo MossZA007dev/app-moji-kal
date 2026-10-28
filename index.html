@@ -10656,13 +10656,19 @@ function renderFeed() {
   const yearAd = new Date().getFullYear();
   const periodLabel = `${monthName} ${yearAd}`;
 
-  // Sort leaderboard for podium based on active sort (Goal Score vs Coins)
+  // Hide Dev account ("มอส" / role dev) from regular friends in friends view
+  const isViewerDev = isCurrentUserDev();
+  const filteredLeaderboard = leaderboardData.filter(u => isViewerDev || !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
   const sortedRank = leaderboardSort === 'coins'
-    ? [...leaderboardData].sort((a, b) => (b.coins || 0) - (a.coins || 0))
-    : [...leaderboardData].sort((a, b) => (b.goal_score || 0) - (a.goal_score || 0));
+    ? [...filteredLeaderboard].sort((a, b) => (b.coins || 0) - (a.coins || 0))
+    : [...filteredLeaderboard].sort((a, b) => (b.goal_score || 0) - (a.goal_score || 0));
   const top1 = sortedRank[0] || null;
   const top2 = sortedRank[1] || null;
   const top3 = sortedRank[2] || null;
+
+  const membersToShow = users.filter(u => isViewerDev || !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+  const feedDataToShow = feedData.filter(item => isViewerDev || !(item.user.role === 'dev' || item.user.is_dev === 1 || item.user.id === 'u1' || item.user.nickname === 'มอส'));
+  const gangStoriesToShow = gangStories.filter(s => isViewerDev || !(s.role === 'dev' || s.is_dev === 1 || s.id === 'u1' || s.nickname === 'มอส'));
 
   $('#main').innerHTML = `
     <div class="top" style="align-items:flex-start;">
@@ -10713,7 +10719,7 @@ function renderFeed() {
         </div>
 
         <!-- Friends Stories -->
-        ${gangStories.map(s => {
+        ${gangStoriesToShow.map(s => {
           const hasStories = !!s.has_stories;
           const ringClass = hasStories ? 'has-story' : (s.goal_achieved ? 'achieved' : 'idle');
           const badgeText = hasStories ? `🍱 ${s.story_count}` : (s.goal_achieved ? '🎯 สำเร็จ' : `🔥 ${s.streak}d`);
@@ -10753,6 +10759,7 @@ function renderFeed() {
       <!-- Feed Posts Stream -->
       ${(() => {
         const filteredPosts = socialPosts.filter(p => {
+          if (!isViewerDev && (p.user_id === 'u1' || p.role === 'dev' || p.author_nickname === 'มอส')) return false;
           if (socialFeedFilter === 'meal') return p.type === 'meal';
           if (socialFeedFilter === 'water') return p.type === 'water';
           if (socialFeedFilter === 'goal') return p.type === 'goal' || p.type === 'challenge';
@@ -11181,12 +11188,12 @@ function renderFeed() {
     <!-- VIEW 3: Members List -->
     ${feedSubTab === 'members' ? `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <b style="font-size:14px; font-family:'Mali',sans-serif;">สมาชิกในแก๊งทั้งหมด (${users.length} คน)</b>
+        <b style="font-size:14px; font-family:'Mali',sans-serif;">สมาชิกในแก๊งทั้งหมด (${membersToShow.length} คน)</b>
         <span style="font-size:11.5px; color:var(--mute);">แตะเพื่อดูโปรไฟล์เพื่อน</span>
       </div>
 
       <div class="member-grid">
-        ${users.map(u => `
+        ${membersToShow.map(u => `
           <div class="member-card" onclick="openMemberDetailModal('${u.id}')">
             <div style="margin-bottom:8px;">
               ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:58px; height:58px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 58, u.avatar_hat)}
@@ -11206,7 +11213,7 @@ function renderFeed() {
 
       <!-- Friends Daily Meals Summary (In Members Tab) -->
       <div style="margin: 16px 0 10px; font-weight:700; font-size:14px; font-family:'Mali',sans-serif;">🍱 สรุปมื้ออาหารของสมาชิกวันนี้:</div>
-      ${feedData.map(item => {
+      ${feedDataToShow.map(item => {
         const u = item.user;
         const s = item.stats;
         const isOverSugar = s.sugar > u.sugar_goal;
@@ -11836,9 +11843,14 @@ function renderMemberProfileModalContent() {
             <b style="font-size:12px; color:#991B1B;">สิทธิ์เฉพาะผู้ดูแลแก๊ง (Developer Controls)</b>
           </div>
           <p style="font-size:11px; color:#B91C1C; margin:0 0 8px;">คุณมีสิทธิ์ Dev สามารถจัดการสมาชิกในแก๊งนี้ได้</p>
-          <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FFFFFF; font-weight:700; box-shadow:0 1px 3px rgba(220,38,38,0.1);" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">
-            🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง
-          </button>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button class="btn s sm" style="width:100%; color:#1D4ED8; border-color:#93C5FD; background:#EFF6FF; font-weight:700;" onclick="devResetMemberPin('${u.id}', '${esc(u.nickname)}')">
+              🔑 รีเซ็ตรหัส PIN ให้ "${esc(u.nickname)}"
+            </button>
+            <button class="btn g sm" style="width:100%; color:#DC2626; border-color:#FCA5A5; background:#FFFFFF; font-weight:700; box-shadow:0 1px 3px rgba(220,38,38,0.1);" onclick="deleteMemberFromGang('${u.id}', '${esc(u.nickname)}')">
+              🗑️ ลบสมาชิก "${esc(u.nickname)}" ออกจากแก๊ง
+            </button>
+          </div>
         </div>
       ` : ''}
     </div>
@@ -14743,43 +14755,54 @@ async function openSelectExistingProfileModal() {
       </div>
 
       <div style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; margin-bottom:16px; padding:2px;">
-        ${!users.length ? `
-          <div style="text-align:center; padding:24px 12px; font-size:12.5px; color:var(--mute);">
-            ยังไม่มีสมาชิกในแก๊ง กรุณาสร้างตัวละครใหม่
-          </div>
-        ` : users.map(u => {
-          const isDev = u.role === 'dev' || u.nickname === 'มอส';
-          const isCurrent = currentUser && currentUser.id === u.id;
-          return `
-            <div class="settings-row" style="cursor:pointer; padding:10px 12px; border-radius:16px; border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; background:var(--card);" onclick="selectExistingProfile('${u.id}')">
-              <div class="settings-row-left" style="display:flex; align-items:center; gap:10px;">
-                <div style="width:44px; height:44px; border-radius:50%; overflow:hidden; background:var(--bg); border:1.5px solid var(--pink); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                  ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face || 'happy', u.avatar_color || '#FF9EB5', 40, u.avatar_hat)}
+        ${(() => {
+          // Hide Dev account ("มอส" / role dev) from friends list
+          const regularUsers = users.filter(u => !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+          if (!regularUsers.length) {
+            return `
+              <div style="text-align:center; padding:24px 12px; font-size:12.5px; color:var(--mute);">
+                ยังไม่มีสมาชิกในแก๊ง กรุณาสร้างตัวละครใหม่
+              </div>
+            `;
+          }
+          return regularUsers.map(u => {
+            const isCurrent = currentUser && currentUser.id === u.id;
+            return `
+              <div class="settings-row" style="cursor:pointer; padding:10px 12px; border-radius:16px; border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; background:var(--card);" onclick="selectExistingProfile('${u.id}')">
+                <div class="settings-row-left" style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:44px; height:44px; border-radius:50%; overflow:hidden; background:var(--bg); border:1.5px solid var(--pink); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face || 'happy', u.avatar_color || '#FF9EB5', 40, u.avatar_hat)}
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <b style="font-size:14px; color:var(--ink);">${esc(u.nickname)}</b>
+                      ${isCurrent ? `<span style="font-size:9.5px; background:var(--pinkS); color:var(--pink); font-weight:700; padding:1px 6px; border-radius:8px;">ใช้งานอยู่</span>` : ''}
+                    </div>
+                    <div style="font-size:11px; color:var(--mute); margin-top:2px;">
+                      🎯 ${u.goal_type === 'sugar_cut' ? 'คุมน้ำตาล' : u.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดน้ำหนัก'} · 🪙 ${u.coins || 0} คอยน์
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div style="display:flex; align-items:center; gap:6px;">
-                    <b style="font-size:14px; color:var(--ink);">${esc(u.nickname)}</b>
-                    ${isDev ? `<span class="badge ok" style="font-size:9.5px; padding:1px 6px;">👑 ผู้ดูแล</span>` : ''}
-                    ${isCurrent ? `<span style="font-size:9.5px; background:var(--pinkS); color:var(--pink); font-weight:700; padding:1px 6px; border-radius:8px;">ใช้งานอยู่</span>` : ''}
-                  </div>
-                  <div style="font-size:11px; color:var(--mute); margin-top:2px;">
-                    🎯 ${u.goal_type === 'sugar_cut' ? 'คุมน้ำตาล' : u.goal_type === 'muscle_gain' ? 'สร้างกล้าม' : 'ลดน้ำหนัก'} · 🪙 ${u.coins || 0} คอยน์
-                  </div>
+                <div class="settings-row-right">
+                  <button class="btn sm" style="font-size:11px; padding:4px 10px; pointer-events:none;">
+                    ${isCurrent ? '✓ ตัวคุณ' : 'เลือกใช้ ➜'}
+                  </button>
                 </div>
               </div>
-              <div class="settings-row-right">
-                <button class="btn sm" style="font-size:11px; padding:4px 10px; pointer-events:none;">
-                  ${isCurrent ? '✓ ตัวคุณ' : 'เลือกใช้ ➜'}
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('')}
+            `;
+          }).join('');
+        })()}
       </div>
 
-      <div style="display:flex; gap:8px;">
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
         <button class="btn s" style="flex:1;" onclick="openOnboardingModal({ isNewUser: true })">+ สร้างตัวละครใหม่</button>
         <button class="btn g" style="flex:1;" onclick="${!currentUser ? 'openWelcomeGateModal()' : 'closeSheet()'}">${!currentUser ? '⬅️ ย้อนกลับ' : 'ปิด'}</button>
+      </div>
+
+      <div style="text-align:center; padding-top:6px; border-top:1px dashed var(--line);">
+        <button type="button" class="btn g sm" style="font-size:11.5px; color:var(--mute); border:none; background:transparent; cursor:pointer;" onclick="openDevLoginModal()">
+          🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)
+        </button>
       </div>
     </div>
   `;
@@ -14823,6 +14846,13 @@ function openUserPinModal(targetUser) {
           ${hasPin ? 'รหัส PIN 4 หลัก' : 'ตั้งรหัส PIN 4 หลักใหม่'}
         </label>
         <input type="password" id="targetUserPinInput" placeholder="••••" maxlength="6" style="font-size:22px; text-align:center; letter-spacing:8px; font-weight:800; max-width:200px; margin:0 auto; display:block;" onkeydown="if(event.key==='Enter') submitUserPinLogin('${targetUser.id}', ${hasPin})">
+        ${hasPin ? `
+          <div style="text-align:center; margin-top:10px;">
+            <a style="font-size:12px; color:var(--pink); font-weight:700; text-decoration:underline; cursor:pointer;" onclick="openForgotPinModal('${targetUser.id}')">
+              ❓ ลืมรหัส PIN? กู้คืนรหัสผ่านที่นี่
+            </a>
+          </div>
+        ` : ''}
       </div>
 
       <div style="display:flex; gap:8px;">
@@ -14884,6 +14914,268 @@ async function submitUserPinLogin(userId, hasPin) {
     }
   } catch (err) {
     toast('เกิดข้อผิดพลาดในการตรวจสอบรหัส PIN');
+  }
+}
+
+// ============================================================
+// PIN Recovery System (กู้คืนรหัส PIN เมื่อลืมรหัสผ่าน)
+// ============================================================
+let forgotPinSubTab = 'security'; // 'security' | 'dev_pin' | 'contact'
+
+function openForgotPinModal(userId, activeTab = 'security') {
+  const targetUser = users.find(u => u.id === userId);
+  if (!targetUser) return toast('ไม่พบสมาชิก');
+
+  forgotPinSubTab = activeTab;
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  el.innerHTML = `
+    <div class="sh" style="padding-bottom:20px;">
+      <div style="text-align:center; margin-bottom:14px;">
+        <span style="font-size:36px; display:block; margin-bottom:4px;">🔑</span>
+        <h2 class="hd" style="font-size:18px; margin-bottom:4px;">กู้คืนรหัส PIN: ${esc(targetUser.nickname)}</h2>
+        <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
+          เลือกวิธียืนยันตัวตนเพื่อตั้งรหัส PIN 4 หลักใหม่
+        </span>
+      </div>
+
+      <!-- Method Selector Tabs -->
+      <div style="display:flex; gap:6px; margin-bottom:14px; background:var(--bg); padding:3px; border-radius:12px;">
+        <button class="btn sm ${forgotPinSubTab === 'security' ? '' : 'g'}" style="flex:1; font-size:11px; padding:6px 4px; border-radius:10px; font-weight:700;" onclick="openForgotPinModal('${userId}', 'security')">
+          ⚖️ ข้อมูลสรีระ
+        </button>
+        <button class="btn sm ${forgotPinSubTab === 'dev_pin' ? '' : 'g'}" style="flex:1; font-size:11px; padding:6px 4px; border-radius:10px; font-weight:700;" onclick="openForgotPinModal('${userId}', 'dev_pin')">
+          🛡️ Master PIN
+        </button>
+        <button class="btn sm ${forgotPinSubTab === 'contact' ? '' : 'g'}" style="flex:1; font-size:11px; padding:6px 4px; border-radius:10px; font-weight:700;" onclick="openForgotPinModal('${userId}', 'contact')">
+          💬 ติดต่อมอส
+        </button>
+      </div>
+
+      ${forgotPinSubTab === 'security' ? `
+        <!-- Method 1: Security questions based on body stats -->
+        <div style="background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px;">
+          <b style="font-size:13px; color:var(--ink); display:block; margin-bottom:4px;">ยืนยันข้อมูลสุขภาพที่คุณเคยระบุ:</b>
+          <span style="font-size:11px; color:var(--mute); display:block; margin-bottom:12px;">
+            ระบุส่วนสูงหรือน้ำหนักตอนสร้างตัวละครโมจิ เพื่อยืนยันว่าเป็นคุณจริงๆ
+          </span>
+
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ส่วนสูง (ซม.) หรือ น้ำหนัก (กก.)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="number" id="recoverHeightInput" placeholder="ส่วนสูง เช่น 170" style="flex:1; font-size:13px; text-align:center;">
+              <input type="number" id="recoverWeightInput" placeholder="น้ำหนัก เช่น 60" style="flex:1; font-size:13px; text-align:center;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ตั้งรหัส PIN 4 หลักใหม่</label>
+            <input type="password" id="recoverNewPinInput" placeholder="••••" maxlength="6" style="font-size:20px; text-align:center; letter-spacing:6px; font-weight:800; max-width:180px; margin:0 auto; display:block;" onkeydown="if(event.key==='Enter') submitSecurityRecovery('${userId}')">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="flex:1;" onclick="submitSecurityRecovery('${userId}')">
+            ยืนยัน & ตั้งรหัส PIN ใหม่ ➜
+          </button>
+          <button class="btn g" style="flex:1;" onclick="openUserPinModal(users.find(u => u.id === '${userId}'))">ย้อนกลับ</button>
+        </div>
+      ` : forgotPinSubTab === 'dev_pin' ? `
+        <!-- Method 2: Dev Master Key -->
+        <div style="background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px;">
+          <b style="font-size:13px; color:var(--ink); display:block; margin-bottom:4px;">ใช้รหัส Master Dev PIN:</b>
+          <span style="font-size:11px; color:var(--mute); display:block; margin-bottom:12px;">
+            ใส่รหัส Master Key ของผู้ดูแล (ขอรหัสได้จากคุณมอส) เพื่อรีเซ็ตรหัส PIN ทันที
+          </span>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">รหัส Master Dev PIN</label>
+            <input type="password" id="recoverDevPinInput" placeholder="ใส่รหัสจากผู้ดูแล" maxlength="10" style="font-size:16px; text-align:center; letter-spacing:4px; font-weight:700;">
+          </div>
+
+          <div style="margin-bottom:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">ตั้งรหัส PIN 4 หลักใหม่ของคุณ</label>
+            <input type="password" id="recoverDevNewPinInput" placeholder="••••" maxlength="6" style="font-size:20px; text-align:center; letter-spacing:6px; font-weight:800; max-width:180px; margin:0 auto; display:block;" onkeydown="if(event.key==='Enter') submitDevPinRecovery('${userId}')">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="flex:1;" onclick="submitDevPinRecovery('${userId}')">
+            ปลดล็อค & ตั้ง PIN ใหม่ ➜
+          </button>
+          <button class="btn g" style="flex:1;" onclick="openUserPinModal(users.find(u => u.id === '${userId}'))">ย้อนกลับ</button>
+        </div>
+      ` : `
+        <!-- Method 3: Contact Moss -->
+        <div style="background:#FFF5F7; border:1.5px dashed var(--pink); border-radius:16px; padding:16px; margin-bottom:14px; text-align:center;">
+          <span style="font-size:32px; display:block; margin-bottom:6px;">💬</span>
+          <b style="font-size:14px; color:var(--ink); display:block; margin-bottom:6px;">ให้คุณมอสช่วยรีเซ็ตให้</b>
+          <p style="font-size:12px; color:var(--mute); line-height:1.5; margin:0 0 12px;">
+            หากจำข้อมูลไม่ได้เลย สามารถทักหาคุณมอสใน LINE ให้กดรีเซ็ตรหัส PIN จากหลังบ้านได้ทันทีใน 1 วินาที!
+          </p>
+          <button class="btn s sm" style="width:100%; font-size:12px;" onclick="copyDevHelpMessage('${esc(targetUser.nickname)}')">
+            📋 คัดลอกข้อความทักหามอส
+          </button>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn g" style="flex:1;" onclick="openUserPinModal(users.find(u => u.id === '${userId}'))">ย้อนกลับไปหน้าใส่ PIN</button>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function copyDevHelpMessage(nick) {
+  const msg = `มอส เราลืมรหัส PIN ใน Moji Kal ของบัญชี "${nick}" ช่วยเข้าไปกดรีเซ็ต PIN ให้หน่อยนะ! 🍡`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(() => {
+      toast('คัดลอกข้อความแล้ว! นำไปส่งให้คุณมอสใน LINE ได้เลย 📋');
+    }).catch(() => {
+      prompt('คัดลอกข้อความด้านล่างเพื่อส่งหามอส:', msg);
+    });
+  } else {
+    prompt('คัดลอกข้อความด้านล่างเพื่อส่งหามอส:', msg);
+  }
+}
+
+async function submitSecurityRecovery(userId) {
+  const height = $('#recoverHeightInput')?.value.trim();
+  const weight = $('#recoverWeightInput')?.value.trim();
+  const newPin = $('#recoverNewPinInput')?.value.trim();
+
+  if (!height && !weight) {
+    return toast('กรุณาระบุส่วนสูงหรือน้ำหนักอย่างน้อยหนึ่งอย่าง');
+  }
+  if (!newPin || newPin.length < 4) {
+    return toast('กรุณาตั้งรหัส PIN ใหม่อย่างน้อย 4 หลัก');
+  }
+
+  try {
+    const res = await fetch('/api/auth/recover-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        method: 'security_verify',
+        securityAnswer: { height, weight },
+        newPin
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      localStorage.setItem('mochi_onboarded', 'true');
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([
+        fetchUsers(),
+        fetchLogs(),
+        fetchStreak(),
+        fetchLeaderboard(),
+        fetchFeed(),
+        fetchWeightLogs(),
+        fetchQuests(),
+        fetchPranksData()
+      ]);
+      render();
+      fireConfetti();
+      toast(`🎉 ยืนยันตัวตนสำเร็จ! ตั้งรหัส PIN ใหม่และเข้าสู่ระบบเรียบร้อย ยินดีต้อนรับ ${currentUser.nickname} ✨`);
+    } else {
+      toast(data.error || 'ข้อมูลไม่ถูกต้อง ไม่สามารถกู้คืนรหัส PIN ได้');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการกู้คืนรหัส PIN');
+  }
+}
+
+async function submitDevPinRecovery(userId) {
+  const devPin = $('#recoverDevPinInput')?.value.trim();
+  const newPin = $('#recoverDevNewPinInput')?.value.trim();
+
+  if (!devPin) {
+    return toast('กรุณาใส่รหัส Master Dev PIN');
+  }
+  if (!newPin || newPin.length < 4) {
+    return toast('กรุณาตั้งรหัส PIN ใหม่อย่างน้อย 4 หลัก');
+  }
+
+  try {
+    const res = await fetch('/api/auth/recover-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        method: 'dev_pin',
+        devPin,
+        newPin
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('mochi_user_id', currentUser.id);
+      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      localStorage.setItem('mochi_onboarded', 'true');
+      closeSheet();
+      updateUserHeader();
+      await Promise.all([
+        fetchUsers(),
+        fetchLogs(),
+        fetchStreak(),
+        fetchLeaderboard(),
+        fetchFeed(),
+        fetchWeightLogs(),
+        fetchQuests(),
+        fetchPranksData()
+      ]);
+      render();
+      fireConfetti();
+      toast(`🎉 ปลดล็อคสำเร็จ! ตั้งรหัส PIN ใหม่และเข้าสู่ระบบเรียบร้อย ✨`);
+    } else {
+      toast(data.error || 'รหัส Master Dev PIN ไม่ถูกต้อง');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการปลดล็อค');
+  }
+}
+
+async function devResetMemberPin(userId, nickname) {
+  if (!isCurrentUserDev()) return toast('เฉพาะ Developer เท่านั้น');
+  const action = confirm(
+    `[สิทธิ์ผู้ดูแล Dev] ต้องการรีเซ็ตรหัส PIN ของ "${nickname}" ใช่หรือไม่?\n\n` +
+    `💡 กด "ตกลง" เพื่อล้างรหัส PIN ออก (เพื่อนจะสามารถเข้าใช้งานได้ทันทีโดยไม่ต้องใส่ PIN)\n` +
+    `หรือกด "ยกเลิก" หากไม่ต้องการเปลี่ยน`
+  );
+  if (!action) return;
+
+  try {
+    const res = await fetch('/api/auth/recover-pin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': currentUser.id
+      },
+      body: JSON.stringify({
+        userId,
+        method: 'dev_reset',
+        adminUserId: currentUser.id
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      await fetchUsers();
+      toast(`✨ ล้างรหัส PIN ให้คุณ "${nickname}" สำเร็จแล้ว! เพื่อนสามารถเข้าใช้งานได้ทันที`);
+      closeSheet();
+    } else {
+      toast(data.error || 'รีเซ็ต PIN ไม่สำเร็จ');
+    }
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการเชื่อมต่อ');
   }
 }
 
@@ -16412,7 +16704,7 @@ function openSelectFriendPrankModal(cardId) {
     return;
   }
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
   if (friends.length === 0) {
     toast('ยังไม่มีเพื่อนในแก๊งให้แกล้งเลย! สร้างตัวละครเพื่อนเพิ่ม หรือชวนเพื่อนมาเล่นด้วยกันนะ 🍡');
     return;
@@ -16453,7 +16745,7 @@ function renderSelectFriendPrankModalContent() {
     fullDesc: 'ส่งผลแกล้งเพื่อนในแก๊ง'
   };
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
   const targetFriend = friends.find(f => f.id === selectedPrankTargetFriendId) || friends[0];
 
   const quickNotes = [
@@ -16601,7 +16893,7 @@ async function submitPrankCardExecution() {
     return toast('กรุณาเลือกการ์ดและเพื่อนที่จะแกล้ง');
   }
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
   const targetFriend = friends.find(f => f.id === toUserId);
   const targetName = targetFriend ? targetFriend.nickname : 'เพื่อน';
 
