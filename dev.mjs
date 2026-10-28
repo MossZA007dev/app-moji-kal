@@ -618,6 +618,14 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, detail);
       }
 
+      // 10.3.1 User Achievements & Badges Showcase (34 Epic Badges 🏆)
+      if (pathname === '/api/achievements' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const data = db.getUserAchievements(userId);
+        return sendJson(res, 200, { success: true, ...data });
+      }
+
       // 10.4 Send Cheer to Friend
       if (pathname === '/api/cheer' && req.method === 'POST') {
         const body = await parseJsonBody(req);

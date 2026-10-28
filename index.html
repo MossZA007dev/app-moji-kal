@@ -768,6 +768,101 @@ nav button i { font-style: normal; font-size: 16px; line-height: 1.1; }
   background: #F3E8FF;
   box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.25);
 }
+
+/* Achievements & Hall of Fame Badges UI (🏅 ตราเกียรติยศ) */
+.achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.achieve-card {
+  position: relative;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.achieve-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.achieve-card.unlocked {
+  background: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.95), var(--card));
+  border-color: #FBBF24;
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.12);
+}
+.achieve-card.locked {
+  opacity: 0.72;
+  background: rgba(0, 0, 0, 0.02);
+}
+.achieve-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+.achieve-tier-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+.tier-bronze { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }
+.tier-silver { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+.tier-gold { background: #FEF9C3; color: #A16207; border: 1px solid #FDE047; box-shadow: 0 0 8px rgba(250, 204, 21, 0.3); }
+.tier-diamond { background: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; box-shadow: 0 0 8px rgba(56, 189, 248, 0.35); }
+.tier-legendary { background: #FCE7F3; color: #BE185D; border: 1px solid #F472B6; box-shadow: 0 0 10px rgba(236, 72, 153, 0.4); }
+
+.achieve-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+  margin-bottom: 3px;
+  line-height: 1.25;
+}
+.achieve-desc {
+  font-size: 10.5px;
+  color: var(--mute);
+  line-height: 1.35;
+  margin-bottom: 8px;
+  flex: 1;
+}
+.achieve-progress-wrap {
+  width: 100%;
+  margin-top: auto;
+}
+.achieve-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+.achieve-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #F59E0B, #10B981);
+}
 .fashion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(102px, 1fr));
@@ -10294,6 +10389,10 @@ function renderQuests() {
         <span style="font-size:12px; color:var(--mute);">ประจำวันที่ ${dateTh}</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
+        <button class="btn s sm" style="font-size:11.5px; padding:5px 10px; border-radius:14px; background:linear-gradient(135deg, #FFFBEB, #FEF3C7); border:1px solid #FDE68A; color:#B45309; font-weight:800; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(245,158,11,0.15);" onclick="openAchievementsModal('${currentUser.id}')" title="ดูทำเนียบตราเกียรติยศ 34 รายการ">
+          <span>🏅</span>
+          <span>ตราเกียรติยศ</span>
+        </button>
         <div class="coin-pill" style="font-size:12.5px; padding:5px 12px; cursor:pointer;" onclick="go('fashion')" title="ไปร้านค้าแฟชั่น">
           🪙 ${currentUser.coins || 0} คอยน์
         </div>
@@ -11703,19 +11802,9 @@ function renderMemberProfileModalContent() {
         </div>
       ` : ''}
 
-      <!-- TAB 3: BADGES VIEW -->
+      <!-- TAB 3: BADGES VIEW (34 Epic Badges 🏆) -->
       ${currentMemberProfileTab === 'badges' ? `
-        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin: 10px 0 16px;">
-          ${badges.map(b => `
-            <div style="background:${b.unlocked ? 'var(--mintS)' : 'var(--card)'}; border:1px solid ${b.unlocked ? 'var(--mint)' : 'var(--line)'}; border-radius:12px; padding:8px 10px; display:flex; align-items:center; gap:8px; opacity:${b.unlocked ? '1' : '0.6'};">
-              <span style="font-size:18px;">${b.unlocked ? '✨' : '🔒'}</span>
-              <div>
-                <b style="font-size:12px; display:block; color:${b.unlocked ? 'var(--mint-ink)' : 'var(--mute)'};">${esc(b.title)}</b>
-                <small style="font-size:10px; color:var(--mute);">${esc(b.desc)}</small>
-              </div>
-            </div>
-          `).join('')}
-        </div>
+        ${renderBadgesShowcaseHtml(badges, data.achievementsStats || data.stats, u)}
       ` : ''}
 
       <!-- Close Button -->
@@ -11734,6 +11823,248 @@ function renderMemberProfileModalContent() {
           </button>
         </div>
       ` : ''}
+    </div>
+  `;
+}
+
+// -------------------------------------------------------------
+// 34 Epic Badges & Achievements UI Components (ทำเนียบตราเกียรติยศ 🏆)
+// -------------------------------------------------------------
+let activeBadgeCategory = 'all';
+let cachedAchievementsData = null;
+
+function setMemberBadgeFilter(cat) {
+  activeBadgeCategory = cat;
+  if (currentMemberProfileData) {
+    renderMemberProfileModalContent();
+  } else if (cachedAchievementsData) {
+    renderAchievementsModalContent(currentUser?.id);
+  }
+}
+
+function renderBadgesShowcaseHtml(badges = [], stats = {}, user = {}) {
+  const total = stats?.total || badges.length || 34;
+  const unlockedCount = stats?.unlockedCount ?? badges.filter(b => b.unlocked).length;
+  const overallPct = stats?.overallPct ?? Math.round((unlockedCount / total) * 100);
+
+  const categories = [
+    { key: 'all', label: `🌐 ทั้งหมด (${badges.length})` },
+    { key: 'unlocked', label: `✨ ปลดล็อคแล้ว (${unlockedCount})` },
+    { key: 'streak', label: '🔥 วินัย & สตรีค' },
+    { key: 'nutrition', label: '🍱 โภชนาการ' },
+    { key: 'water', label: '💧 น้ำดื่ม' },
+    { key: 'social', label: '💖 โซเชียล' },
+    { key: 'mischief', label: '🃏 จอมป่วน' },
+    { key: 'wealth', label: '🪙 คอลเลกชัน' }
+  ];
+
+  const filteredBadges = badges.filter(b => {
+    if (activeBadgeCategory === 'unlocked') return b.unlocked;
+    if (activeBadgeCategory === 'locked') return !b.unlocked;
+    if (activeBadgeCategory !== 'all') return b.category === activeBadgeCategory;
+    return true;
+  });
+
+  return `
+    <!-- Achievement Level Banner -->
+    <div style="background:linear-gradient(135deg, #FFFBEB, #FEF3C7); border:1.5px solid #FDE68A; border-radius:18px; padding:12px 14px; margin:10px 0 12px; box-shadow:0 3px 12px rgba(245,158,11,0.12);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:36px; height:36px; border-radius:12px; background:linear-gradient(135deg, #F59E0B, #D97706); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; box-shadow:0 2px 6px rgba(245,158,11,0.3);">🏆</div>
+          <div>
+            <b style="font-size:13.5px; color:#92400E; font-family:'Mali',sans-serif; display:block;">ทำเนียบตราเกียรติยศโมจิ (Hall of Fame)</b>
+            <span style="font-size:11px; color:#B45309;">ปลดล็อคแล้ว <b>${unlockedCount}</b> จาก ${total} ตราเกียรติยศ</span>
+          </div>
+        </div>
+        <span style="font-size:11.5px; font-weight:800; background:linear-gradient(135deg, #F59E0B, #EA580C); color:#fff; padding:3px 10px; border-radius:12px; box-shadow:0 2px 6px rgba(234,88,12,0.25);">${overallPct}%</span>
+      </div>
+      <div style="width:100%; height:7px; background:rgba(0,0,0,0.06); border-radius:6px; overflow:hidden;">
+        <div style="height:100%; width:${overallPct}%; background:linear-gradient(90deg, #F59E0B, #10B981); border-radius:6px; transition:width 0.4s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div style="display:flex; gap:5px; overflow-x:auto; padding-bottom:6px; margin-bottom:8px; -webkit-overflow-scrolling:touch;">
+      ${categories.map(c => `
+        <button type="button" class="btn sm" style="font-size:11px; padding:4px 10px; border-radius:12px; white-space:nowrap; ${activeBadgeCategory === c.key ? 'background:linear-gradient(135deg, #9333EA, #EC4899); color:#fff; border:none; font-weight:800; box-shadow:0 2px 8px rgba(147,51,234,0.25);' : 'background:var(--card); border:1px solid var(--line); color:var(--ink);'}" onclick="setMemberBadgeFilter('${c.key}')">
+          ${c.label}
+        </button>
+      `).join('')}
+    </div>
+
+    <!-- Badges Grid -->
+    ${filteredBadges.length === 0 ? `
+      <div style="text-align:center; padding:28px 14px; color:var(--mute); font-size:12px;">
+        ยังไม่มีตราเกียรติยศในหมวดนี้
+      </div>
+    ` : `
+      <div class="achieve-grid">
+        ${filteredBadges.map(b => {
+          const iconBg = b.unlocked
+            ? (b.tier === 'legendary' ? 'linear-gradient(135deg, #EC4899, #8B5CF6)'
+              : b.tier === 'diamond' ? 'linear-gradient(135deg, #06B6D4, #3B82F6)'
+              : b.tier === 'gold' ? 'linear-gradient(135deg, #F59E0B, #EAB308)'
+              : b.tier === 'silver' ? 'linear-gradient(135deg, #64748B, #94A3B8)'
+              : 'linear-gradient(135deg, #F97316, #B45309)')
+            : '#E2E8F0';
+          const iconColor = b.unlocked ? '#FFFFFF' : '#94A3B8';
+
+          return `
+            <div class="achieve-card ${b.unlocked ? 'unlocked' : 'locked'}" onclick="openBadgeDetailModal('${b.id}')" title="แตะเพื่อดูรายละเอียดตราเกียรติยศ">
+              <span class="achieve-tier-pill tier-${b.tier}">${b.tierLabel || b.tier}</span>
+              <div class="achieve-icon-wrap" style="background:${iconBg}; color:${iconColor};">
+                ${b.unlocked ? b.icon : '🔒'}
+              </div>
+              <div class="achieve-title">${esc(b.title)}</div>
+              <div class="achieve-desc">${esc(b.desc)}</div>
+
+              <div class="achieve-progress-wrap">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; color:${b.unlocked ? '#059669' : 'var(--mute)'}; font-weight:700; margin-bottom:2px;">
+                  <span>${b.unlocked ? '✨ สำเร็จแล้ว' : b.progressText}</span>
+                  <span>${b.pct}%</span>
+                </div>
+                <div class="achieve-progress-bar">
+                  <div class="achieve-progress-fill" style="width:${b.pct}%; background:${b.unlocked ? 'linear-gradient(90deg, #10B981, #059669)' : 'linear-gradient(90deg, #F59E0B, #10B981)'};"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `}
+  `;
+}
+
+function openBadgeDetailModal(badgeId) {
+  const currentBadges = (currentMemberProfileData?.badges) || (cachedAchievementsData?.badges) || [];
+  const b = currentBadges.find(x => x.id === badgeId);
+  if (!b) return;
+
+  const el = $('#sheet');
+  if (!el) return;
+
+  if (b.unlocked) {
+    playMojiSound('love');
+    if (typeof fireConfetti === 'function') fireConfetti();
+  } else {
+    playMojiSound('bounce');
+  }
+
+  const iconBg = b.unlocked
+    ? (b.tier === 'legendary' ? 'linear-gradient(135deg, #EC4899, #8B5CF6)'
+      : b.tier === 'diamond' ? 'linear-gradient(135deg, #06B6D4, #3B82F6)'
+      : b.tier === 'gold' ? 'linear-gradient(135deg, #F59E0B, #EAB308)'
+      : b.tier === 'silver' ? 'linear-gradient(135deg, #64748B, #94A3B8)'
+      : 'linear-gradient(135deg, #F97316, #B45309)')
+    : '#CBD5E1';
+
+  el.innerHTML = `
+    <div class="sh" style="text-align:center; padding:24px 18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span class="achieve-tier-pill tier-${b.tier}" style="font-size:11px; padding:3px 10px;">${b.tierLabel}</span>
+        <button class="btn-icon" onclick="${currentMemberProfileData ? 'renderMemberProfileModalContent()' : (cachedAchievementsData ? `renderAchievementsModalContent('${currentUser?.id}')` : 'closeSheet()')}" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Hero Badge Visual -->
+      <div style="width:84px; height:84px; border-radius:50%; background:${iconBg}; display:flex; align-items:center; justify-content:center; font-size:42px; color:#fff; margin:10px auto 14px; box-shadow:0 8px 24px rgba(0,0,0,0.15); border:3px solid #fff;">
+        ${b.unlocked ? b.icon : '🔒'}
+      </div>
+
+      <h2 class="hd" style="font-size:18px; margin:0 0 4px;">${esc(b.title)}</h2>
+      <div style="font-size:12px; color:var(--mute); margin-bottom:14px;">หมวดหมู่: <b>${esc(b.categoryName || b.category)}</b></div>
+
+      <!-- Description Box -->
+      <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:16px; padding:12px 14px; font-size:13px; color:var(--ink); line-height:1.5; margin-bottom:16px;">
+        ${esc(b.desc)}
+      </div>
+
+      <!-- Status & Progress Indicator -->
+      <div style="background:${b.unlocked ? '#ECFDF5' : '#FFFBEB'}; border:1.5px solid ${b.unlocked ? '#A7F3D0' : '#FDE68A'}; border-radius:16px; padding:12px; margin-bottom:18px;">
+        ${b.unlocked ? `
+          <div style="font-size:13.5px; font-weight:800; color:#047857; font-family:'Mali',sans-serif; margin-bottom:4px;">
+            🎉 ปลดล็อคสำเร็จแล้ว!
+          </div>
+          <span style="font-size:11.5px; color:#065F46;">คุณได้พิชิตเกียรติยศนี้และจารึกชื่อลงในทำเนียบความสำเร็จแล้ว ✨</span>
+        ` : `
+          <div style="font-size:13px; font-weight:800; color:#92400E; font-family:'Mali',sans-serif; margin-bottom:4px;">
+            🔒 ยังไม่ปลดล็อค (ความคืบหน้า: ${b.pct}%)
+          </div>
+          <div style="font-size:11.5px; color:#B45309; margin-bottom:8px;">
+            ทำได้แล้ว <b>${b.progressText}</b> (ขาดอีก ${Math.max(0, b.target - b.current)} ${b.unit})
+          </div>
+          <div class="achieve-progress-bar" style="height:7px;">
+            <div class="achieve-progress-fill" style="width:${b.pct}%;"></div>
+          </div>
+        `}
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        ${currentMemberProfileData ? `
+          <button class="btn g" style="flex:1;" onclick="renderMemberProfileModalContent()">‹ กลับสู่โปรไฟล์</button>
+        ` : cachedAchievementsData ? `
+          <button class="btn g" style="flex:1;" onclick="renderAchievementsModalContent('${currentUser?.id}')">‹ กลับสู่ทำเนียบ</button>
+        ` : ''}
+        <button class="btn" style="flex:2;" onclick="closeSheet()">ตกลง</button>
+      </div>
+    </div>
+  `;
+}
+
+async function openAchievementsModal(userId = null) {
+  const targetId = userId || currentUser?.id;
+  if (!targetId) return toast('กรุณาเลือกโปรไฟล์ก่อนน้า');
+
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+  el.innerHTML = '<div class="sh" style="text-align:center; padding:40px;"><div style="font-size:32px; margin-bottom:8px;">🏆</div>กำลังโหลดทำเนียบตราเกียรติยศ...</div>';
+
+  try {
+    const res = await fetch(`/api/achievements?userId=${encodeURIComponent(targetId)}`);
+    const data = await res.json();
+    if (!data.success) {
+      el.innerHTML = '<div class="sh" style="text-align:center; padding:30px;">ไม่พบข้อมูลตราเกียรติยศ <button class="btn g sm" style="margin-top:10px;" onclick="closeSheet()">ปิด</button></div>';
+      return;
+    }
+    cachedAchievementsData = data;
+    renderAchievementsModalContent(targetId);
+  } catch (err) {
+    console.error('openAchievementsModal error:', err);
+    el.innerHTML = '<div class="sh" style="text-align:center; padding:30px;">เกิดข้อผิดพลาดในการโหลด <button class="btn g sm" style="margin-top:10px;" onclick="closeSheet()">ปิด</button></div>';
+  }
+}
+
+function renderAchievementsModalContent(targetId) {
+  const el = $('#sheet');
+  if (!el || !cachedAchievementsData) return;
+
+  const data = cachedAchievementsData;
+  const badges = data.badges || [];
+  const stats = data.stats || {};
+
+  el.innerHTML = `
+    <div class="sh" style="max-height:88vh; display:flex; flex-direction:column;">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">🏆</span>
+          <div>
+            <h2 class="hd" style="font-size:17px; margin:0;">ทำเนียบตราเกียรติยศโมจิ ✨</h2>
+            <div style="font-size:11.5px; color:var(--mute);">34 ความสำเร็จระดับตำนานสะสมเกียรติยศ</div>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="closeSheet()" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Scrollable Badges Container -->
+      <div style="overflow-y:auto; flex:1; padding-right:2px; margin-bottom:10px;">
+        ${renderBadgesShowcaseHtml(badges, stats)}
+      </div>
+
+      <!-- Footer -->
+      <div style="border-top:1px solid var(--line); padding-top:8px;">
+        <button class="btn g" style="width:100%;" onclick="closeSheet()">ปิดหน้าต่าง</button>
+      </div>
     </div>
   `;
 }

@@ -2287,16 +2287,8 @@ export function getMemberDetail(targetUserId, requesterId) {
     muscle_gain: 'สร้างกล้ามเนื้อ'
   };
 
-  const badges = [
-    { id: 'b_join', title: 'สมาชิกแก๊งโมจิ 🍡', desc: 'ร่วมเดินทางสร้างนิสัยสุขภาพดี', unlocked: true },
-    { id: 'b_goal', title: `เป้าหมาย: ${goalTypeNames[user.goal_type] || 'ลดน้ำหนัก'} 🎯`, desc: todayGoal.goal_label, unlocked: true },
-    { id: 'b_score', title: 'วินัยยอดเยี่ยม 🌟', desc: 'สะสมคะแนนวินัยเป้าหมาย 300 คะแนนขึ้นไป', unlocked: (user.goal_score || 0) >= 300 },
-    { id: 'b_coins', title: 'เศรษฐีคอยน์ 🪙', desc: 'สะสมโมจิคอยน์ครบ 150 เหรียญ', unlocked: (user.coins || 0) >= 150 },
-    { id: 'b_streak3', title: 'ไฟแรง 3 วันติด 🔥', desc: 'บันทึกต่อเนื่องไม่ขาดตอน 3 วัน', unlocked: streak.current >= 3 },
-    { id: 'b_streak7', title: 'แชมป์ความสม่ำเสมอ 🏆', desc: 'บันทึกต่อเนื่อง 7 วันขึ้นไป', unlocked: streak.current >= 7 },
-    { id: 'b_meals5', title: 'นักชิมตัวจริง 🍱', desc: 'บันทึกมื้ออาหารสะสม 5 มื้อขึ้นไป', unlocked: totalMeals >= 5 },
-    { id: 'b_cheered', title: 'ขวัญใจเพื่อนๆ 💖', desc: 'ได้รับกำลังใจจากเพื่อนสะสม', unlocked: cheersReceived >= 1 }
-  ];
+  const achievementsData = getUserAchievements(targetUserId);
+  const badges = achievementsData.badges;
 
   return {
     user: {
@@ -2323,13 +2315,594 @@ export function getMemberDetail(targetUserId, requesterId) {
       bestStreak: streak.best,
       totalMeals,
       totalPosts: allMeals.length,
-      cheersReceived
+      cheersReceived,
+      unlockedBadgesCount: achievementsData.stats.unlockedCount,
+      totalBadgesCount: achievementsData.stats.total
     },
     badges,
+    achievementsStats: achievementsData.stats,
     todayMeals: logs,
     stories,
     has_stories: stories.length > 0,
     allMeals
+  };
+}
+
+// -------------------------------------------------------------
+// 34 Epic Achievements & Badges System (ระบบตราเกียรติยศและทำเนียบความสำเร็จ 🏆✨)
+// -------------------------------------------------------------
+export function getUserAchievements(userId) {
+  const user = getUser(userId);
+  if (!user) return { badges: [], stats: { total: 0, unlockedCount: 0, overallPct: 0 } };
+
+  const streak = calculateUserStreak(userId);
+  const currentStreak = streak.current || 0;
+  const bestStreak = Math.max(streak.best || 0, currentStreak);
+
+  const totalMeals = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND (water_ml IS NULL OR water_ml = 0)').get(userId)?.c || 0;
+  const photoMeals = db.prepare("SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND image_url IS NOT NULL AND length(image_url) > 0").get(userId)?.c || 0;
+  const totalWaterMl = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND (water_ml > 0 OR name LIKE '%น้ำ%')").get(userId)?.s || 0;
+
+  const cheersSent = db.prepare('SELECT COUNT(*) as c FROM cheers WHERE from_user_id = ?').get(userId)?.c || 0;
+  const cheersRecv = db.prepare('SELECT COUNT(*) as c FROM cheers WHERE to_user_id = ?').get(userId)?.c || 0;
+
+  const pranksSent = db.prepare("SELECT COUNT(*) as c FROM pranks WHERE from_user_id = ? AND card_id != 'shield'").get(userId)?.c || 0;
+  const pranksReflected = db.prepare("SELECT COUNT(*) as c FROM pranks WHERE to_user_id = ? AND extra_data LIKE '%reflected%'").get(userId)?.c || 0;
+  const pranksCleared = db.prepare('SELECT COUNT(*) as c FROM pranks WHERE to_user_id = ? AND is_cleared = 1').get(userId)?.c || 0;
+
+  const waterTarget = user.water_daily_target_ml || 2000;
+  const daysWaterGoalMet = db.prepare(`
+    SELECT COUNT(DISTINCT date) as c FROM (
+      SELECT date, SUM(COALESCE(water_ml, 500)) as total
+      FROM logs
+      WHERE user_id = ? AND (water_ml > 0 OR name LIKE '%น้ำ%')
+      GROUP BY date
+      HAVING total >= ?
+    )
+  `).get(userId, waterTarget)?.c || 0;
+
+  const sugarGoal = user.sugar_goal || 25;
+  const daysSugarMet = db.prepare(`
+    SELECT COUNT(DISTINCT date) as c FROM (
+      SELECT date, SUM(sugar) as total_sugar
+      FROM logs
+      WHERE user_id = ? AND (water_ml IS NULL OR water_ml = 0)
+      GROUP BY date
+      HAVING total_sugar <= ?
+    )
+  `).get(userId, sugarGoal)?.c || 0;
+
+  const proteinGoal = user.protein_goal || 60;
+  const daysProteinMet = db.prepare(`
+    SELECT COUNT(DISTINCT date) as c FROM (
+      SELECT date, SUM(protein) as total_protein
+      FROM logs
+      WHERE user_id = ? AND (water_ml IS NULL OR water_ml = 0)
+      GROUP BY date
+      HAVING total_protein >= ?
+    )
+  `).get(userId, proteinGoal)?.c || 0;
+
+  let unlockedItems = [];
+  try {
+    unlockedItems = JSON.parse(user.unlocked_items || '[]');
+  } catch (_) {}
+  const skin3dCount = unlockedItems.filter(i => String(i).startsWith('skin_3d_')).length;
+
+  const goalScore = user.goal_score || 150;
+  const coins = user.coins || 0;
+
+  const rawBadges = [
+    // 1. วินัย & สตรีค (Streak & Goal Score)
+    {
+      id: 'b_streak_3',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'ไฟแรกแย้ม 🔥',
+      desc: 'บันทึกสุขภาพต่อเนื่องไม่ขาดตอน 3 วัน',
+      icon: '🔥',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: bestStreak >= 3,
+      current: bestStreak,
+      target: 3,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_streak_7',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'สตรีค 1 สัปดาห์เหล็ก ⚔️',
+      desc: 'บันทึกสุขภาพต่อเนื่องไม่ขาดตอน 7 วัน',
+      icon: '⚔️',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: bestStreak >= 7,
+      current: bestStreak,
+      target: 7,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_streak_14',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'ผู้พิทักษ์ความสม่ำเสมอ 🛡️',
+      desc: 'บันทึกสุขภาพต่อเนื่องไม่ขาดตอน 14 วัน',
+      icon: '🛡️',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: bestStreak >= 14,
+      current: bestStreak,
+      target: 14,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_streak_30',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'ตำนานไฟลุก 30 วัน 🌋',
+      desc: 'สร้างนิสัยถาวร บันทึกต่อเนื่องครบ 30 วัน',
+      icon: '🌋',
+      tier: 'diamond',
+      tierLabel: 'Diamond 💎',
+      unlocked: bestStreak >= 30,
+      current: bestStreak,
+      target: 30,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_streak_100',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'เทพเจ้าแห่งสตรีค 100 วัน ⚡',
+      desc: 'ความสม่ำเสมอระดับยอดมนุษย์ สตรีคทะลุ 100 วัน',
+      icon: '⚡',
+      tier: 'legendary',
+      tierLabel: 'Legendary 👑',
+      unlocked: bestStreak >= 100,
+      current: bestStreak,
+      target: 100,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_score_300',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'ผู้เปี่ยมวินัย 🌟',
+      desc: 'สะสมคะแนนวินัยเป้าหมายครบ 300 แต้ม',
+      icon: '🌟',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: goalScore >= 300,
+      current: goalScore,
+      target: 300,
+      unit: 'pt'
+    },
+    {
+      id: 'b_score_500',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'มาสเตอร์แห่งวินัย 🏅',
+      desc: 'สะสมคะแนนวินัยเป้าหมายครบ 500 แต้ม',
+      icon: '🏅',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: goalScore >= 500,
+      current: goalScore,
+      target: 500,
+      unit: 'pt'
+    },
+    {
+      id: 'b_score_1000',
+      category: 'streak',
+      categoryName: 'วินัย & สตรีค',
+      title: 'จักรพรรดิแห่งการคุมวินัย 👑',
+      desc: 'สะสมคะแนนวินัยเป้าหมายครบ 1,000 แต้ม',
+      icon: '👑',
+      tier: 'legendary',
+      tierLabel: 'Legendary 👑',
+      unlocked: goalScore >= 1000,
+      current: goalScore,
+      target: 1000,
+      unit: 'pt'
+    },
+
+    // 2. โภชนาการ & มื้ออาหาร (Meals & Nutrition)
+    {
+      id: 'b_meals_1',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'ก้าวแรกสู่วิถีคลีน 🥗',
+      desc: 'บันทึกมื้ออาหารมื้อแรกในแอปโมจิ',
+      icon: '🥗',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: totalMeals >= 1,
+      current: totalMeals,
+      target: 1,
+      unit: 'มื้อ'
+    },
+    {
+      id: 'b_meals_10',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'นักจดบันทึกตัวยง 📝',
+      desc: 'บันทึกอาหารสะสมครบ 10 มื้อ',
+      icon: '📝',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: totalMeals >= 10,
+      current: totalMeals,
+      target: 10,
+      unit: 'มื้อ'
+    },
+    {
+      id: 'b_meals_50',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'กูรูสารอาหาร 🍱',
+      desc: 'บันทึกอาหารสะสมครบ 50 มื้อ',
+      icon: '🍱',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: totalMeals >= 50,
+      current: totalMeals,
+      target: 50,
+      unit: 'มื้อ'
+    },
+    {
+      id: 'b_meals_100',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'สารานุกรมอาหารเดินได้ 📚',
+      desc: 'บันทึกอาหารสะสมทะลุ 100 มื้อ',
+      icon: '📚',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: totalMeals >= 100,
+      current: totalMeals,
+      target: 100,
+      unit: 'มื้อ'
+    },
+    {
+      id: 'b_photo_10',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'ตากล้องสายสุขภาพ 📸',
+      desc: 'ถ่ายรูปอาหารจริงบันทึกลงแอปครบ 10 รูป',
+      icon: '📸',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: photoMeals >= 10,
+      current: photoMeals,
+      target: 10,
+      unit: 'รูป'
+    },
+    {
+      id: 'b_sugar_guard',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'อัศวินปราบน้ำตาล 📉',
+      desc: 'คุมน้ำตาลไม่เกินโควต้าเป้าหมายสะสม 5 วัน',
+      icon: '📉',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: daysSugarMet >= 5,
+      current: daysSugarMet,
+      target: 5,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_protein_beast',
+      category: 'nutrition',
+      categoryName: 'โภชนาการ & อาหาร',
+      title: 'ราชาโปรตีนกล้ามโต 🥩',
+      desc: 'ทานโปรตีนถึงเป้าหมายรายวันสะสมครบ 5 วัน',
+      icon: '🥩',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: daysProteinMet >= 5,
+      current: daysProteinMet,
+      target: 5,
+      unit: 'วัน'
+    },
+
+    // 3. น้ำดื่ม & ความสดชื่น (Water & Hydration)
+    {
+      id: 'b_water_first',
+      category: 'water',
+      categoryName: 'น้ำดื่ม & สุขภาพ',
+      title: 'หยดน้ำหยดแรก 🫧',
+      desc: 'บันทึกการดื่มน้ำครั้งแรกในระบบ',
+      icon: '🫧',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: totalWaterMl > 0,
+      current: totalWaterMl > 0 ? 1 : 0,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_water_target_3',
+      category: 'water',
+      categoryName: 'น้ำดื่ม & สุขภาพ',
+      title: 'สายชุ่มฉ่ำ 💧',
+      desc: 'ดื่มน้ำครบโควต้าเป้าหมายต่อวันครบ 3 วัน',
+      icon: '💧',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: daysWaterGoalMet >= 3,
+      current: daysWaterGoalMet,
+      target: 3,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_water_target_7',
+      category: 'water',
+      categoryName: 'น้ำดื่ม & สุขภาพ',
+      title: 'บ่อน้ำศักดิ์สิทธิ์ 🌊',
+      desc: 'ดื่มน้ำครบโควต้าเป้าหมายต่อวันครบ 7 วัน',
+      icon: '🌊',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: daysWaterGoalMet >= 7,
+      current: daysWaterGoalMet,
+      target: 7,
+      unit: 'วัน'
+    },
+    {
+      id: 'b_water_50L',
+      category: 'water',
+      categoryName: 'น้ำดื่ม & สุขภาพ',
+      title: 'จ้าวสมุทรโมจิ 🔱',
+      desc: 'ดื่มน้ำสะสมในแอปรวมทะลุ 50,000 ml (50 ลิตร)',
+      icon: '🔱',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: totalWaterMl >= 50000,
+      current: totalWaterMl,
+      target: 50000,
+      unit: 'ml'
+    },
+    {
+      id: 'b_bottle_setup',
+      category: 'water',
+      categoryName: 'น้ำดื่ม & สุขภาพ',
+      title: 'นักสะสมกระบอกน้ำ 🏺',
+      desc: 'ปรับแต่งขนาดและเลือกประเภทขวดน้ำส่วนตัว',
+      icon: '🏺',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: Boolean(user.water_bottle_setup),
+      current: user.water_bottle_setup ? 1 : 0,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+
+    // 4. โซเชียล & มิตรภาพ (Social & Camaraderie)
+    {
+      id: 'b_join',
+      category: 'social',
+      categoryName: 'โซเชียล & มิตรภาพ',
+      title: 'สมาชิกแก๊งโมจิ 🍡',
+      desc: 'สร้างตัวละครและร่วมเดินทางสร้างสุขภาพดี',
+      icon: '🍡',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: true,
+      current: 1,
+      target: 1,
+      unit: 'โปรไฟล์'
+    },
+    {
+      id: 'b_cheer_send',
+      category: 'social',
+      categoryName: 'โซเชียล & มิตรภาพ',
+      title: 'ส่งพลังใจดวงแรก 💖',
+      desc: 'ส่งหัวใจหรือข้อความเชียร์ให้เพื่อนในแก๊ง',
+      icon: '💖',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: cheersSent >= 1,
+      current: cheersSent,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_cheer_star',
+      category: 'social',
+      categoryName: 'โซเชียล & มิตรภาพ',
+      title: 'ขวัญใจมหาชน ✨',
+      desc: 'ได้รับกำลังใจและความรักจากเพื่อนสะสม 10 ครั้ง',
+      icon: '✨',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: cheersRecv >= 10,
+      current: cheersRecv,
+      target: 10,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_social_poster',
+      category: 'social',
+      categoryName: 'โซเชียล & มิตรภาพ',
+      title: 'อินฟลูเอนเซอร์แก๊ง 🌐',
+      desc: 'โพสต์กิจกรรมสุขภาพลงฟีดแก๊งสะสมครบ 10 โพสต์',
+      icon: '🌐',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: totalMeals >= 10,
+      current: totalMeals,
+      target: 10,
+      unit: 'โพสต์'
+    },
+
+    // 5. จอมป่วน & ตลาดมหาเวทย์ (Mischief & Pranksters)
+    {
+      id: 'b_prank_first',
+      category: 'mischief',
+      categoryName: 'จอมป่วน & ประลอง',
+      title: 'จอมซนเปิดศึก 😈',
+      desc: 'ใช้การ์ดแกล้งเพื่อนในแก๊งสำเร็จครั้งแรก',
+      icon: '😈',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: pranksSent >= 1,
+      current: pranksSent,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_prank_5',
+      category: 'mischief',
+      categoryName: 'จอมป่วน & ประลอง',
+      title: 'มือวางอันดับป่วน 🃏',
+      desc: 'ใช้การ์ดแกล้งเพื่อนสะสมครบ 5 ครั้ง',
+      icon: '🃏',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: pranksSent >= 5,
+      current: pranksSent,
+      target: 5,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_shield_master',
+      category: 'mischief',
+      categoryName: 'จอมป่วน & ประลอง',
+      title: 'เกราะสะท้อนไร้พ่าย 🛡️',
+      desc: 'กางโล่มหาเวทย์และสะท้อนการ์ดแกล้งกลับไปสำเร็จ',
+      icon: '🛡️',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: pranksReflected >= 1,
+      current: pranksReflected,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+    {
+      id: 'b_curse_cleared',
+      category: 'mischief',
+      categoryName: 'จอมป่วน & ประลอง',
+      title: 'ผู้ปลดพันธนาการคำสาป ⚔️',
+      desc: 'พิชิตภารกิจการบ้านงอกและล้างคำสาปแกล้งได้สำเร็จ',
+      icon: '⚔️',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: pranksCleared >= 1,
+      current: pranksCleared,
+      target: 1,
+      unit: 'ครั้ง'
+    },
+
+    // 6. เหรียญ & แฟชั่นนิสต้า (Wealth & Wardrobe)
+    {
+      id: 'b_coins_250',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'กระเป๋าตุง 🪙',
+      desc: 'สะสมเหรียญโมจิคอยน์ครบ 250 เหรียญ',
+      icon: '🪙',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: coins >= 250,
+      current: coins,
+      target: 250,
+      unit: '🪙'
+    },
+    {
+      id: 'b_coins_600',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'เศรษฐีโมจิ 💰',
+      desc: 'สะสมเหรียญโมจิคอยน์ทะลุ 600 เหรียญ',
+      icon: '💰',
+      tier: 'silver',
+      tierLabel: 'Silver 🥈',
+      unlocked: coins >= 600,
+      current: coins,
+      target: 600,
+      unit: '🪙'
+    },
+    {
+      id: 'b_coins_1500',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'มหาเศรษฐีคอยน์ 💎',
+      desc: 'สะสมเหรียญโมจิคอยน์ทะลุ 1,500 เหรียญ',
+      icon: '💎',
+      tier: 'diamond',
+      tierLabel: 'Diamond 💎',
+      unlocked: coins >= 1500,
+      current: coins,
+      target: 1500,
+      unit: '🪙'
+    },
+    {
+      id: 'b_fashion_buyer',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'แฟชั่นนิสต้าร้านเสื้อ 🛍️',
+      desc: 'ปลดล็อคไอเทมเสื้อผ้า/เครื่องแต่งกายสะสมครบ 3 ชิ้น',
+      icon: '🛍️',
+      tier: 'bronze',
+      tierLabel: 'Bronze 🥉',
+      unlocked: unlockedItems.length >= 3,
+      current: unlockedItems.length,
+      target: 3,
+      unit: 'ชิ้น'
+    },
+    {
+      id: 'b_skin_3d_owner',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'เจ้าของฟิกเกอร์ 3D 🌟',
+      desc: 'ครอบครองสกินพรีเมียม 3D อย่างน้อย 1 สกิน',
+      icon: '🌟',
+      tier: 'gold',
+      tierLabel: 'Gold 🥇',
+      unlocked: skin3dCount >= 1,
+      current: skin3dCount,
+      target: 1,
+      unit: 'สกิน'
+    },
+    {
+      id: 'b_legend_collector',
+      category: 'wealth',
+      categoryName: 'เหรียญ & คอลเลกชัน',
+      title: 'นักสะสมระดับตำนาน 👑',
+      desc: 'ครอบครองสกินพรีเมียม 3D สะสมครบ 3 สกินขึ้นไป',
+      icon: '👑',
+      tier: 'legendary',
+      tierLabel: 'Legendary 👑',
+      unlocked: skin3dCount >= 3,
+      current: skin3dCount,
+      target: 3,
+      unit: 'สกิน'
+    }
+  ];
+
+  const formattedBadges = rawBadges.map(b => {
+    const cur = Math.min(b.target, Math.max(0, b.current || 0));
+    const pct = b.unlocked ? 100 : Math.min(99, Math.round((cur / b.target) * 100));
+    return {
+      ...b,
+      progressText: `${cur} / ${b.target} ${b.unit}`,
+      pct
+    };
+  });
+
+  const total = formattedBadges.length;
+  const unlockedCount = formattedBadges.filter(b => b.unlocked).length;
+  const overallPct = Math.round((unlockedCount / total) * 100);
+
+  return {
+    badges: formattedBadges,
+    stats: {
+      total,
+      unlockedCount,
+      overallPct
+    }
   };
 }
 
