@@ -879,7 +879,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Fast Path: Check Group Verified Knowledge Cache (Point 3)
-        if (!body.imageBase64 && body.text) {
+        if (!body.imageBase64 && body.text && !body.detail) {
           const verified = db.lookupVerifiedDish(body.text);
           if (verified) {
             let cal = verified.calorie;

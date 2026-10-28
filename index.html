@@ -8298,7 +8298,7 @@ function checkWaterNotificationTriggers() {
 
   const waterBottleMl = Number(currentUser?.water_bottle_ml) || 500;
   const waterDailyTarget = Number(currentUser?.water_daily_target_ml) || 2000;
-  const waterLogs = (currentLogs || []).filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterLogs = (currentLogs || []).filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำเปล่า')));
   const totalWaterMl = waterLogs.reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
 
   if (totalWaterMl >= waterDailyTarget) return;
@@ -8519,7 +8519,7 @@ function renderToday() {
   const waterBottleName = currentUser?.water_bottle_name || 'ขวดน้ำ 500 ml';
   const waterBottleIcon = currentUser?.water_bottle_icon || 'bottle_500';
 
-  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterLogs = currentLogs.filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำเปล่า')));
   const waterCount = waterLogs.length;
   const totalWaterMl = waterLogs.reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
   const targetRounds = Math.max(1, Math.ceil(waterDailyTarget / waterBottleMl));
@@ -9568,7 +9568,7 @@ function renderWaterHistoryModalContent() {
               return `
                 <div class="water-history-item">
                   <div class="water-history-info">
-                    <div class="water-history-icon">💧</div>
+                    <div class="water-history-icon">${(item.calorie && item.calorie > 0) || (item.sugar && item.sugar > 0) ? '🥤' : '💧'}</div>
                     <div>
                       <div class="water-history-title">รอบที่ ${waterLogs.length - idx}: ${esc(item.name || waterBottleName)}</div>
                       <div class="water-history-time">🕒 ${timeStr}</div>
@@ -18156,7 +18156,7 @@ function openShareModal() {
   const totalFat = Math.round(currentLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
   const totalSodium = Math.round(currentLogs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
   
-  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterLogs = currentLogs.filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำเปล่า')));
   const waterCount = waterLogs.length;
   const waterGoal = Number(currentUser?.water_goal) || 8;
   const curWeight = Number(currentUser?.weight) || 60;
@@ -18639,6 +18639,7 @@ function openSheet() {
 
   draft = {
     name: '',
+    detail: '',
     kcal: '',
     carbs: '',
     sugar: '',
@@ -18664,7 +18665,9 @@ function openSheet() {
     activePinIdx: null,
     isScanning: false,
     showAdvanced: false,
-    isDrink: false
+    isDrink: false,
+    waterMl: null,
+    autoTrackWater: true
   };
   renderSheet();
 }
@@ -18714,7 +18717,7 @@ function renderSheet() {
         <span class="simple-bar-icon">🔍</span>
         <input class="simple-bar-input" 
                type="text" 
-               placeholder="พิมพ์ชื่ออาหาร เช่น ข้าวมันไก่, สลัด..." 
+               placeholder="พิมพ์ชื่ออาหาร เช่น ข้าวมันไก่, น้ำแดงโซดา..." 
                value="${esc(draft.name || draft.txt)}" 
                oninput="onFoodSearchInput(this.value)">
         <div class="simple-bar-actions">
@@ -18724,6 +18727,47 @@ function renderSheet() {
           <button id="voiceBtn" class="simple-action-btn mic" onclick="toggleVoiceInput()" title="พูดชื่อเมนู">
             🎙️
           </button>
+        </div>
+      </div>
+
+      <!-- Menu Customization & Details Input -->
+      <div class="food-detail-wrap" style="margin: 8px 0 10px; background:var(--card, #fff); border:1px solid var(--line, #E2E8F0); border-radius:14px; padding:8px 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+          <span style="font-size:11.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:4px;">
+            <span>📝</span> รายละเอียด / สั่งพิเศษ
+          </span>
+          <span style="font-size:10px; color:var(--mute);">เช่น หวาน 50%, แก้ว 500 ml, ไข่มุก</span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input class="simple-bar-input" 
+                 type="text" 
+                 style="font-size:12px; padding:6px 10px; height:32px; border-radius:10px; background:#F8FAFC; border:1px solid #E2E8F0; width:100%; box-sizing:border-box;" 
+                 placeholder="ระบุความหวาน ขนาดแก้ว หรือสั่งพิเศษ..." 
+                 value="${esc(draft.detail || '')}" 
+                 oninput="onFoodDetailInput(this.value)">
+          ${draft.detail ? `
+            <button type="button" class="btn g sm" style="font-size:10px; padding:4px 8px; border-radius:8px;" onclick="draft.detail=''; onFoodDetailInput(''); renderSheet();" title="ล้างข้อความ">
+              ✕
+            </button>
+          ` : ''}
+        </div>
+        <div class="fast-chips-scroll" style="margin-top:6px; gap:4px; padding-bottom:2px;">
+          ${[
+            '🍯 หวาน 50%',
+            '🍃 หวานน้อย 25%',
+            '🚫 ไม่หวาน 0%',
+            '🥤 แก้ว 500 ml',
+            '☕ แก้ว 350 ml',
+            '🧋 เพิ่มไข่มุก',
+            '🍗 ไม่เอาหนัง',
+            '🍚 ข้าวน้อย'
+          ].map(tag => `
+            <div class="fast-chip sm ${(draft.detail || '').includes(tag) ? 'active' : ''}" 
+                 style="font-size:10px; padding:3px 8px; border-radius:8px; cursor:pointer;" 
+                 onclick="appendFoodDetail('${tag}')">
+              <span>${tag}</span>
+            </div>
+          `).join('')}
         </div>
       </div>
 
@@ -18950,6 +18994,40 @@ function renderSheet() {
                 `).join('')}
               </div>
             </div>
+
+            <!-- Automatic Water Intake Tracker Card for Drinks -->
+            <div class="drink-water-card" style="margin-top:10px; padding:10px 12px; background:linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); border:1px solid #BAE6FD; border-radius:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:12px; color:#0369A1; margin:0;">
+                  <input type="checkbox" style="width:16px; height:16px; accent-color:#0284C7; cursor:pointer;" 
+                         ${draft.autoTrackWater ? 'checked' : ''} 
+                         onchange="draft.autoTrackWater = this.checked; renderSheet();">
+                  <span>💧 บันทึกการดื่มน้ำอัตโนมัติ</span>
+                </label>
+                <span class="badge" style="background:#0284C7; color:#fff; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:800;">
+                  +${fmt(draft.waterMl || 500)} ml
+                </span>
+              </div>
+              ${draft.autoTrackWater ? `
+                <div style="margin-top:8px; padding-top:6px; border-top:1px dashed #BAE6FD; display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap;">
+                  <span style="font-size:11px; color:#0C4A6E;">💧 ปริมาณน้ำ (AI ประเมินให้อัตโนมัติ):</span>
+                  <div style="display:flex; gap:4px; align-items:center;">
+                    ${[250, 350, 500, 650].map(ml => `
+                      <button type="button" class="pill ${(draft.waterMl || 500) === ml ? 'active' : ''}" 
+                              style="font-size:10px; padding:2px 7px; background:${(draft.waterMl || 500) === ml ? '#0284C7' : '#FFFFFF'}; color:${(draft.waterMl || 500) === ml ? '#FFFFFF' : '#0369A1'}; border-color:#BAE6FD;" 
+                              onclick="setDraftWaterMl(${ml})">
+                        ${ml} ml
+                      </button>
+                    `).join('')}
+                    <input type="number" 
+                           inputmode="numeric" 
+                           style="width:58px; font-size:10.5px; padding:2px 4px; border-radius:8px; border:1px solid #BAE6FD; background:#fff; text-align:center;" 
+                           value="${draft.waterMl || 500}" 
+                           oninput="setDraftWaterMl(this.value)">
+                  </div>
+                </div>
+              ` : ''}
+            </div>
           ` : ''}
 
           <!-- AI Clarification Question Banner (if any) -->
@@ -19112,6 +19190,48 @@ function setQuickSweetness(val, grams) {
   if (!draft) return;
   draft.sweetness = val;
   draft.sugar = grams;
+  renderSheet();
+}
+
+function onFoodDetailInput(val) {
+  if (!draft) return;
+  draft.detail = val;
+  const lower = val.toLowerCase();
+  if (lower.includes('50%') || lower.includes('ครึ่ง')) draft.sweetness = 'half';
+  else if (lower.includes('25%') || lower.includes('น้อย')) draft.sweetness = 'less';
+  else if (lower.includes('0%') || lower.includes('ไม่หวาน')) draft.sweetness = 'none';
+  else if (lower.includes('100%') || lower.includes('ปกติ')) draft.sweetness = 'normal';
+
+  const mlMatch = lower.match(/(\d{2,4})\s*(ml|มล|ซีซี)?/);
+  if (mlMatch) {
+    const valMl = parseInt(mlMatch[1], 10);
+    if (valMl >= 50 && valMl <= 2000) {
+      draft.waterMl = valMl;
+      draft.isDrink = true;
+    }
+  }
+}
+
+function appendFoodDetail(tag) {
+  if (!draft) return;
+  if (!draft.detail) {
+    draft.detail = tag;
+  } else if (!draft.detail.includes(tag)) {
+    draft.detail = (draft.detail + ' ' + tag).trim();
+  }
+  onFoodDetailInput(draft.detail);
+  renderSheet();
+  if (draft.name || draft.txt) {
+    analyzeMeal();
+  }
+}
+
+function setDraftWaterMl(val) {
+  if (!draft) return;
+  const n = parseInt(val, 10);
+  if (!isNaN(n) && n > 0) {
+    draft.waterMl = n;
+  }
   renderSheet();
 }
 
@@ -19343,6 +19463,7 @@ async function analyzeMeal() {
       body: JSON.stringify({
         userId: currentUser?.id,
         text: draft.txt,
+        detail: draft.detail || '',
         imageBase64: draft.imageBase64,
         sweetness: draft.sweetness,
         portion: draft.portion,
@@ -19383,6 +19504,16 @@ async function analyzeMeal() {
     draft.activePinIdx = null;
     draft.status = `✨ ${result.note}`;
 
+    if (result.is_drink) {
+      draft.isDrink = true;
+    }
+    if (result.water_ml && Number(result.water_ml) > 0) {
+      draft.waterMl = Number(result.water_ml);
+      draft.isDrink = true;
+    } else if (draft.isDrink && !draft.waterMl) {
+      draft.waterMl = 500;
+    }
+
     if (result.needs_clarification && result.clarification_question) {
       draft.clarification = {
         question: result.clarification_question,
@@ -19415,6 +19546,7 @@ async function saveMeal() {
 
   try {
     const mealDate = draft.date || key();
+    const drinkWaterMl = (draft.isDrink && draft.autoTrackWater && draft.waterMl > 0) ? Number(draft.waterMl) : null;
     await fetch('/api/logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
@@ -19432,7 +19564,8 @@ async function saveMeal() {
         sweetness_level: draft.sweetness,
         is_private: draft.isPrivate ? 1 : 0,
         image_url: draft.imageBase64 || null,
-        components_json: draft.components && draft.components.length ? JSON.stringify(draft.components) : null
+        components_json: draft.components && draft.components.length ? JSON.stringify(draft.components) : null,
+        water_ml: drinkWaterMl
       })
     });
 
@@ -19466,7 +19599,10 @@ async function saveMeal() {
       sendPushNotification('โมจิส่งกำลังใจ 🚨', 'น้ำตาลวันนี้เกินเป้าแล้ว ดื่มน้ำเปล่าเพิ่มและค่อยๆ ปรับสมดุลกันนะ');
     }
 
-    if (mealDate !== key()) {
+    if (drinkWaterMl) {
+      try { playMojiSound('gulp'); } catch (_) {}
+      toast(`บันทึกมื้ออาหารพร้อมดื่มน้ำ +${drinkWaterMl} ml เรียบร้อยแล้ว 🥤💧`);
+    } else if (mealDate !== key()) {
       toast(`บันทึกมื้ออาหารของวันที่ ${mealDate} เรียบร้อยแล้ว 🍡`);
     } else {
       toast(sp > 1 ? 'บันทึกแล้ว แต่น้ำตาลเกินโควตาแล้วนะ 😣' : 'บันทึกมื้ออาหารเรียบร้อยแล้ว 🍡');
@@ -19807,7 +19943,7 @@ function shareText() {
   const totalProtein = Math.round(currentLogs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
   const totalFat = Math.round(currentLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
   const totalSodium = Math.round(currentLogs.reduce((a, b) => a + (Number(b.sodium) || 0), 0));
-  const waterLogs = currentLogs.filter(l => l.name && l.name.includes('น้ำเปล่า'));
+  const waterLogs = currentLogs.filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำเปล่า')));
   const waterCount = waterLogs.length;
   const curWeight = Number(currentUser?.weight) || 60;
   const dateStr = new Date().toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });

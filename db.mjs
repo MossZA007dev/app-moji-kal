@@ -1184,7 +1184,7 @@ export function resetWaterLogs(userId, date) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const logs = db.prepare(`
     SELECT id, created_at FROM logs
-    WHERE user_id = ? AND date = ? AND (water_ml > 0 OR name LIKE '%น้ำ%')
+    WHERE user_id = ? AND date = ? AND (COALESCE(calorie, 0) = 0 AND (name LIKE '%ดื่มน้ำ%' OR name LIKE '%น้ำเปล่า%'))
   `).all(userId, targetDate);
 
   if (!logs.length) {
@@ -3153,9 +3153,7 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     JOIN users u ON l.user_id = u.id
     WHERE (l.is_private = 0 OR l.user_id = ?)
       AND (u.privacy_level = 'full' OR l.user_id = ?)
-      AND (l.water_ml IS NULL OR l.water_ml = 0)
-      AND l.name NOT LIKE '%ดื่มน้ำ%'
-      AND l.name NOT LIKE '%น้ำเปล่า%'
+      AND NOT (COALESCE(l.calorie, 0) = 0 AND (l.name LIKE '%ดื่มน้ำ%' OR l.name LIKE '%น้ำเปล่า%'))
     ORDER BY l.created_at DESC
     LIMIT ?
   `).all(currentUserId, currentUserId, limit);
@@ -3313,7 +3311,7 @@ export function getGangStories(currentUserId = '') {
         WHERE user_id = ? 
           AND (created_at >= ? OR date >= ?)
           ${isMe ? '' : 'AND is_private = 0'}
-          AND (water_ml IS NULL OR name NOT LIKE '%น้ำเปล่า%')
+          AND NOT (COALESCE(calorie, 0) = 0 AND (name LIKE '%ดื่มน้ำ%' OR name LIKE '%น้ำเปล่า%'))
         ORDER BY created_at ASC
       `).all(u.id, since24h, todayDate);
 

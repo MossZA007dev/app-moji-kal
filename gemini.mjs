@@ -111,11 +111,12 @@ export function saveSettings(settings) {
 
 // Built-in Thai food & drink baseline database
 const THAI_FOOD_DB = [
-  { keywords: ['ชานมไข่มุก', 'ชานม', 'boba'], name: 'ชานมไข่มุก', baseCal: 360, baseSugar: 28, baseSodium: 75, isDrink: true, components: [{ name: 'ชาและนม', kcal: 220, sugar: 20, sodium: 55, icon: '🧋', x: 50, y: 38 }, { name: 'ไข่มุกบราวน์ชูการ์', kcal: 140, sugar: 8, sodium: 20, icon: '🧋', x: 50, y: 72 }] },
-  { keywords: ['ชาไทย', 'ชาเย็น'], name: 'ชาไทยเย็น', baseCal: 220, baseSugar: 24, baseSodium: 85, isDrink: true, components: [{ name: 'ชาไทยสกัด', kcal: 20, sugar: 0, sodium: 10, icon: '🧋', x: 50, y: 35 }, { name: 'นมข้นหวานและนมสด', kcal: 200, sugar: 24, sodium: 75, icon: '🥛', x: 50, y: 65 }] },
-  { keywords: ['ชาเขียวเย็น', 'มัทฉะลาเต้', 'ชาเขียวนม'], name: 'ชาเขียวนมเย็น', baseCal: 240, baseSugar: 22, baseSodium: 80, isDrink: true, components: [{ name: 'มัทฉะแท้', kcal: 30, sugar: 0, sodium: 10, icon: '🍵', x: 50, y: 35 }, { name: 'นมสดและไซรัป', kcal: 210, sugar: 22, sodium: 70, icon: '🥛', x: 50, y: 65 }] },
-  { keywords: ['กาแฟดำ', 'อเมริกาโน่', 'americano'], name: 'อเมริกาโน่เย็น (ไม่หวาน)', baseCal: 15, baseSugar: 0, baseSodium: 10, isDrink: true, components: [{ name: 'เอสเพรสโซ่ช็อต + น้ำ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 50 }] },
-  { keywords: ['ลาเต้', 'latte', 'คาปูชิโน่', 'cappuccino'], name: 'ลาเต้เย็น', baseCal: 180, baseSugar: 12, baseSodium: 110, isDrink: true, components: [{ name: 'กาแฟ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 35 }, { name: 'นมสด', kcal: 165, sugar: 12, sodium: 100, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['น้ำแดงโซดา', 'แดงโซดา', 'เขียวโซดา', 'น้ำหวานโซดา', 'อิตาเลียนโซดา', 'น้ำหวาน'], name: 'น้ำแดงโซดา', baseCal: 160, baseSugar: 38, baseSodium: 65, isDrink: true, waterMl: 500, components: [{ name: 'น้ำหวานเข้มข้น', kcal: 160, sugar: 38, sodium: 50, icon: '🍯', x: 50, y: 70 }, { name: 'โซดาและน้ำแข็ง', kcal: 0, sugar: 0, sodium: 15, icon: '🥤', x: 50, y: 35 }] },
+  { keywords: ['ชานมไข่มุก', 'ชานม', 'boba'], name: 'ชานมไข่มุก', baseCal: 360, baseSugar: 28, baseSodium: 75, isDrink: true, waterMl: 500, components: [{ name: 'ชาและนม', kcal: 220, sugar: 20, sodium: 55, icon: '🧋', x: 50, y: 38 }, { name: 'ไข่มุกบราวน์ชูการ์', kcal: 140, sugar: 8, sodium: 20, icon: '🧋', x: 50, y: 72 }] },
+  { keywords: ['ชาไทย', 'ชาเย็น'], name: 'ชาไทยเย็น', baseCal: 220, baseSugar: 24, baseSodium: 85, isDrink: true, waterMl: 500, components: [{ name: 'ชาไทยสกัด', kcal: 20, sugar: 0, sodium: 10, icon: '🧋', x: 50, y: 35 }, { name: 'นมข้นหวานและนมสด', kcal: 200, sugar: 24, sodium: 75, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['ชาเขียวเย็น', 'มัทฉะลาเต้', 'ชาเขียวนม'], name: 'ชาเขียวนมเย็น', baseCal: 240, baseSugar: 22, baseSodium: 80, isDrink: true, waterMl: 500, components: [{ name: 'มัทฉะแท้', kcal: 30, sugar: 0, sodium: 10, icon: '🍵', x: 50, y: 35 }, { name: 'นมสดและไซรัป', kcal: 210, sugar: 22, sodium: 70, icon: '🥛', x: 50, y: 65 }] },
+  { keywords: ['กาแฟดำ', 'อเมริกาโน่', 'americano'], name: 'อเมริกาโน่เย็น (ไม่หวาน)', baseCal: 15, baseSugar: 0, baseSodium: 10, isDrink: true, waterMl: 350, components: [{ name: 'เอสเพรสโซ่ช็อต + น้ำ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 50 }] },
+  { keywords: ['ลาเต้', 'latte', 'คาปูชิโน่', 'cappuccino'], name: 'ลาเต้เย็น', baseCal: 180, baseSugar: 12, baseSodium: 110, isDrink: true, waterMl: 350, components: [{ name: 'กาแฟ', kcal: 15, sugar: 0, sodium: 10, icon: '☕', x: 50, y: 35 }, { name: 'นมสด', kcal: 165, sugar: 12, sodium: 100, icon: '🥛', x: 50, y: 65 }] },
   { keywords: ['กะเพรา', 'ผัดกะเพรา'], name: 'ผัดกะเพราหมูสับ + ไข่ดาว', baseCal: 630, baseSugar: 3, baseSodium: 980, components: [{ name: 'ข้าวสวย 1 จาน', kcal: 200, sugar: 0, sodium: 15, icon: '🍚', x: 34, y: 58 }, { name: 'ผัดกะเพราหมูสับ', kcal: 310, sugar: 2.5, sodium: 820, icon: '🥩', x: 68, y: 46 }, { name: 'ไข่ดาว', kcal: 120, sugar: 0.5, sodium: 145, icon: '🍳', x: 48, y: 28 }] },
   { keywords: ['ข้าวมันไก่'], name: 'ข้าวมันไก่ตอน', baseCal: 580, baseSugar: 1.5, baseSodium: 850, components: [{ name: 'ข้าวมัน', kcal: 300, sugar: 0.5, sodium: 280, icon: '🍚', x: 38, y: 60 }, { name: 'เนื้อไก่ตอน', kcal: 220, sugar: 0, sodium: 160, icon: '🍗', x: 62, y: 45 }, { name: 'น้ำจิ้มและน้ำซุป', kcal: 60, sugar: 1, sodium: 410, icon: '🥣', x: 50, y: 25 }] },
   { keywords: ['ข้าวผัด'], name: 'ข้าวผัดหมู/ไก่', baseCal: 550, baseSugar: 2.5, baseSodium: 780, components: [{ name: 'ข้าวผัดน้ำมัน', kcal: 420, sugar: 1.5, sodium: 520, icon: '🍚', x: 45, y: 56 }, { name: 'เนื้อสัตว์และไข่', kcal: 130, sugar: 1, sodium: 260, icon: '🥩', x: 65, y: 40 }] },
@@ -134,8 +135,8 @@ const BRAND_BASELINES = {
   standard: { name: 'ร้านทั่วไป / คาเฟ่', factor: 1.0 }
 };
 
-function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = []) {
-  if (!text.trim()) {
+function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = [], detail = '') {
+  if (!text.trim() && !detail.trim()) {
     return {
       name: '',
       kcal: 0,
@@ -146,48 +147,99 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
       clarification_question: null,
       options: null,
       components: [],
-      note: '💡 ยังไม่ได้เชื่อมต่อ Gemini API Key สำหรับสแกนรูปภาพ กรุณาพิมพ์ชื่ออาหารด้านบน หรือใส่ API Key ในหน้าตั้งค่า 🍡',
+      note: '💡 กรุณาระบุชื่ออาหารหรือรายละเอียดเมนู 🍡',
       is_fallback: true
     };
   }
 
-  const lower = text.toLowerCase();
+  const fullText = (text + ' ' + (detail || '')).trim();
+  const lower = fullText.toLowerCase();
+
+  // Auto-detect sweetness percentage from text/detail if present
+  let effectiveSweetness = sweetness;
+  let customSweetPercent = null;
+  if (lower.includes('หวาน 50%') || lower.includes('50%') || lower.includes('หวานครึ่ง')) {
+    effectiveSweetness = 'half';
+    customSweetPercent = 50;
+  } else if (lower.includes('หวาน 25%') || lower.includes('25%') || lower.includes('หวานน้อย')) {
+    effectiveSweetness = 'less';
+    customSweetPercent = 25;
+  } else if (lower.includes('0%') || lower.includes('ไม่หวาน') || lower.includes('ไม่ใส่น้ำตาล')) {
+    effectiveSweetness = 'none';
+    customSweetPercent = 0;
+  } else if (lower.includes('หวานมาก') || lower.includes('120%')) {
+    effectiveSweetness = 'sweet';
+    customSweetPercent = 120;
+  } else if (lower.includes('100%') || lower.includes('ปกติ')) {
+    effectiveSweetness = 'normal';
+    customSweetPercent = 100;
+  }
+
+  // Auto-detect liquid / drink volume in ml from text/detail
+  let detectedWaterMl = null;
+  const mlMatch = lower.match(/(\d{2,4})\s*(ml|มล|ซีซี)?/);
+  if (mlMatch) {
+    const val = parseInt(mlMatch[1], 10);
+    if (val >= 50 && val <= 2000) {
+      detectedWaterMl = val;
+    }
+  }
+
   let matched = THAI_FOOD_DB.find(item => item.keywords.some(k => lower.includes(k)));
 
+  const isSweetDrink = Boolean(
+    (matched && matched.isDrink) ||
+    lower.includes('ชา') || lower.includes('กาแฟ') || lower.includes('นม') || 
+    lower.includes('หวาน') || lower.includes('amazon') || lower.includes('เต่าบิน') ||
+    lower.includes('โซดา') || lower.includes('น้ำแดง') || lower.includes('น้ำเขียว') ||
+    lower.includes('สมูทตี้') || lower.includes('น้ำส้ม') || lower.includes('น้ำผลไม้') ||
+    lower.includes('โคล่า') || lower.includes('เป๊ปซี่')
+  );
+
+  const finalWaterMl = isSweetDrink ? (detectedWaterMl || (matched?.waterMl) || (lower.includes('กาแฟ') ? 350 : 500)) : null;
+
   if (!matched) {
-    const isSweetDrink = lower.includes('ชา') || lower.includes('กาแฟ') || lower.includes('นม') || lower.includes('หวาน') || lower.includes('amazon') || lower.includes('เต่าบิน');
-    let baseSugar = isSweetDrink ? 24 : 4;
-    let baseKcal = isSweetDrink ? 220 : 450;
+    let baseSugar = isSweetDrink ? 26 : 4;
+    let baseKcal = isSweetDrink ? 180 : 450;
 
     if (isSweetDrink) {
       const brandFactor = BRAND_BASELINES[brand]?.factor || 1.0;
       baseSugar *= brandFactor;
-      if (sweetness === 'none') baseSugar = 0;
-      else if (sweetness === 'less') baseSugar *= 0.35;
-      else if (sweetness === 'half') baseSugar *= 0.6;
-      else if (sweetness === 'sweet') baseSugar *= 1.25;
+      if (effectiveSweetness === 'none') { baseSugar = 0.5; baseKcal -= 60; }
+      else if (effectiveSweetness === 'less') { baseSugar *= 0.35; baseKcal -= 40; }
+      else if (effectiveSweetness === 'half') { baseSugar *= 0.55; baseKcal -= 25; }
+      else if (effectiveSweetness === 'sweet') { baseSugar *= 1.25; baseKcal += 35; }
 
-      if (toppings.includes('boba')) { baseSugar += 12; baseKcal += 110; }
-      if (toppings.includes('whip')) { baseSugar += 2; baseKcal += 85; }
-      if (toppings.includes('jelly')) { baseSugar += 1; baseKcal += 15; }
+      if (toppings.includes('boba') || lower.includes('ไข่มุก')) { baseSugar += 12; baseKcal += 110; }
+      if (toppings.includes('whip') || lower.includes('วิป')) { baseSugar += 2; baseKcal += 85; }
+      if (toppings.includes('jelly') || lower.includes('เจลลี่')) { baseSugar += 1; baseKcal += 15; }
     }
 
-    const fbSodiumDrink = Math.round(isSweetDrink ? 60 : (baseKcal * 1.3));
+    const fbSodiumDrink = Math.round(isSweetDrink ? 55 : (baseKcal * 1.3));
+    const displayName = text.trim() || 'มื้ออาหาร';
+
+    let customNote = isSweetDrink
+      ? `ประเมินเครื่องดื่ม ${displayName}${customSweetPercent !== null ? ` (หวาน ${customSweetPercent}%)` : ''} ~${finalWaterMl} ml 💧`
+      : 'ประเมินจากฐานข้อมูลอาหารไทยเบื้องต้น';
+
     return {
-      name: text.trim() || 'มื้ออาหาร',
-      kcal: Math.round(baseKcal),
+      name: displayName,
+      kcal: Math.max(10, Math.round(baseKcal)),
       carbs: Math.round((baseKcal * 0.45 / 4) * 10) / 10,
       sugar: Math.round(baseSugar * 10) / 10,
       protein: Math.round((baseKcal * 0.2 / 4) * 10) / 10,
       fat: Math.round((baseKcal * 0.35 / 9) * 10) / 10,
       sodium: fbSodiumDrink,
+      is_drink: isSweetDrink,
+      water_ml: finalWaterMl,
+      sweetness_percent: customSweetPercent,
       confidence: 'medium',
-      needs_clarification: isSweetDrink && sweetness === 'normal',
+      needs_clarification: isSweetDrink && effectiveSweetness === 'normal' && customSweetPercent === null,
       clarification_question: isSweetDrink ? 'แก้วนี้สั่งหวานระดับไหนคะ? เพื่อคำนวณน้ำตาลให้แม่นยำ' : 'ระบุขนาดหรือส่วนผสมเพิ่มเติมได้นะ',
-      note: isSweetDrink ? `ประเมินตามสูตร ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}` : 'ประเมินจากฐานข้อมูลอาหารไทยเบื้องต้น',
+      note: customNote,
       components: enrichComponents(
-        [{ name: text.trim() || 'มื้อหลัก', kcal: Math.round(baseKcal), sugar: Math.round(baseSugar * 10) / 10, sodium: fbSodiumDrink }],
-        text.trim() || 'มื้ออาหาร',
+        [{ name: displayName, kcal: Math.round(baseKcal), sugar: Math.round(baseSugar * 10) / 10, sodium: fbSodiumDrink }],
+        displayName,
         baseKcal,
         baseSugar
       ),
@@ -203,23 +255,23 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
     const brandFactor = BRAND_BASELINES[brand]?.factor || 1.0;
     sugar *= brandFactor;
 
-    if (sweetness === 'none' || lower.includes('ไม่หวาน') || lower.includes('0%')) {
+    if (effectiveSweetness === 'none') {
       sugar = Math.max(0, sugar * 0.04);
       cal -= 60;
-    } else if (sweetness === 'less' || lower.includes('หวานน้อย') || lower.includes('25%')) {
+    } else if (effectiveSweetness === 'less') {
       sugar = Math.round(sugar * 0.35 * 10) / 10;
       cal -= 40;
-    } else if (sweetness === 'half' || lower.includes('หวาน 50%') || lower.includes('50%')) {
-      sugar = Math.round(sugar * 0.6 * 10) / 10;
+    } else if (effectiveSweetness === 'half') {
+      sugar = Math.round(sugar * 0.5 * 10) / 10;
       cal -= 25;
-    } else if (sweetness === 'sweet' || lower.includes('หวานมาก') || lower.includes('120%')) {
+    } else if (effectiveSweetness === 'sweet') {
       sugar = Math.round(sugar * 1.25 * 10) / 10;
       cal += 40;
     }
 
-    if (toppings.includes('boba')) { sugar += 12; cal += 110; sodium += 20; }
-    if (toppings.includes('whip')) { sugar += 2; cal += 85; sodium += 30; }
-    if (toppings.includes('jelly')) { sugar += 1; cal += 15; sodium += 10; }
+    if (toppings.includes('boba') || lower.includes('ไข่มุก')) { sugar += 12; cal += 110; sodium += 20; }
+    if (toppings.includes('whip') || lower.includes('วิป')) { sugar += 2; cal += 85; sodium += 30; }
+    if (toppings.includes('jelly') || lower.includes('เจลลี่')) { sugar += 1; cal += 15; sodium += 10; }
   }
 
   if (portion === 'small') {
@@ -232,36 +284,43 @@ function fallbackAnalyze(text = '', sweetness = 'normal', portion = 'normal', br
     sodium = Math.round(sodium * 1.3);
   }
 
-  const needsClarification = matched.isDrink && sweetness === 'normal' && !lower.includes('หวาน');
+  const needsClarification = matched.isDrink && effectiveSweetness === 'normal' && customSweetPercent === null && !lower.includes('หวาน');
 
   const fbCarbs = Math.round((cal * 0.45 / 4) * 10) / 10;
   const fbProtein = Math.round((cal * 0.2 / 4) * 10) / 10;
   const fbFat = Math.round((cal * 0.35 / 9) * 10) / 10;
 
+  let drinkNote = matched.isDrink
+    ? `คำนวณ ${matched.name}${customSweetPercent !== null ? ` (หวาน ${customSweetPercent}%)` : ''} น้ำตาล ${Math.round(sugar * 10) / 10}g ปริมาณน้ำ ~${finalWaterMl} ml 💧`
+    : `คำนวณจากสูตรอาหารไทยมาตรฐาน (${matched.name})`;
+
   return {
     name: matched.name,
-    kcal: Math.round(cal),
+    kcal: Math.max(5, Math.round(cal)),
     carbs: fbCarbs,
     sugar: Math.round(sugar * 10) / 10,
     protein: fbProtein,
     fat: fbFat,
     sodium: Math.round(sodium),
+    is_drink: Boolean(matched.isDrink),
+    water_ml: finalWaterMl,
+    sweetness_percent: customSweetPercent,
     confidence: 'high',
     needs_clarification: needsClarification,
     clarification_question: needsClarification ? `สั่ง "${matched.name}" ระดับความหวานเท่าไหร่? (ค่านี้คิดจากหวานปกติ 100%)` : null,
-    options: matched.isDrink ? ['ไม่หวาน 0% (~0g)', 'หวานน้อย 25% (~8g)', 'หวานปกติ 100% (~' + Math.round(sugar) + 'g)'] : null,
-    note: `คำนวณจากสูตรอาหารไทยมาตรฐาน (${matched.name}) อิง ${BRAND_BASELINES[brand]?.name || 'ร้านทั่วไป'}`,
+    options: matched.isDrink ? ['ไม่หวาน 0% (~0g)', 'หวานน้อย 25% (~8g)', 'หวาน 50% (~15g)', 'หวานปกติ 100% (~' + Math.round(sugar) + 'g)'] : null,
+    note: drinkNote,
     components: enrichComponents(matched.components, matched.name, cal, sugar, fbCarbs, fbProtein, fbFat),
     is_fallback: true
   };
 }
 
-export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, imageMimeType = 'image/jpeg', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = [] }) {
+export async function analyzeFoodWithGemini({ text = '', detail = '', imageBase64 = null, imageMimeType = 'image/jpeg', sweetness = 'normal', portion = 'normal', brand = 'standard', toppings = [] }) {
   const settings = getSettings();
   const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    if (!text.trim()) {
+    if (!text.trim() && !detail.trim()) {
       return {
         name: '',
         kcal: 0,
@@ -276,7 +335,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
         is_fallback: true
       };
     }
-    const res = fallbackAnalyze(text, sweetness, portion, brand, toppings);
+    const res = fallbackAnalyze(text, sweetness, portion, brand, toppings, detail);
     res.note += ' 💡 (ใส่ Gemini API Key ในเมนูตั้งค่าเพื่อเปิดระบบวิเคราะห์รูปภาพด้วย AI)';
     return res;
   }
@@ -286,8 +345,9 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
 
   const prompt = `
 คุณคือผู้ช่วยโภชนาการและนักวิเคราะห์ภาพอาหารระบบ AI ชั้นสูง (AR Food Vision Scanner)
-วิเคราะห์อาหารหรือเครื่องดื่มจากรูปภาพที่แนบมา และคำอธิบายของผู้ใช้
-- คำอธิบาย: "${text || '(ไม่มี)'}"
+วิเคราะห์อาหารหรือเครื่องดื่มจากรูปภาพที่แนบมา และคำอธิบาย/รายละเอียดของผู้ใช้
+- คำอธิบาย / ชื่อเมนู: "${text || '(ไม่มี)'}"
+- รายละเอียดเพิ่มเติม / ระดับความหวาน / สั่งพิเศษ: "${detail || '(ไม่มี)'}"
 - ระดับความหวานที่เลือกไว้: "${sweetness}"
 - ร้าน/แบรนด์เครื่องดื่มที่เลือก: "${brandInfo}"
 - ท็อปปิ้งเพิ่มเติม: "${toppingsList || 'ไม่มี'}"
@@ -299,29 +359,34 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
 3. ร้านชงโบราณ / รถเข็น / ตลาดนัด: ใช้นมข้นหวาน+น้ำเชื่อมจัดเต็ม หวาน 100% สูงถึง ~48-52g (12-13 ช้อนชา)
 4. ตู้เต่าบิน (Tao Bin): หวาน 100% ~28-30g, หวาน 60% ~18g
 5. Starbucks: ไซรัปมาตรฐาน 3-4 ปั๊ม (ปั๊มละ ~5g)
-6. หากผู้ใช้เลือกความหวาน:
-   - "none" (0%): น้ำตาลเติมแต่งเป็น 0g (คงเหลือน้ำตาลธรรมชาติจากนม 0-2g เท่านั้น)
-   - "less" (25%): ให้น้ำตาลประมาณ 25-30% ของสูตรปกติ
-   - "half" (50%): ให้น้ำตาลประมาณ 50-60% ของสูตรปกติ
-   - "normal" (100%): ให้น้ำตาลตามสูตรจริงของร้าน
-   - "sweet" (120%): ให้น้ำตาลประมาณ 125-130%
+6. หากผู้ใช้ระบุระดับความหวานในคำอธิบายหรือรายละเอียด (เช่น "หวาน 50%", "หวาน 25%", "หวาน 0%", "ไม่หวาน") หรือเลือกความหวาน:
+   - "none" หรือ 0%: น้ำตาลเติมแต่งเป็น 0g (คงเหลือน้ำตาลธรรมชาติจากนม/ส่วนผสม 0-2g เท่านั้น)
+   - "less" หรือ 25%: ให้น้ำตาลประมาณ 25-30% ของสูตรปกติ
+   - "half" หรือ 50%: ให้น้ำตาลประมาณ 50-60% ของสูตรปกติ (ลดแคลอรีลงด้วย)
+   - "normal" หรือ 100%: ให้น้ำตาลตามสูตรจริงของร้าน
+   - "sweet" หรือ 120%: ให้น้ำตาลประมาณ 125-130%
 
 ข้อกำหนดสำคัญในการตอบ:
 1. ตอบเป็น JSON object ตัวเดียวเท่านั้น ห้ามมี markdown หรือ backticks
 2. ต้องประเมิน:
    - "is_food": boolean (ต้องเป็น true เฉพาะเมื่อรูปภาพหรือคำอธิบายเป็นอาหาร เครื่องดื่ม ขนม ของกิน หรือวัตถุดิบจริงเท่านั้น! หากเป็นรูปเอกสาร ข้อความ คน สัตว์ สิ่งของ รถยนต์ หรือวิวทิวทัศน์ ให้ตอบ false ทันที)
    - "name": ชื่อเมนูสั้นๆ ภาษาไทย (หากไม่ใช่ของกิน ให้ใส่ "ไม่ใช่รูปอาหาร")
-   - "kcal": แคลอรีรวมทั้งจาน (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "kcal": แคลอรีรวมทั้งจาน/แก้ว (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "carbs": ปริมาณแป้งและคาร์โบไฮเดรตรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "sugar": ปริมาณน้ำตาลรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "protein": ปริมาณโปรตีนรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "fat": ปริมาณไขมันรวมทั้งจานเป็นกรัม (ถ้าไม่ใช่ของกินให้ใส่ 0)
    - "sodium": ปริมาณโซเดียมรวมทั้งจานเป็นมิลลิกรัม mg (เช่น อาหารไทย/ก๋วยเตี๋ยว/แกง มักมี 600-1400mg, ข้าวจานเดียว 500-900mg, สลัด/ผลไม้ 10-150mg, เครื่องดื่ม 20-120mg) (ถ้าไม่ใช่ของกินให้ใส่ 0)
+   - "is_drink": boolean (true หากเป็นเครื่องดื่ม เช่น ชา, กาแฟ, น้ำแดงโซดา, นม, สมูทตี้, น้ำอัดลม, น้ำหวาน, น้ำผลไม้, น้ำเปล่า ฯลฯ)
+   - "water_ml": number หรือ null (ถ้า is_drink เป็น true ให้ระบุปริมาตรน้ำ/ของเหลวเป็นมิลลิลิตร ml เพื่อนำไปบันทึกการดื่มน้ำ:
+       * หากผู้ใช้ระบุขนาด/ปริมาตร เช่น 500 ml, 350 ml, แก้วใหญ่ ให้ใช้ค่านั้น
+       * หากไม่ทราบหรือไม่ระบุ ให้ AI ประมาณการมาตรฐาน: กาแฟแก้วปกติ ~350 ml, น้ำหวาน/ชา/โซดา/ชานมแก้วทั่วไป ~500 ml, แก้วใหญ่ ~650 ml, ขวด/กระป๋อง ~325-600 ml
+       * ถ้าไม่ใช่น้ำ/เครื่องดื่มให้ใส่ null)
    - "confidence": "high" | "medium" | "low"
    - "needs_clarification": true ถ้าเป็นเครื่องดื่มหรือของหวานที่ข้อมูลความหวานหรือไซส์ไม่ชัดเจน
    - "clarification_question": คำถามสั้นๆ ถามกลับเมื่อข้อมูลไม่พอ
    - "options": อาเรย์ของตัวเลือกแนะนำ หรือ null
-   - "components": อาเรย์แจกแจงแยกชิ้นส่วนของอาหารแต่ละอย่างในจาน เพื่อนำไปปักหมุด AR Pin บนรูปภาพ เช่น ขนมปังโทสต์อะโวคาโด, ไข่ต้ม, เห็ดผัด, มะเขือเทศ:
+   - "components": อาเรย์แจกแจงแยกชิ้นส่วนของอาหาร/เครื่องดื่มแต่ละอย่างในจาน เพื่อนำไปปักหมุด AR Pin บนรูปภาพ เช่น ขนมปังโทสต์อะโวคาโด, ไข่ต้ม, เห็ดผัด, มะเขือเทศ:
      ตัวอย่าง:
      [
        {"name":"โทสต์อะโวคาโด","icon":"🥑","kcal":240,"carbs":22,"sugar":1.5,"protein":4.5,"fat":15,"sodium":280,"x":25,"y":45},
@@ -333,9 +398,9 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
      1. ถ้ามีรูปภาพ ให้ตรวจจับตำแหน่งของแต่ละวัตถุดิบ/อาหารบนรูป และระบุพิกัดตรงกลางของอาหารชิ้นนั้นเป็นเปอร์เซ็นต์ (15 ถึง 85):
         - "x": พิกัดแนวนอน (15 ถึง 85)
         - "y": พิกัดแนวตั้ง (15 ถึง 85)
-     2. ใส่ "icon" เป็น emoji อาหารที่ตรงที่สุด เช่น 🥑, 🍄, 🥚, 🍅, 🍳, 🥩, 🍚, 🍗, 🥬, 🍜, 🧋, 🥣, 🍞
+     2. ใส่ "icon" เป็น emoji อาหารที่ตรงที่สุด เช่น 🥑, 🍄, 🥚, 🍅, 🍳, 🥩, 🍚, 🍗, 🥬, 🍜, 🧋, 🥣, 🍞, 🥤, ☕
      3. แจกแจง "kcal" (แคลอรี), "carbs" (แป้ง g), "sugar" (น้ำตาล g), "protein" (โปรตีน g), "fat" (ไขมัน g), "sodium" (โซเดียม mg) ของแต่ละชิ้นส่วนในจานให้สมเหตุสมผล โดยผลรวมใกล้เคียงกับค่ารวมทั้งจาน
-   - "note": คำอธิบายสั้นๆ 1-2 ประโยค สรุปโภชนาการ สัดส่วนแป้ง โซเดียม และน้ำตาล หรือคำแนะนำสุขภาพที่เป็นมิตร
+   - "note": คำอธิบายสั้นๆ 1-2 ประโยค สรุปโภชนาการ สัดส่วนแป้ง โซเดียม น้ำตาล และปริมาณน้ำ
 `;
 
   try {
@@ -382,7 +447,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     }
 
     if (!response || !response.ok) {
-      const fb = fallbackAnalyze(text, sweetness, portion);
+      const fb = fallbackAnalyze(text, sweetness, portion, brand, toppings, detail);
       fb.note = `⚠️ ระบบ AI ขณะนี้ไม่พร้อมใช้งานชั่วคราว (${lastStatus || 503}) — ดึงค่ามาตรฐานมาให้แทน สามารถกดแก้ไขตัวเลขได้ตามต้องการ`;
       return fb;
     }
@@ -391,7 +456,7 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     const candidateParts = data.candidates?.[0]?.content?.parts || [];
     const candidateText = candidateParts.map(p => p.text).filter(Boolean).join('\n').trim();
     if (!candidateText) {
-      const fb = fallbackAnalyze(text, sweetness, portion);
+      const fb = fallbackAnalyze(text, sweetness, portion, brand, toppings, detail);
       fb.note = '⚠️ ผลการวิเคราะห์จาก AI ว่างเปล่า — ใช้ค่ามาตรฐานแทน คุณสามารถแก้ไขได้เลยน้า';
       return fb;
     }
@@ -422,6 +487,31 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
     const parsedSodium = parsed.sodium !== undefined && parsed.sodium !== null ? Math.round(Number(parsed.sodium)) : null;
     const parsedName = String(parsed.name || text || 'มื้ออาหาร');
 
+    const combinedText = (parsedName + ' ' + (text || '') + ' ' + (detail || '')).toLowerCase();
+    const isDrink = Boolean(
+      parsed.is_drink ||
+      (parsed.water_ml && parsed.water_ml > 0) ||
+      combinedText.includes('ชา') || combinedText.includes('กาแฟ') || combinedText.includes('นม') ||
+      combinedText.includes('โซดา') || combinedText.includes('น้ำ') || combinedText.includes('ลาเต้') ||
+      combinedText.includes('อเมริกาโน่') || combinedText.includes('สมูทตี้')
+    );
+
+    let finalWaterMl = null;
+    if (isDrink) {
+      if (parsed.water_ml && Number(parsed.water_ml) > 0) {
+        finalWaterMl = Math.round(Number(parsed.water_ml));
+      } else {
+        const mlMatch = combinedText.match(/(\d{2,4})\s*(ml|มล|ซีซี)?/);
+        if (mlMatch && parseInt(mlMatch[1], 10) >= 50 && parseInt(mlMatch[1], 10) <= 2000) {
+          finalWaterMl = parseInt(mlMatch[1], 10);
+        } else if (combinedText.includes('กาแฟ') || combinedText.includes('coffee') || combinedText.includes('espresso') || combinedText.includes('latte')) {
+          finalWaterMl = 350;
+        } else {
+          finalWaterMl = 500;
+        }
+      }
+    }
+
     const components = enrichComponents(parsed.components, parsedName, parsedKcal, parsedSugar, parsedCarbs, parsedProtein, parsedFat);
 
     const finalCarbs = parsedCarbs !== null ? parsedCarbs : Math.round(components.reduce((a, b) => a + (b.carbs || 0), 0) * 10) / 10;
@@ -437,17 +527,19 @@ export async function analyzeFoodWithGemini({ text = '', imageBase64 = null, ima
       protein: finalProtein,
       fat: finalFat,
       sodium: finalSodium,
+      is_drink: isDrink,
+      water_ml: finalWaterMl,
       is_food: true,
       confidence: parsed.confidence || 'medium',
       needs_clarification: Boolean(parsed.needs_clarification),
       clarification_question: parsed.clarification_question || null,
       options: Array.isArray(parsed.options) ? parsed.options : null,
       components,
-      note: parsed.note || 'วิเคราะห์ด้วย Google Gemini',
+      note: parsed.note || (isDrink ? `ประเมินเครื่องดื่ม ~${finalWaterMl} ml 💧` : 'วิเคราะห์ด้วย Google Gemini'),
       is_fallback: false
     };
   } catch (err) {
-    const fb = fallbackAnalyze(text, sweetness, portion);
+    const fb = fallbackAnalyze(text, sweetness, portion, brand, toppings, detail);
     fb.note = '⚠️ เชื่อมต่อ AI ไม่สำเร็จ — ใช้ค่ามาตรฐานภาษาไทยแทน คุณสามารถแก้ไขตัวเลขก่อนบันทึกได้เลย';
     return fb;
   }
