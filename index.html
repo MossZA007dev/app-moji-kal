@@ -6288,6 +6288,104 @@ let feedSubTab = 'activities'; // 'activities' | 'leaderboard' | 'members'
 let activitiesData = [];
 let leaderboardData = [];
 let leaderboardSort = 'goal'; // 'goal' | 'coins'
+
+// ============================================================
+// GangDB: Native IndexedDB Vault for Zero Data Loss Architecture
+// (Supports unlimited offline meal photos, user history & mesh sync)
+// ============================================================
+const GangDB = {
+  dbName: 'moji_gang_vault_v1',
+  storeName: 'vault',
+  _db: null,
+
+  async init() {
+    if (this._db) return this._db;
+    return new Promise((resolve) => {
+      try {
+        if (typeof indexedDB === 'undefined') return resolve(null);
+        const req = indexedDB.open(this.dbName, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            db.createObjectStore(this.storeName);
+          }
+        };
+        req.onsuccess = (e) => {
+          this._db = e.target.result;
+          resolve(this._db);
+        };
+        req.onerror = () => {
+          console.warn('[GangDB] IndexedDB error, using fallback');
+          resolve(null);
+        };
+      } catch (err) {
+        console.warn('[GangDB Init Catch]', err);
+        resolve(null);
+      }
+    });
+  },
+
+  async get(key) {
+    try {
+      const db = await this.init();
+      if (!db) return null;
+      return new Promise((resolve) => {
+        const tx = db.transaction(this.storeName, 'readonly');
+        const store = tx.objectStore(this.storeName);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (_) {
+      return null;
+    }
+  },
+
+  async set(key, value) {
+    try {
+      const db = await this.init();
+      if (!db) return false;
+      return new Promise((resolve) => {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        store.put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      });
+    } catch (_) {
+      return false;
+    }
+  },
+
+  async getAllKeys(prefix = '') {
+    try {
+      const db = await this.init();
+      if (!db) return [];
+      return new Promise((resolve) => {
+        const tx = db.transaction(this.storeName, 'readonly');
+        const store = tx.objectStore(this.storeName);
+        const req = store.getAllKeys();
+        req.onsuccess = () => {
+          const keys = req.result || [];
+          resolve(prefix ? keys.filter(k => typeof k === 'string' && k.startsWith(prefix)) : keys);
+        };
+        req.onerror = () => resolve([]);
+      });
+    } catch (_) {
+      return [];
+    }
+  },
+
+  async getAll(prefix = '') {
+    const keys = await this.getAllKeys(prefix);
+    const results = [];
+    for (const k of keys) {
+      const val = await this.get(k);
+      if (val !== null && val !== undefined) results.push({ key: k, value: val });
+    }
+    return results;
+  }
+};
 let socialPosts = [];
 let gangStories = [];
 let socialFeedFilter = 'all'; // 'all' | 'meal' | 'water' | 'goal'
@@ -6627,77 +6725,127 @@ async function fetchUsers() {
 async function autoRestoreAllCachedLogs() {
   if (!currentUser) return;
   const prefix = `mochi_logs_${currentUser.id}_`;
-  const cachedDates = [];
+  
+  // 1. Gather all local logs from localStorage and GangDB
+  const localLogsMap = new Map();
+
+  // From localStorage
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
     if (k && k.startsWith(prefix)) {
       const d = k.replace(prefix, '');
       if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-        cachedDates.push(d);
+        if (!sessionStorage.getItem('mochi_user_deleted_' + d)) {
+          try {
+            const list = JSON.parse(localStorage.getItem(k));
+            if (Array.isArray(list)) {
+              for (const item of list) {
+                if (item && (item.id || item.name)) {
+                  const key = item.id || `${item.user_id || currentUser.id}_${item.date || d}_${item.name}`;
+                  localLogsMap.set(key, { ...item, date: item.date || d, user_id: item.user_id || currentUser.id });
+                }
+              }
+            }
+          } catch (_) {}
+        }
       }
     }
   }
 
+  // From GangDB (Native IndexedDB Vault)
   try {
-    const res = await fetch(`/api/logs?userId=${currentUser.id}`);
-    const data = await res.json();
-    const serverLogs = data.logs || [];
-    const serverLogIds = new Set(serverLogs.map(l => l.id));
-
-    // 1. Restore missing logs from localStorage up to server across all historical dates
-    for (const d of cachedDates) {
-      if (sessionStorage.getItem('mochi_user_deleted_' + d)) continue;
-      const raw = localStorage.getItem(prefix + d);
-      if (!raw) continue;
-      let list = [];
-      try { list = JSON.parse(raw); } catch (_) {}
-      if (Array.isArray(list) && list.length > 0) {
-        for (const item of list) {
-          if (item && item.name && (!item.id || !serverLogIds.has(item.id))) {
-            console.log(`[Auto-Restore] Syncing meal '${item.name}' (${d}) to server`);
-            try {
-              await fetch('/api/logs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
-                body: JSON.stringify({
-                  id: item.id || undefined,
-                  userId: currentUser.id,
-                  date: item.date || d,
-                  name: item.name,
-                  calorie: item.calorie,
-                  sugar: item.sugar,
-                  carbs: item.carbs || 0,
-                  protein: item.protein || 0,
-                  fat: item.fat || 0,
-                  sodium: item.sodium || 0,
-                  portion_size: item.portion_size || 'normal',
-                  sweetness_level: item.sweetness_level || 'normal',
-                  is_private: item.is_private ? 1 : 0,
-                  image_url: item.image_url || null,
-                  components_json: item.components_json || null,
-                  water_ml: item.water_ml || null
-                })
-              });
-              if (item.id) serverLogIds.add(item.id);
-            } catch (postErr) {
-              console.warn('[Auto-Restore Post Error]', postErr);
-            }
+    const dbLogs = await GangDB.getAll('log_');
+    for (const entry of dbLogs) {
+      const item = entry.value;
+      if (item && item.user_id === currentUser.id) {
+        const key = item.id || `${item.user_id}_${item.date}_${item.name}`;
+        if (!localLogsMap.has(key)) {
+          localLogsMap.set(key, item);
+        } else {
+          const existing = localLogsMap.get(key);
+          if (!existing.image_url && item.image_url) {
+            existing.image_url = item.image_url;
           }
         }
       }
     }
+  } catch (idbErr) {
+    console.warn('[GangDB Log Gather Warning]', idbErr);
+  }
 
-    // 2. Bidirectional sync: cache server logs into localStorage for offline/speed
-    const logsByDate = {};
-    for (const sl of serverLogs) {
-      if (!logsByDate[sl.date]) logsByDate[sl.date] = [];
-      logsByDate[sl.date].push(sl);
+  // Gather quest claims from GangDB
+  const clientClaims = [];
+  try {
+    const dbClaims = await GangDB.getAll('claim_');
+    for (const c of dbClaims) {
+      if (c.value && c.value.user_id === currentUser.id) {
+        clientClaims.push(c.value);
+      }
     }
-    for (const [dateStr, sLogs] of Object.entries(logsByDate)) {
-      const storageKey = prefix + dateStr;
-      const localStr = localStorage.getItem(storageKey);
-      if (!localStr || localStr === '[]') {
-        localStorage.setItem(storageKey, JSON.stringify(sLogs));
+  } catch (_) {}
+
+  // 2. Perform Zero Data Loss Mesh Synchronization with Server
+  try {
+    const syncPayload = {
+      clientUser: currentUser,
+      clientLogs: Array.from(localLogsMap.values()),
+      clientClaims
+    };
+
+    const res = await fetch('/api/sync/mesh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify(syncPayload)
+    });
+
+    if (res.ok) {
+      const meshData = await res.json();
+      console.log(`[Mesh Sync] Synchronized with gang network:`, meshData);
+
+      // Save all authoritative logs (including photos!) to GangDB
+      if (Array.isArray(meshData.logs)) {
+        for (const log of meshData.logs) {
+          if (log && log.id) {
+            await GangDB.set('log_' + log.id, log);
+          }
+        }
+
+        // Cache currentUser logs into localStorage by date
+        const myLogsByDate = {};
+        for (const log of meshData.logs) {
+          if (log.user_id === currentUser.id) {
+            if (!myLogsByDate[log.date]) myLogsByDate[log.date] = [];
+            myLogsByDate[log.date].push(log);
+          }
+        }
+
+        for (const [dateStr, sLogs] of Object.entries(myLogsByDate)) {
+          const storageKey = prefix + dateStr;
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(sLogs));
+          } catch (lsErr) {
+            console.warn('[localStorage Quota Limit]', lsErr);
+          }
+        }
+      }
+
+      // Update gang coop status if received
+      if (meshData.coop) {
+        gangCoopData = meshData.coop;
+      }
+
+      // Update users list if received
+      if (Array.isArray(meshData.users) && meshData.users.length > 0) {
+        users = meshData.users;
+        const freshUser = users.find(u => u.id === currentUser.id);
+        if (freshUser) {
+          currentUser = { ...currentUser, ...freshUser };
+          try {
+            localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+          } catch (_) {}
+          await GangDB.set('mochi_user_profile', currentUser);
+          updateUserHeader();
+        }
       }
     }
   } catch (err) {
@@ -6880,6 +7028,7 @@ async function claimQuestReward(questId) {
         currentUser.coins = (currentUser.coins || 0) + coinsEarned;
         currentUser.goal_score = (currentUser.goal_score || 0) + scoreEarned;
       }
+      GangDB.set('claim_' + questId, { id: 'claim_' + questId, user_id: currentUser.id, quest_id: questId, period_key: 'all_time', claimed_at: Date.now() });
       await Promise.all([fetchQuests(), fetchFeed(), fetchLeaderboard()]);
       updateQuestNavBadge();
       if (tab === 'quests') renderQuests();
@@ -6916,6 +7065,7 @@ async function claimGangCoopReward() {
       toast(`🎉 สมาชิกแก๊งสุดยอดมาก! ได้รับรางวัลใหญ่ +${data.rewardCoins} 🪙 และ +${data.rewardScore} pt!`);
       currentUser.coins = (currentUser.coins || 0) + data.rewardCoins;
       currentUser.goal_score = (currentUser.goal_score || 0) + data.rewardScore;
+      GangDB.set('claim_' + (gangCoopData?.id || 'coop'), { id: 'claim_' + (gangCoopData?.id || 'coop'), user_id: currentUser.id, quest_id: gangCoopData?.id || 'coop', period_key: gangCoopData?.periodKey || 'current', claimed_at: Date.now() });
       await Promise.all([fetchQuests(), fetchFeed(), fetchLeaderboard()]);
       updateQuestNavBadge();
       if (tab === 'quests') renderQuests();
@@ -7115,7 +7265,11 @@ async function uploadProfilePhoto(file) {
     const data = await res.json();
     if (data.user) {
       currentUser = data.user;
-      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      try {
+        localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      } catch (_) {}
+      await GangDB.set('mochi_user_profile', currentUser);
+      await GangDB.set('user_' + currentUser.id, currentUser);
       updateUserHeader();
       toast('อัปเดตรูปโปรไฟล์เหมือน LINE เรียบร้อยแล้ว! 📸✨');
       fireConfetti();
@@ -7140,7 +7294,11 @@ async function removeProfilePhoto() {
     const data = await res.json();
     if (data.user) {
       currentUser = data.user;
-      localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      try {
+        localStorage.setItem('mochi_user_profile', JSON.stringify(currentUser));
+      } catch (_) {}
+      await GangDB.set('mochi_user_profile', currentUser);
+      await GangDB.set('user_' + currentUser.id, currentUser);
       updateUserHeader();
       toast('กลับมาใช้ตัวละครโมจิเรียบร้อยแล้ว 🍡');
       openMyProfileModal();
@@ -12000,6 +12158,19 @@ async function openMemberDetailModal(userId, initialTab = 'grid') {
     });
     const data = await res.json();
     if (!data.user) throw new Error('Member not found');
+
+    // Self-Healing: If member detail has 0 allMeals, try reading from GangDB
+    if (!data.allMeals || data.allMeals.length === 0) {
+      try {
+        const idbLogs = await GangDB.getAll('log_');
+        const userLogs = idbLogs
+          .map(e => e.value)
+          .filter(l => l && l.user_id === userId && (l.image_url || Number(l.calorie) > 0 || !l.name?.includes('น้ำเปล่า')));
+        if (userLogs.length > 0) {
+          data.allMeals = userLogs;
+        }
+      } catch (_) {}
+    }
 
     currentMemberProfileData = data;
     currentMemberProfileTab = initialTab || 'grid';
@@ -19842,7 +20013,7 @@ async function saveMeal() {
     const mealDate = draft.date || currentViewingDate || key();
     currentViewingDate = mealDate;
     const drinkWaterMl = (draft.isDrink && draft.autoTrackWater && draft.waterMl > 0) ? Number(draft.waterMl) : null;
-    await fetch('/api/logs', {
+    const logRes = await fetch('/api/logs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
       body: JSON.stringify({
@@ -19863,6 +20034,12 @@ async function saveMeal() {
         water_ml: drinkWaterMl
       })
     });
+    try {
+      const logData = await logRes.json();
+      if (logData && logData.log) {
+        await GangDB.set('log_' + logData.log.id, logData.log);
+      }
+    } catch (_) {}
 
     if (draft.saveAsFav) {
       await fetch('/api/favorites', {

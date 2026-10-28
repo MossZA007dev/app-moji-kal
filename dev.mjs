@@ -870,6 +870,79 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, deletedLog });
       }
 
+      // 11.1 Gang Zero Data Loss: Mesh Synchronization Endpoint
+      if (pathname === '/api/sync/mesh') {
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { clientUser, clientLogs, clientClaims } = body || {};
+
+          // 1. Sync User Profile from client
+          if (clientUser && clientUser.id) {
+            db.upsertFullUser(clientUser);
+          }
+
+          // 2. Sync Meals & Photos from client
+          if (Array.isArray(clientLogs) && clientLogs.length > 0) {
+            for (const item of clientLogs) {
+              if (!item || !item.id || !item.user_id) continue;
+              db.addLog({
+                id: item.id,
+                userId: item.user_id,
+                date: item.date,
+                name: item.name,
+                calorie: item.calorie,
+                sugar: item.sugar,
+                carbs: item.carbs,
+                protein: item.protein,
+                fat: item.fat,
+                sodium: item.sodium,
+                portion_size: item.portion_size,
+                sweetness_level: item.sweetness_level,
+                is_private: item.is_private,
+                image_url: item.image_url,
+                components_json: item.components_json || (item.components ? JSON.stringify(item.components) : null),
+                water_ml: item.water_ml
+              });
+            }
+          }
+
+          // 3. Sync Quest Claims from client
+          if (Array.isArray(clientClaims) && clientClaims.length > 0) {
+            for (const c of clientClaims) {
+              db.upsertQuestClaim(c);
+            }
+          }
+
+          // Persist seed file
+          db.exportGangSeedJson();
+
+          const allUsers = db.getAllUsers();
+          const allLogs = db.getAllGangLogs(200);
+          const reqUserId = clientUser?.id || req.headers['x-user-id'] || '';
+          const coop = db.getGangCoopStatus(reqUserId);
+
+          return sendJson(res, 200, {
+            success: true,
+            users: allUsers,
+            logs: allLogs,
+            coop
+          });
+        }
+
+        if (req.method === 'GET') {
+          const reqUserId = parsedUrl.searchParams.get('userId') || req.headers['x-user-id'] || '';
+          const allUsers = db.getAllUsers();
+          const allLogs = db.getAllGangLogs(200);
+          const coop = db.getGangCoopStatus(reqUserId);
+          return sendJson(res, 200, {
+            success: true,
+            users: allUsers,
+            logs: allLogs,
+            coop
+          });
+        }
+      }
+
       // 12. AI Food Analysis with Rate Limiting & Group Verified Knowledge Cache
       if (pathname === '/api/analyze' && req.method === 'POST') {
         const body = await parseJsonBody(req);

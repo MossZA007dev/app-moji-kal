@@ -284,6 +284,206 @@ for (const col of neededLogCols) {
   }
 }
 
+// ============================================================
+// GANG PERSISTENCE SYSTEM (Zero Data Loss Architecture)
+// ============================================================
+export function seedFromGangSeedJson() {
+  const seedFile = path.join(dataDir, 'gang_seed.json');
+  if (!fs.existsSync(seedFile)) return;
+  try {
+    const raw = fs.readFileSync(seedFile, 'utf8');
+    const data = JSON.parse(raw);
+    if (!data) return;
+
+    // 1. Seed / Upsert Users
+    if (Array.isArray(data.users) && data.users.length > 0) {
+      const stmtUser = db.prepare(`
+        INSERT OR REPLACE INTO users (
+          id, nickname, avatar_color, avatar_face, avatar_hat, avatar_accessory,
+          avatar_image, personality, coins, goal_score, goal_type, calorie_goal,
+          sugar_goal, carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
+          water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml,
+          water_bottle_setup, unlocked_items, privacy_level, role, is_dev, pin,
+          gender, age, height, weight, activity_level, target_weight, consent_pdpa,
+          consent_at, created_at
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?, ?,
+          ?, ?
+        )
+      `);
+
+      for (const u of data.users) {
+        stmtUser.run(
+          u.id, u.nickname, u.avatar_color || '#FF9EB5', u.avatar_face || 'happy', u.avatar_hat || 'none', u.avatar_accessory || 'none',
+          u.avatar_image || null, u.personality || 'kind', u.coins ?? 120, u.goal_score ?? 150, u.goal_type || 'weight_loss', u.calorie_goal || 2000,
+          u.sugar_goal || 25, u.carbs_goal || null, u.protein_goal || null, u.fat_goal || null, u.sodium_goal || 2000, u.water_goal || 8,
+          u.water_bottle_ml || 500, u.water_bottle_name || 'ขวดน้ำ 500 ml', u.water_bottle_icon || 'bottle_500', u.water_daily_target_ml || 2000,
+          u.water_bottle_setup || 0, typeof u.unlocked_items === 'string' ? u.unlocked_items : JSON.stringify(u.unlocked_items || []), u.privacy_level || 'full', u.role || 'user', u.is_dev || 0, u.pin || null,
+          u.gender || null, u.age || null, u.height || null, u.weight || null, u.activity_level || null, u.target_weight || null, u.consent_pdpa || 1,
+          u.consent_at || Date.now(), u.created_at || Date.now()
+        );
+      }
+      console.log(`[Seed] Seeded ${data.users.length} users from gang_seed.json`);
+    }
+
+    // 2. Seed / Upsert Logs (including photos!)
+    if (Array.isArray(data.logs) && data.logs.length > 0) {
+      const stmtLog = db.prepare(`
+        INSERT OR REPLACE INTO logs (
+          id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium,
+          portion_size, sweetness_level, is_private, image_url, components_json, water_ml, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const l of data.logs) {
+        stmtLog.run(
+          l.id, l.user_id, l.date, l.name, l.calorie || 0, l.sugar || 0, l.carbs || 0, l.protein || 0, l.fat || 0, l.sodium || 0,
+          l.portion_size || 'normal', l.sweetness_level || 'normal', l.is_private || 0, l.image_url || null, l.components_json || null,
+          l.water_ml || null, l.created_at || Date.now()
+        );
+      }
+      console.log(`[Seed] Seeded ${data.logs.length} logs from gang_seed.json`);
+    }
+
+    // 3. Seed / Upsert Post Reactions
+    if (Array.isArray(data.post_reactions)) {
+      const stmtReaction = db.prepare(`
+        INSERT OR REPLACE INTO post_reactions (id, post_id, user_id, reaction_type, comment_text, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      for (const r of data.post_reactions) {
+        stmtReaction.run(r.id, r.post_id, r.user_id, r.reaction_type || r.type || 'heart', r.comment_text || null, r.created_at || Date.now());
+      }
+    }
+
+    // 4. Seed / Upsert Quest Claims
+    if (Array.isArray(data.quest_claims)) {
+      const stmtClaim = db.prepare(`
+        INSERT OR REPLACE INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      for (const c of data.quest_claims) {
+        stmtClaim.run(c.id, c.user_id, c.quest_id, c.period_key, c.claimed_at || Date.now());
+      }
+    }
+  } catch (err) {
+    console.warn('[Seed Error]:', err);
+  }
+}
+
+export function exportGangSeedJson() {
+  try {
+    const seedFile = path.join(dataDir, 'gang_seed.json');
+    const dump = {
+      exported_at: new Date().toISOString(),
+      users: db.prepare('SELECT * FROM users').all(),
+      logs: db.prepare('SELECT * FROM logs').all(),
+      post_reactions: db.prepare('SELECT * FROM post_reactions').all(),
+      quest_claims: db.prepare('SELECT * FROM quest_claims').all()
+    };
+    fs.writeFileSync(seedFile, JSON.stringify(dump, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('[Gang Seed Save Warning]:', err);
+  }
+}
+
+let seedSaveTimer = null;
+export function triggerGangSeedSave() {
+  if (seedSaveTimer) clearTimeout(seedSaveTimer);
+  seedSaveTimer = setTimeout(() => {
+    exportGangSeedJson();
+  }, 1000);
+}
+
+export function getAllGangLogs(limit = 200) {
+  return db.prepare('SELECT * FROM logs ORDER BY created_at DESC LIMIT ?').all(limit);
+}
+
+export function upsertFullUser(u) {
+  if (!u || !u.id || !u.nickname) return null;
+  const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(u.id);
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO users (
+      id, nickname, avatar_color, avatar_face, avatar_hat, avatar_accessory,
+      avatar_image, personality, coins, goal_score, goal_type, calorie_goal,
+      sugar_goal, carbs_goal, protein_goal, fat_goal, sodium_goal, water_goal,
+      water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml,
+      water_bottle_setup, unlocked_items, privacy_level, role, is_dev, pin,
+      gender, age, height, weight, activity_level, target_weight, consent_pdpa,
+      consent_at, created_at
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?
+    )
+  `);
+
+  stmt.run(
+    u.id,
+    u.nickname,
+    u.avatar_color || existing?.avatar_color || '#FF9EB5',
+    u.avatar_face || existing?.avatar_face || 'happy',
+    u.avatar_hat || existing?.avatar_hat || 'none',
+    u.avatar_accessory || existing?.avatar_accessory || 'none',
+    u.avatar_image !== undefined ? u.avatar_image : (existing?.avatar_image || null),
+    u.personality || existing?.personality || 'kind',
+    Math.max(Number(u.coins) || 0, Number(existing?.coins) || 0),
+    Math.max(Number(u.goal_score) || 0, Number(existing?.goal_score) || 0),
+    u.goal_type || existing?.goal_type || 'weight_loss',
+    Number(u.calorie_goal) || existing?.calorie_goal || 2000,
+    Number(u.sugar_goal) || existing?.sugar_goal || 25,
+    u.carbs_goal !== undefined ? u.carbs_goal : (existing?.carbs_goal || null),
+    u.protein_goal !== undefined ? u.protein_goal : (existing?.protein_goal || null),
+    u.fat_goal !== undefined ? u.fat_goal : (existing?.fat_goal || null),
+    u.sodium_goal !== undefined ? u.sodium_goal : (existing?.sodium_goal || 2000),
+    u.water_goal !== undefined ? u.water_goal : (existing?.water_goal || 8),
+    u.water_bottle_ml || existing?.water_bottle_ml || 500,
+    u.water_bottle_name || existing?.water_bottle_name || 'ขวดน้ำ 500 ml',
+    u.water_bottle_icon || existing?.water_bottle_icon || 'bottle_500',
+    u.water_daily_target_ml || existing?.water_daily_target_ml || 2000,
+    u.water_bottle_setup !== undefined ? u.water_bottle_setup : (existing?.water_bottle_setup || 0),
+    typeof u.unlocked_items === 'string' ? u.unlocked_items : JSON.stringify(u.unlocked_items || existing?.unlocked_items || []),
+    u.privacy_level || existing?.privacy_level || 'full',
+    u.role || existing?.role || 'user',
+    u.is_dev !== undefined ? u.is_dev : (existing?.is_dev || 0),
+    u.pin || existing?.pin || null,
+    u.gender || existing?.gender || null,
+    u.age || existing?.age || null,
+    u.height || existing?.height || null,
+    u.weight || existing?.weight || null,
+    u.activity_level || existing?.activity_level || null,
+    u.target_weight || existing?.target_weight || null,
+    u.consent_pdpa !== undefined ? u.consent_pdpa : (existing?.consent_pdpa || 1),
+    u.consent_at || existing?.consent_at || Date.now(),
+    u.created_at || existing?.created_at || Date.now()
+  );
+
+  triggerGangSeedSave();
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(u.id);
+}
+
+export function upsertQuestClaim(c) {
+  if (!c || !c.user_id || !c.quest_id) return null;
+  const claimId = c.id || `claim_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  db.prepare(`
+    INSERT OR REPLACE INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(claimId, c.user_id, c.quest_id, c.period_key || 'all_time', c.claimed_at || Date.now());
+  triggerGangSeedSave();
+}
+
+// Initial seed from gang_seed.json
+seedFromGangSeedJson();
+
 // Seed default users if empty (Prevents FOREIGN KEY constraint error on fresh deploy)
 try {
   const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
@@ -1094,6 +1294,7 @@ export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein,
     console.error('Goal sync error on addLog:', err);
   }
 
+  triggerGangSeedSave();
   return db.prepare('SELECT * FROM logs WHERE id = ?').get(logId);
 }
 
@@ -1106,6 +1307,7 @@ export function deleteLog(id, userId) {
   } catch (err) {
     console.error('Goal sync error on deleteLog:', err);
   }
+  triggerGangSeedSave();
   return log; // Return deleted log data for Undo functionality
 }
 
@@ -1138,6 +1340,7 @@ export function restoreDeletedLog(log) {
   } catch (err) {
     console.error('Goal sync error on restoreDeletedLog:', err);
   }
+  triggerGangSeedSave();
   return log;
 }
 
@@ -1761,6 +1964,7 @@ export function claimQuest(userId, questId) {
   // Broadcast celebration to Gang Social Feed
   recordActivity(userId, 'goal', `🎉 พิชิตภารกิจ [${target.title}] สำเร็จ! (+${target.rewardScore} pt, +${target.rewardCoins} 🪙) 🏆`, 0);
 
+  triggerGangSeedSave();
   return {
     success: true,
     quest: target,
@@ -1894,6 +2098,7 @@ export function claimGangCoopReward(userId) {
 
   recordActivity(userId, 'goal', `🎉 แก๊งร่วมใจพิชิต [${coop.title}] สำเร็จ! รับรางวัลใหญ่ (+${coop.rewardCoins} 🪙, +${coop.rewardScore} pt) ยกแก๊ง! 🤝✨`, 0);
 
+  triggerGangSeedSave();
   return {
     success: true,
     rewardCoins: coop.rewardCoins,
@@ -2278,7 +2483,12 @@ export function getMemberDetail(targetUserId, requesterId) {
 
   // All meal posts for Instagram-style 3x3 Photo Grid & timeline
   const rawAllLogs = getLogsSecure(targetUserId, requesterId); // returns all logs
-  const mealLogs = rawAllLogs.filter(l => !l.water_ml && !l.name.includes('น้ำเปล่า'));
+  const mealLogs = rawAllLogs.filter(l => {
+    if (l.image_url) return true;
+    if (Number(l.calorie) > 0) return true;
+    if (l.water_ml && (l.name.includes('น้ำเปล่า') || l.name === 'ดื่มน้ำ')) return false;
+    return !l.name.includes('น้ำเปล่า');
+  });
   const allMeals = attachReactionsToPosts(mealLogs, requesterId);
 
   // 24-hour stories
@@ -3046,6 +3256,7 @@ export function deletePostComment(commentId, userId) {
   }
 
   db.prepare('DELETE FROM post_reactions WHERE id = ?').run(commentId);
+  triggerGangSeedSave();
   return { success: true, removedId: commentId, postId: comment.post_id };
 }
 
@@ -3102,6 +3313,7 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
       }
     }
 
+    triggerGangSeedSave();
     return { success: true, type: 'comment', commentId, commentText: text, userNickname: user.nickname };
   }
 
@@ -3112,6 +3324,7 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
 
   if (existing) {
     db.prepare('DELETE FROM post_reactions WHERE id = ?').run(existing.id);
+    triggerGangSeedSave();
     return { success: true, liked: false };
   } else {
     const reactId = `react_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -3138,6 +3351,7 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
       });
     }
 
+    triggerGangSeedSave();
     return { success: true, liked: true };
   }
 }
