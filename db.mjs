@@ -188,6 +188,28 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
   CREATE INDEX IF NOT EXISTS idx_weight_logs_user_date ON weight_logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_notifications_user_date ON notifications(user_id, created_at DESC);
+
+  -- Prank Cards & Mischief System
+  CREATE TABLE IF NOT EXISTS pranks (
+    id TEXT PRIMARY KEY,
+    from_user_id TEXT NOT NULL,
+    to_user_id TEXT NOT NULL,
+    card_id TEXT NOT NULL,
+    card_name TEXT NOT NULL,
+    card_icon TEXT NOT NULL,
+    card_effect TEXT NOT NULL,
+    prank_note TEXT,
+    extra_data TEXT,
+    is_active INTEGER DEFAULT 1,
+    is_cleared INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_pranks_to_user ON pranks(to_user_id, is_active);
+  CREATE INDEX IF NOT EXISTS idx_pranks_created_at ON pranks(created_at DESC);
 `);
 
 // Idempotent column migrations for users table
@@ -601,6 +623,298 @@ export function claimMissionItem(userId, itemKey, itemName) {
   recordActivity(userId, 'shop', `สำเร็จภารกิจและปลดล็อคแฟชั่น [${itemName || itemKey}] ฟรี! 🎯🎉`, 0);
 
   return { success: true, user: getUser(userId), unlocked };
+}
+
+// -------------------------------------------------------------
+// Prank Cards & Mischief Shop System (ระบบการ์ดแกล้งเพื่อน 🃏😈)
+// -------------------------------------------------------------
+
+export const PRANK_CARDS = [
+  {
+    id: 'steal_score',
+    name: 'การ์ดดูดแต้มวินัย 🧲',
+    icon: '🧲',
+    price: 25,
+    tag: 'ยอดนิยม 🔥',
+    gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)',
+    shortDesc: 'ดูดแต้มเพื่อน -15 pt มาเป็นของเรา +10 pt',
+    fullDesc: 'แกล้งเพื่อนที่คะแนนนำหน้า! ดูดคะแนนวินัย (Goal Score) ของเพื่อนลดลง 15 แต้ม และโอนมาเพิ่มให้เราทันที 10 แต้ม 😈',
+    effectType: 'score',
+    scorePenalty: 15,
+    scoreBonus: 10,
+    durationHours: 0,
+    needsTarget: true
+  },
+  {
+    id: 'extra_quest',
+    name: 'การ์ดการบ้านงอก 📜',
+    icon: '📜',
+    price: 20,
+    tag: 'ท้าทาย ⚡',
+    gradient: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+    shortDesc: 'ส่งภารกิจพิเศษฉุกเฉินให้เพื่อน 1 อย่าง',
+    fullDesc: 'ยัดเยียดภารกิจพิเศษฉุกเฉินให้เพื่อนทำภายในวันนี้! (เช่น ดื่มน้ำเพิ่ม หรือถ่ายรูปมื้อสุขภาพ) ถ้าเพื่อนทำไม่สำเร็จโดนหัก 10 pt',
+    effectType: 'quest',
+    durationHours: 24,
+    needsTarget: true
+  },
+  {
+    id: 'water_force',
+    name: 'การ์ดแก้วน้ำบังคับ 💧',
+    icon: '💧',
+    price: 15,
+    tag: 'รักสุขภาพ 🫧',
+    gradient: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+    shortDesc: 'สั่งเพื่อนดื่มน้ำเพิ่ม +500 ml วันนี้',
+    fullDesc: 'แกล้งเพื่อนสายไม่ชอบจิบน้ำ! บังคับเพิ่มเป้าหมายน้ำดื่มของเพื่อน +500 ml วันนี้ พร้อมแจ้งเตือนเตือนดื่มน้ำรัวๆ',
+    effectType: 'water',
+    waterAddedMl: 500,
+    durationHours: 24,
+    needsTarget: true
+  },
+  {
+    id: 'clown_curse',
+    name: 'การ์ดสาปหน้ามึนตึ้บ 🤡',
+    icon: '🤡',
+    price: 18,
+    tag: 'กวนประสาท 🤣',
+    gradient: 'linear-gradient(135deg, #EC4899, #F43F5E)',
+    shortDesc: 'สาปหน้าโมจิเพื่อนเป็นหน้ามึนงง 24 ชม.',
+    fullDesc: 'เสกคาถาสาปให้ใบหน้าน้องโมจิของเพื่อนเปลี่ยนเป็นหน้า Dizzy / มึนงง ตลอด 24 ชม. ทั้งในฟีดและหน้าโปรไฟล์!',
+    effectType: 'face_curse',
+    faceType: 'dizzy',
+    durationHours: 24,
+    needsTarget: true
+  },
+  {
+    id: 'sugar_lock',
+    name: 'การ์ดล็อกโควตาน้ำตาล 📉',
+    icon: '📉',
+    price: 25,
+    tag: 'ดัดนิสัย 🍬',
+    gradient: 'linear-gradient(135deg, #10B981, #0D9488)',
+    shortDesc: 'บีบโควตาน้ำตาลเพื่อนลดลง 5g วันนี้',
+    fullDesc: 'บีบเพดานน้ำตาลของเพื่อนให้ลดลง 5g สำหรับวันนี้! ใครชอบกินชานมหรือของหวานโดนการ์ดนี้รับรองว่าต้องคุมเข้ม!',
+    effectType: 'sugar_limit',
+    sugarReduction: 5,
+    durationHours: 24,
+    needsTarget: true
+  },
+  {
+    id: 'shield',
+    name: 'การ์ดโล่สะท้อนมหาเวทย์ 🛡️',
+    icon: '🛡️',
+    price: 30,
+    tag: 'ไอเทมป้องกัน 🔮',
+    gradient: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+    shortDesc: 'สะท้อนการ์ดแกล้งกลับไปหาผู้ส่ง 100%',
+    fullDesc: 'ซื้อติดตัวไว้ป้องกัน! หากมีใครคิดจะแกล้งเรา โล่จะทำงานอัตโนมัติ สะท้อนเอฟเฟกต์การแกล้งกลับไปหาเพื่อนคนนั้นทันที!',
+    effectType: 'defense',
+    durationHours: 48,
+    needsTarget: false
+  }
+];
+
+export function getUserActivePranks(userId) {
+  if (!userId) return [];
+  const now = Date.now();
+  try {
+    return db.prepare(`
+      SELECT p.*, u.nickname as sender_nickname, u.avatar_image as sender_avatar_image, u.avatar_color as sender_avatar_color, u.avatar_face as sender_avatar_face
+      FROM pranks p
+      JOIN users u ON p.from_user_id = u.id
+      WHERE p.to_user_id = ? AND p.is_active = 1 AND p.expires_at > ?
+      ORDER BY p.created_at DESC
+    `).all(userId, now);
+  } catch (_) {
+    return [];
+  }
+}
+
+export function getRecentGangPranks(limit = 20) {
+  try {
+    return db.prepare(`
+      SELECT p.*, 
+             u1.nickname as from_nickname, u1.avatar_color as from_color, u1.avatar_face as from_face,
+             u2.nickname as to_nickname, u2.avatar_color as to_color, u2.avatar_face as to_face
+      FROM pranks p
+      JOIN users u1 ON p.from_user_id = u1.id
+      JOIN users u2 ON p.to_user_id = u2.id
+      ORDER BY p.created_at DESC
+      LIMIT ?
+    `).all(limit);
+  } catch (_) {
+    return [];
+  }
+}
+
+export function usePrankCard(fromUserId, toUserId, cardId, prankNote = '') {
+  const fromUser = getUser(fromUserId);
+  if (!fromUser) return { success: false, error: 'User not found' };
+
+  const card = PRANK_CARDS.find(c => c.id === cardId);
+  if (!card) return { success: false, error: 'ไม่พบการ์ดแกล้งนี้' };
+
+  const targetId = card.id === 'shield' ? fromUserId : toUserId;
+  const toUser = getUser(targetId);
+  if (!toUser) return { success: false, error: 'ไม่พบผู้เล่นเป้าหมาย' };
+
+  if (card.needsTarget && fromUserId === toUserId) {
+    return { success: false, error: 'ไม่สามารถแกล้งตัวเองได้นะ!' };
+  }
+
+  const userCoins = Number(fromUser.coins) || 0;
+  if (userCoins < card.price) {
+    return { success: false, error: `เหรียญไม่พอ (ต้องการ ${card.price} 🪙 แต่มี ${userCoins} 🪙)` };
+  }
+
+  // Deduct coins from sender
+  addCoins(fromUserId, -card.price);
+
+  const now = Date.now();
+  const expiresAt = now + (card.durationHours > 0 ? card.durationHours * 3600 * 1000 : 86400000);
+
+  // If buying shield for self
+  if (card.id === 'shield') {
+    const prankId = `prank_${now}_${Math.random().toString(36).slice(2, 6)}`;
+    try {
+      db.prepare("UPDATE pranks SET is_active = 0 WHERE to_user_id = ? AND card_id = 'shield'").run(fromUserId);
+      db.prepare(`
+        INSERT INTO pranks (id, from_user_id, to_user_id, card_id, card_name, card_icon, card_effect, prank_note, extra_data, is_active, is_cleared, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+      `).run(prankId, fromUserId, fromUserId, 'shield', card.name, card.icon, 'โล่สะท้อนมหาเวทย์พร้อมปกป้อง 1 ครั้ง', prankNote || 'เปิดใช้งานโล่สะท้อน', JSON.stringify({}), now, expiresAt);
+    } catch (_) {}
+
+    recordActivity(fromUserId, 'shop', `🛡️ เปิดใช้งาน [${card.name}] ป้องกันการโดนแกล้ง (-${card.price} 🪙) ✨`, -card.price);
+
+    return {
+      success: true,
+      card,
+      reflected: false,
+      message: `เปิดใช้งาน ${card.name} เรียบร้อยแล้ว! พร้อมสะท้อนการ์ดแกล้ง 1 ครั้ง 🛡️`,
+      user: getUser(fromUserId)
+    };
+  }
+
+  // Check if target has an active shield!
+  const activeShield = db.prepare(`
+    SELECT * FROM pranks 
+    WHERE to_user_id = ? AND card_id = 'shield' AND is_active = 1 AND expires_at > ?
+  `).get(toUserId, now);
+
+  if (activeShield) {
+    // Break target's shield!
+    db.prepare('UPDATE pranks SET is_active = 0, is_cleared = 1 WHERE id = ?').run(activeShield.id);
+
+    // Reflect prank back to sender!
+    const reflectPrankId = `prank_${now}_${Math.random().toString(36).slice(2, 6)}`;
+    let reflectEffect = '';
+
+    if (card.id === 'steal_score') {
+      db.prepare('UPDATE users SET goal_score = MAX(0, COALESCE(goal_score, 150) - ?) WHERE id = ?').run(card.scorePenalty, fromUserId);
+      db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ? WHERE id = ?').run(card.scoreBonus, toUserId);
+      reflectEffect = `โดนสะท้อนกลับ! ${fromUser.nickname} โดนหัก ${card.scorePenalty} pt และ ${toUser.nickname} ได้รับ +${card.scoreBonus} pt แทน!`;
+    } else {
+      reflectEffect = `โดนโล่สะท้อนมหาเวทย์ของ ${toUser.nickname} สะท้อนผลเอฟเฟกต์ [${card.name}] กลับใส่ตัวเองเต็มๆ!`;
+    }
+
+    db.prepare(`
+      INSERT INTO pranks (id, from_user_id, to_user_id, card_id, card_name, card_icon, card_effect, prank_note, extra_data, is_active, is_cleared, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+    `).run(reflectPrankId, toUserId, fromUserId, card.id, card.name, card.icon, reflectEffect, `โล่สะท้อนจาก ${toUser.nickname}`, JSON.stringify({ reflected: true }), now, expiresAt);
+
+    // Feed Broadcast
+    recordActivity(fromUserId, 'prank', `💥 พลิกล็อค! ${toUser.nickname} กางโล่สะท้อนมหาเวทย์ 🛡️ สะท้อน [${card.name}] ใส่ ${fromUser.nickname} เต็มๆ! 🤣`, 0);
+
+    // Notifications
+    createNotification({
+      userId: toUserId,
+      type: 'social',
+      icon: '🛡️',
+      title: 'โล่สะท้อนของคุณทำงาน!',
+      body: `${fromUser.nickname} พยายามใช้ ${card.name} แต่ถูกโล่ของคุณสะท้อนกลับใส่เขาเรียบร้อย!`,
+      action: 'openGang',
+      actionLabel: 'ดูก๊วน'
+    });
+
+    createNotification({
+      userId: fromUserId,
+      type: 'social',
+      icon: '💥',
+      title: 'การแกล้งโดนสะท้อนกลับ!',
+      body: `${toUser.nickname} มีโล่สะท้อนมหาเวทย์! ผลของ ${card.name} จึงสะท้อนกลับใส่คุณเอง 😱`,
+      action: 'openGang',
+      actionLabel: 'ดูก๊วน'
+    });
+
+    return {
+      success: true,
+      reflected: true,
+      card,
+      message: `💥 โอ๊ะ! ${toUser.nickname} มีโล่สะท้อนมหาเวทย์! การ์ดถูกสะท้อนกลับใส่คุณเต็มๆ!`,
+      user: getUser(fromUserId)
+    };
+  }
+
+  // Normal prank execution (Target has no shield)
+  const prankId = `prank_${now}_${Math.random().toString(36).slice(2, 6)}`;
+  let effectMsg = '';
+  let extraJson = {};
+
+  if (card.id === 'steal_score') {
+    db.prepare('UPDATE users SET goal_score = MAX(0, COALESCE(goal_score, 150) - ?) WHERE id = ?').run(card.scorePenalty, toUserId);
+    db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ? WHERE id = ?').run(card.scoreBonus, fromUserId);
+    effectMsg = `ดูดแต้มวินัยจาก ${toUser.nickname} -${card.scorePenalty} pt และมอบให้ ${fromUser.nickname} +${card.scoreBonus} pt 😈`;
+    extraJson = { score_deducted: card.scorePenalty, score_bonus: card.scoreBonus };
+  } else if (card.id === 'extra_quest') {
+    const questPool = [
+      { title: 'ดื่มน้ำเพิ่ม 1 แก้วใหญ่ 💧', desc: 'ดื่มน้ำเปล่า 1 แก้วและบันทึกลงในแอปเพื่อลบล้างคำสาป', task_type: 'water', target: 1 },
+      { title: 'กินผลไม้หรือผัก 1 มื้อ 🥗', desc: 'บันทึกมื้ออาหารที่มีผักหรือผลไม้เพื่อสุขภาพดี', task_type: 'meal', target: 1 },
+      { title: 'ถ่ายรูปมื้ออาหารจริง 📸', desc: 'ถ่ายรูปมื้ออาหารด้วยกล้อง AI 1 รูป', task_type: 'photo', target: 1 }
+    ];
+    const pickedQuest = questPool[Math.floor(Math.random() * questPool.length)];
+    effectMsg = `ส่งภารกิจพิเศษ "${pickedQuest.title}" ให้ ${toUser.nickname} ต้องทำให้เสร็จวันนี้! 📜`;
+    extraJson = { ...pickedQuest };
+  } else if (card.id === 'water_force') {
+    effectMsg = `สั่งให้ ${toUser.nickname} ดื่มน้ำเพิ่ม +500 ml วันนี้เพื่อสุขภาพและความสดชื่น 💧`;
+    extraJson = { water_added: 500 };
+  } else if (card.id === 'clown_curse') {
+    effectMsg = `สาปให้หน้าน้องโมจิของ ${toUser.nickname} กลายเป็นหน้าตัวตลก/มึนตึ้บ เป็นเวลา 24 ชม. 🤡`;
+    extraJson = { face: 'dizzy' };
+  } else if (card.id === 'sugar_lock') {
+    effectMsg = `บีบโควตาน้ำตาลของ ${toUser.nickname} ลดลง 5g วันนี้! ห้ามกินหวานนะ 📉`;
+    extraJson = { sugar_reduction: 5 };
+  }
+
+  db.prepare(`
+    INSERT INTO pranks (id, from_user_id, to_user_id, card_id, card_name, card_icon, card_effect, prank_note, extra_data, is_active, is_cleared, created_at, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+  `).run(prankId, fromUserId, toUserId, card.id, card.name, card.icon, effectMsg, prankNote || '', JSON.stringify(extraJson), now, expiresAt);
+
+  // Broadcast to Social Feed
+  const feedNote = prankNote ? ` "${prankNote}"` : '';
+  recordActivity(fromUserId, 'prank', `🃏 ${fromUser.nickname} ใช้ [${card.name}] ใส่ ${toUser.nickname}!${feedNote} (${effectMsg})`, 0);
+
+  // Notify Target User
+  createNotification({
+    userId: toUserId,
+    type: 'social',
+    icon: card.icon,
+    title: `คุณโดน ${fromUser.nickname} แกล้งด้วย ${card.name}! 😈`,
+    body: `${prankNote ? `"${prankNote}" · ` : ''}${effectMsg}`,
+    action: 'openGang',
+    actionLabel: 'ดูฟีดแก๊ง'
+  });
+
+  return {
+    success: true,
+    reflected: false,
+    card,
+    targetNickname: toUser.nickname,
+    effectMsg,
+    message: `ใช้ ${card.name} แกล้ง ${toUser.nickname} สำเร็จ! (-${card.price} 🪙) 😈`,
+    user: getUser(fromUserId)
+  };
 }
 
 export function deleteUserAndData(userId) {
@@ -1360,6 +1674,53 @@ export function getUserQuests(userId) {
     }
   ];
 
+  // Inject active Prank Quests sent by friends!
+  try {
+    const activePrankQuests = db.prepare(`
+      SELECT p.*, u.nickname as sender_nickname
+      FROM pranks p
+      JOIN users u ON p.from_user_id = u.id
+      WHERE p.to_user_id = ? AND p.card_id = 'extra_quest' AND p.is_active = 1 AND p.expires_at > ?
+      ORDER BY p.created_at DESC
+    `).all(userId, Date.now());
+
+    for (const pq of activePrankQuests) {
+      let extra = {};
+      try { extra = JSON.parse(pq.extra_data || '{}'); } catch (_) {}
+      const questId = `prank_quest_${pq.id}`;
+      let curProg = 0;
+      const reqTarget = extra.target || 1;
+      if (extra.task_type === 'water') {
+        curProg = todayWater >= 1000 ? 1 : 0;
+      } else if (extra.task_type === 'photo') {
+        curProg = todayPhotos >= 1 ? 1 : 0;
+      } else {
+        curProg = todayMeals >= 1 ? 1 : 0;
+      }
+      const isDone = curProg >= reqTarget;
+      const isClaimedPrank = isClaimed(questId, todayStr) || pq.is_cleared === 1;
+
+      dailyTasks.unshift({
+        id: questId,
+        category: 'daily',
+        periodKey: todayStr,
+        icon: '📜',
+        title: `😈 โดน ${pq.sender_nickname} แกล้ง: ${extra.title || 'ภารกิจพิเศษ'}`,
+        desc: extra.desc || 'รีบทำภารกิจให้สำเร็จเพื่อลบล้างคำสาปแกล้งจากเพื่อน!',
+        progress: curProg,
+        target: reqTarget,
+        unit: extra.unit || 'ครั้ง',
+        rewardCoins: 20,
+        rewardScore: 25,
+        isCompleted: isDone,
+        isClaimed: isClaimedPrank,
+        isPrank: true,
+        prankId: pq.id,
+        actionType: extra.task_type || 'meal'
+      });
+    }
+  } catch (_) {}
+
   return { daily: dailyTasks, weekly: weeklyTasks, main: mainTasks };
 }
 
@@ -1382,6 +1743,13 @@ export function claimQuest(userId, questId) {
   addCoins(userId, target.rewardCoins);
   db.prepare('UPDATE users SET goal_score = COALESCE(goal_score, 150) + ? WHERE id = ?')
     .run(target.rewardScore, userId);
+
+  // If this was a prank quest, mark the prank as cleared!
+  if (target.isPrank && target.prankId) {
+    try {
+      db.prepare('UPDATE pranks SET is_active = 0, is_cleared = 1 WHERE id = ?').run(target.prankId);
+    } catch (_) {}
+  }
 
   // Broadcast celebration to Gang Social Feed
   recordActivity(userId, 'goal', `🎉 พิชิตภารกิจ [${target.title}] สำเร็จ! (+${target.rewardScore} pt, +${target.rewardCoins} 🪙) 🏆`, 0);
@@ -2232,7 +2600,7 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     FROM activities a
     JOIN users u ON a.user_id = u.id
     WHERE a.type != 'meal'
-      AND (u.privacy_level = 'full' OR a.user_id = ?)
+      AND (u.privacy_level = 'full' OR a.user_id = ? OR a.type = 'prank')
     ORDER BY a.created_at DESC
     LIMIT ?
   `).all(currentUserId, limit);

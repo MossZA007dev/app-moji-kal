@@ -380,6 +380,35 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, result.success ? 200 : 400, result);
       }
 
+      // 8.3 Prank Cards Shop (ตลาดการ์ดแกล้งเพื่อน 🃏😈)
+      if (pathname === '/api/pranks/cards' && req.method === 'GET') {
+        return sendJson(res, 200, { success: true, cards: db.PRANK_CARDS });
+      }
+
+      if (pathname === '/api/pranks/active' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const activePranks = db.getUserActivePranks(userId);
+        const shieldActive = activePranks.some(p => p.card_id === 'shield');
+        return sendJson(res, 200, { success: true, activePranks, shieldActive });
+      }
+
+      if (pathname === '/api/pranks/recent' && req.method === 'GET') {
+        const pranks = db.getRecentGangPranks(20);
+        return sendJson(res, 200, { success: true, pranks });
+      }
+
+      if (pathname === '/api/pranks/use' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const fromUserId = req.headers['x-user-id'] || body.fromUserId || body.userId;
+        const { toUserId, cardId, prankNote } = body;
+        if (!fromUserId || !cardId) {
+          return sendJson(res, 400, { error: 'fromUserId and cardId are required' });
+        }
+        const result = db.usePrankCard(fromUserId, toUserId, cardId, prankNote);
+        return sendJson(res, result.success ? 200 : 400, result);
+      }
+
       // 9. Users
       if (pathname === '/api/users' && req.method === 'GET') {
         return sendJson(res, 200, { users: db.getAllUsers() });

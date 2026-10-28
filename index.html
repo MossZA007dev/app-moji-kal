@@ -645,6 +645,129 @@ nav button i { font-style: normal; font-size: 16px; line-height: 1.1; }
   color: var(--pink-ink);
   box-shadow: 0 2px 8px rgba(255, 117, 140, 0.2);
 }
+
+/* Prank Cards Shop & Mischief UI */
+.prank-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.prank-card {
+  position: relative;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+.prank-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.15);
+  border-color: #C084FC;
+}
+.prank-card-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 4px auto 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.prank-card-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.prank-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.prank-card-desc {
+  font-size: 11px;
+  color: var(--mute);
+  line-height: 1.35;
+  text-align: center;
+  margin-bottom: 10px;
+  flex: 1;
+}
+.prank-card-btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 7px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+.prank-card-btn:active {
+  transform: scale(0.96);
+}
+
+/* Feed Prank Post Box */
+.ig-post-prank-box {
+  background: linear-gradient(135deg, rgba(243, 232, 255, 0.8), rgba(253, 242, 248, 0.8));
+  border: 1.5px solid #E9D5FF;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 14px 10px;
+}
+.ig-post-pill.prank {
+  background: #F3E8FF;
+  border-color: #D8B4FE;
+  color: #7E22CE;
+}
+
+/* Friend selector item in prank modal */
+.prank-target-friend-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.prank-target-friend-card:hover {
+  border-color: #C084FC;
+  background: #FAF5FF;
+}
+.prank-target-friend-card.selected {
+  border-color: #9333EA;
+  background: #F3E8FF;
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.25);
+}
 .fashion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(102px, 1fr));
@@ -8064,12 +8187,12 @@ function go(t) {
   render();
   window.scrollTo(0, 0);
 
-  if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges()]).catch(console.error).then(render);
+  if (t === 'feed') Promise.all([fetchFeed(), fetchActivities(), fetchLeaderboard(), fetchChallenges(), fetchPranksData()]).catch(console.error).then(render);
   else if (t === 'quests') Promise.all([fetchQuests(), fetchLeaderboard(), fetchStreak()]).catch(console.error).then(render);
-  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs()]).catch(console.error).then(render);
+  else if (t === 'today') Promise.all([fetchLogs(), fetchFavorites(), fetchStreak(), fetchWeightLogs(), fetchPranksData()]).catch(console.error).then(render);
   else if (t === 'stats') Promise.all([fetchStreak(), fetchChallenges()]).catch(console.error).then(render);
   else if (t === 'chat') fetchChatHistory().catch(console.error).then(render);
-  else if (t === 'fashion') Promise.all([fetchUsers(), fetchStreak(), fetchLogs()]).catch(console.error).then(render);
+  else if (t === 'fashion') Promise.all([fetchUsers(), fetchStreak(), fetchLogs(), fetchPranksData()]).catch(console.error).then(render);
 }
 
 // 1. TODAY VIEW
@@ -8104,14 +8227,24 @@ function renderToday() {
   const totalProtein = Math.round(currentLogs.reduce((a, b) => a + (Number(b.protein) || 0), 0) * 10) / 10;
   const totalFat = Math.round(currentLogs.reduce((a, b) => a + (Number(b.fat) || 0), 0) * 10) / 10;
 
-  const [mood, msg] = moodOf(totalSugar, currentUser?.sugar_goal, totalCal, currentUser?.calorie_goal, currentLogs.length);
+  let [mood, msg] = moodOf(totalSugar, currentUser?.sugar_goal, totalCal, currentUser?.calorie_goal, currentLogs.length);
+  const activeCurses = (userActivePranks || []).filter(p => p.card_id !== 'shield');
+  if (activeCurses.some(p => p.card_id === 'clown_curse')) {
+    mood = 'dizzy';
+    msg = 'มึนตึ้บเลยย! 🤡 โดนเพื่อนในแก๊งสาปหน้ามึนตึ้บอยู่นะเนี่ย!';
+  }
+
   const dateTh = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
 
   // Goal & Nutrition Targets
   const goalType = currentUser?.goal_type || 'weight_loss';
   const weight = Number(currentUser?.weight) || 55;
   const calGoal = Number(currentUser?.calorie_goal) || 1800;
-  const sugarGoal = Number(currentUser?.sugar_goal) || 25;
+  
+  // Dynamic Sugar Goal (with sugar_lock prank effect)
+  const baseSugarGoal = Number(currentUser?.sugar_goal) || 25;
+  const sugarLockCurse = activeCurses.find(p => p.card_id === 'sugar_lock');
+  const sugarGoal = sugarLockCurse ? Math.max(10, baseSugarGoal - 5) : baseSugarGoal;
 
   const carbsGoal = Number(currentUser?.carbs_goal) || (goalType === 'sugar_cut' ? 150 : goalType === 'muscle_gain' ? 250 : 180);
   const proteinGoal = Number(currentUser?.protein_goal) || Math.max(55, Math.round(weight * (goalType === 'muscle_gain' ? 1.6 : 1.3)));
@@ -8119,9 +8252,11 @@ function renderToday() {
   const sodiumLimit = Number(currentUser?.sodium_goal) || 2000;
   const waterGoal = Number(currentUser?.water_goal) || 8;
 
-  // Water tracking calculations (Custom Bottle System)
+  // Water tracking calculations (Custom Bottle System + water_force prank effect)
   const waterBottleMl = Number(currentUser?.water_bottle_ml) || 500;
-  const waterDailyTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const baseWaterTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const waterForceCurse = activeCurses.find(p => p.card_id === 'water_force');
+  const waterDailyTarget = waterForceCurse ? (baseWaterTarget + 500) : baseWaterTarget;
   const waterBottleName = currentUser?.water_bottle_name || 'ขวดน้ำ 500 ml';
   const waterBottleIcon = currentUser?.water_bottle_icon || 'bottle_500';
 
@@ -8207,6 +8342,34 @@ function renderToday() {
       <div class="bub" id="homeMascotBubble">${msg}</div>
       <div class="mo-tap-hint">แตะพุงเค้าสิ! 🍡</div>
     </div>
+
+    <!-- Prank Status & Curse Alert Banner (ถ้าโดนแกล้งหรือมีโล่) -->
+    ${activeCurses.length > 0 ? `
+      <div style="background:linear-gradient(135deg, #FAF5FF, #F3E8FF); border:1.5px solid #D8B4FE; border-radius:16px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 3px 10px rgba(168,85,247,0.12);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">🃏</span>
+          <div>
+            <div style="font-size:12.5px; font-weight:800; color:#7E22CE; font-family:'Mali',sans-serif;">
+              คุณกำลังโดนเพื่อนแกล้ง! (${activeCurses.length} คำสาป)
+            </div>
+            <div style="font-size:11px; color:#6B21A8;">
+              ${activeCurses.map(p => esc(p.card_name || p.name)).join(' · ')}
+            </div>
+          </div>
+        </div>
+        <button class="btn sm" style="background:linear-gradient(135deg, #9333EA, #EC4899); color:#fff; border:none; padding:5px 12px; font-size:11px; border-radius:12px; font-weight:800; white-space:nowrap; box-shadow:0 2px 8px rgba(147,51,234,0.3);" onclick="go('fashion'); switchFashionTab('pranks');">
+          😈 เอาคืนเลย!
+        </button>
+      </div>
+    ` : isShieldActive ? `
+      <div style="background:linear-gradient(135deg, #EFF6FF, #EEF2FF); border:1px solid #C7D2FE; border-radius:14px; padding:8px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:#3730A3;">
+          <span style="font-size:16px;">🛡️</span>
+          <span><b>โล่สะท้อนมหาเวทย์:</b> เปิดใช้งานอยู่ พร้อมสะท้อนการ์ดแกล้ง 1 ครั้ง ✨</span>
+        </div>
+        <span style="font-size:10.5px; color:#4F46E5; font-weight:700;">ปลอดภัย</span>
+      </div>
+    ` : ''}
 
     <div class="rings">
       ${ringSVG(totalCal, currentUser?.calorie_goal || 2000, 'var(--pink)', fmt(totalCal) + ' kcal', 'เป้า ' + (currentUser?.calorie_goal || 2000))}
@@ -10292,7 +10455,15 @@ function renderQuests() {
           const qId = (q.id || '').toLowerCase();
           let actionBtn = '';
           if (!claimed && !claimable) {
-            if (qId.includes('meal') || qId.includes('food') || qId.includes('snack') || qId.includes('dinner') || qId.includes('lunch') || qId.includes('breakfast')) {
+            if (q.isPrank) {
+              if (q.actionType === 'water') {
+                actionBtn = `<button class="btn s sm" style="font-size:10px; padding:3px 7px; background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;" onclick="triggerWaterLog()">💧 ดื่มน้ำ</button>`;
+              } else if (q.actionType === 'photo') {
+                actionBtn = `<button class="btn s sm" style="font-size:10px; padding:3px 7px; background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;" onclick="openCameraModal()">📷 ถ่ายรูป</button>`;
+              } else {
+                actionBtn = `<button class="btn s sm" style="font-size:10px; padding:3px 7px; background:#F3E8FF; border-color:#D8B4FE; color:#7E22CE;" onclick="openSheet()">🍽️ บันทึกอาหาร</button>`;
+              }
+            } else if (qId.includes('meal') || qId.includes('food') || qId.includes('snack') || qId.includes('dinner') || qId.includes('lunch') || qId.includes('breakfast')) {
               actionBtn = `<button class="btn s sm" style="font-size:10px; padding:3px 7px;" onclick="openCameraModal()">📷 ถ่ายรูป</button>`;
             } else if (qId.includes('water')) {
               actionBtn = `<button class="btn s sm" style="font-size:10px; padding:3px 7px;" onclick="triggerWaterLog()">💧 ดื่มน้ำ</button>`;
@@ -10302,12 +10473,15 @@ function renderQuests() {
           }
 
           return `
-            <div class="${boxClass}">
+            <div class="${boxClass}" style="${q.isPrank ? 'border-color:#C084FC; background:linear-gradient(135deg, rgba(243,232,255,0.4), var(--card));' : ''}">
               <div class="quest-item-top">
                 <div class="quest-item-left">
-                  <div class="quest-icon-bubble">${q.icon || '🎯'}</div>
+                  <div class="quest-icon-bubble" style="${q.isPrank ? 'background:linear-gradient(135deg, #F3E8FF, #E9D5FF); border-color:#D8B4FE;' : ''}">${q.icon || '🎯'}</div>
                   <div style="min-width:0; flex:1;">
-                    <div class="quest-title-text">${esc(title)}</div>
+                    <div class="quest-title-text">
+                      ${q.isPrank ? '<span style="font-size:10px; background:#F3E8FF; color:#7E22CE; border:1px solid #D8B4FE; border-radius:6px; padding:1px 5px; margin-right:4px; font-weight:800;">🃏 โดนแกล้ง!</span>' : ''}
+                      ${esc(title)}
+                    </div>
                     <div class="quest-desc-text">${esc(descText)}</div>
                   </div>
                 </div>
@@ -10330,9 +10504,11 @@ function renderQuests() {
 
                 <div style="flex-shrink:0; display:flex; align-items:center; gap:6px;">
                   ${claimed ? `
-                    <span class="badge ok" style="font-size:11px; padding:4px 8px;">✓ รับแล้ว</span>
+                    <span class="badge ok" style="font-size:11px; padding:4px 8px;">${q.isPrank ? '✨ เคลียร์คำสาปแล้ว' : '✓ รับแล้ว'}</span>
                   ` : claimable ? `
-                    <button class="quest-claim-btn pulse" onclick="claimQuestReward('${q.id}')">🎁 รับรางวัล</button>
+                    <button class="quest-claim-btn pulse" style="${q.isPrank ? 'background:linear-gradient(135deg, #9333EA, #EC4899); box-shadow:0 3px 10px rgba(147,51,234,0.3);' : ''}" onclick="claimQuestReward('${q.id}')">
+                      ${q.isPrank ? '⚔️ ล้างคำสาป!' : '🎁 รับรางวัล'}
+                    </button>
                   ` : `
                     ${actionBtn || `<span style="font-size:11px; color:var(--mute); font-weight:600; padding:4px 6px;">กำลังทำ</span>`}
                   `}
@@ -10452,6 +10628,9 @@ function renderFeed() {
         <button class="ig-filter-btn ${socialFeedFilter === 'goal' ? 'active' : ''}" onclick="setSocialFeedFilter('goal')">
           🎯 ภารกิจสำเร็จ (${socialPosts.filter(p => p.type === 'goal' || p.type === 'challenge').length})
         </button>
+        <button class="ig-filter-btn ${socialFeedFilter === 'prank' ? 'active' : ''}" onclick="setSocialFeedFilter('prank')">
+          🃏 แกล้งเพื่อน (${socialPosts.filter(p => p.type === 'prank').length})
+        </button>
       </div>
 
       <!-- Feed Posts Stream -->
@@ -10460,6 +10639,7 @@ function renderFeed() {
           if (socialFeedFilter === 'meal') return p.type === 'meal';
           if (socialFeedFilter === 'water') return p.type === 'water';
           if (socialFeedFilter === 'goal') return p.type === 'goal' || p.type === 'challenge';
+          if (socialFeedFilter === 'prank') return p.type === 'prank';
           return true;
         });
 
@@ -10480,9 +10660,10 @@ function renderFeed() {
           const isGoal = p.type === 'goal';
           const isChallenge = p.type === 'challenge';
           const isShop = p.type === 'shop';
+          const isPrank = p.type === 'prank';
 
-          const pillClass = isMeal ? 'meal' : isWater ? 'water' : isGoal ? 'goal' : isChallenge ? 'challenge' : 'shop';
-          const pillText = isMeal ? `🍱 ${fmt(p.calorie)} kcal` : isWater ? `💧 ดื่มน้ำ` : isGoal ? `🎯 พิชิตเป้าหมาย` : isChallenge ? `🏆 ชาเลนจ์` : `🛍️ แฟชั่น`;
+          const pillClass = isMeal ? 'meal' : isWater ? 'water' : isGoal ? 'goal' : isChallenge ? 'challenge' : isPrank ? 'prank' : 'shop';
+          const pillText = isMeal ? `🍱 ${fmt(p.calorie)} kcal` : isWater ? `💧 ดื่มน้ำ` : isGoal ? `🎯 พิชิตเป้าหมาย` : isChallenge ? `🏆 ชาเลนจ์` : isPrank ? `🃏 ป่วนแก๊ง 😈` : `🛍️ แฟชั่น`;
 
           return `
             <div class="ig-post-card">
@@ -10555,6 +10736,19 @@ function renderFeed() {
                       </div>
                     </div>
                   ` : ''}
+                </div>
+              ` : isPrank ? `
+                <div class="ig-post-prank-box">
+                  <div style="font-size:32px; background:linear-gradient(135deg, #F3E8FF, #E9D5FF); width:48px; height:48px; border-radius:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 3px 8px rgba(147,51,234,0.15);">🃏</div>
+                  <div style="flex:1;">
+                    <b style="font-size:13px; color:#7E22CE; font-family:'Mali',sans-serif; display:block;">สงครามการ์ดแกล้งเพื่อน! 😈</b>
+                    <span style="font-size:12px; color:var(--ink); line-height:1.4; display:block;">${esc(p.text)}</span>
+                    <div style="margin-top:6px;">
+                      <button class="btn sm" style="background:linear-gradient(135deg, #9333EA, #EC4899); color:#fff; border:none; padding:4px 10px; font-size:10.5px; border-radius:10px; font-weight:700;" onclick="go('fashion'); switchFashionTab('pranks');">
+                        🃏 ไปร้านการ์ดแกล้ง
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ` : isWater ? `
                 <div class="ig-post-water-box">
@@ -14361,6 +14555,15 @@ let currentWardrobeTab = 'skin3d';
 let activeFashionTab = 'skin3d';
 let fashionPreview = null;
 
+// Prank Cards & Mischief System State (🃏 ตลาดการ์ดแกล้งเพื่อน)
+let prankCardsList = [];
+let userActivePranks = [];
+let recentGangPranks = [];
+let isShieldActive = false;
+let selectedPrankCardId = null;
+let selectedPrankTargetFriendId = null;
+let prankQuickNote = '';
+
 const WARDROBE_CONFIG = {
   skin3d: {
     title: 'สกินพรีเมียม',
@@ -15085,6 +15288,35 @@ function playMojiSound(type = 'bounce') {
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 0.22);
+    } else if (type === 'prank') {
+      // Mischievous, quirky spring sound (400Hz -> 850Hz -> 300Hz)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(750, now + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(260, now + 0.25);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } else if (type === 'shield') {
+      // Crystalline magical chime (523Hz -> 659Hz -> 784Hz -> 1046Hz)
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        const start = now + idx * 0.05;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.06, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.35);
+      });
     }
   } catch (_) {}
 }
@@ -15439,6 +15671,9 @@ function renderFashionShop() {
 
     <!-- Category Tabs -->
     <div class="fashion-cat-nav">
+      <button class="fashion-cat-btn ${activeFashionTab === 'pranks' ? 'active' : ''}" onclick="switchFashionTab('pranks')" style="${activeFashionTab === 'pranks' ? 'background:linear-gradient(135deg, #9333EA, #EC4899); color:#fff; border-color:#7E22CE; font-weight:800; box-shadow:0 2px 10px rgba(147,51,234,0.35);' : ''}">
+        <span>🃏</span> <span>การ์ดแกล้งเพื่อน 😈</span> <span style="background:rgba(255,255,255,0.25); border-radius:10px; padding:1px 6px; font-size:10px; margin-left:2px;">ใหม่!</span>
+      </button>
       <button class="fashion-cat-btn ${activeFashionTab === 'skin3d' ? 'active' : ''}" onclick="switchFashionTab('skin3d')" style="${activeFashionTab === 'skin3d' ? 'background:linear-gradient(135deg, #EC4899, #8B5CF6); color:#fff; border-color:#8B5CF6; font-weight:800; box-shadow:0 2px 8px rgba(236,72,153,0.3);' : ''}">
         <span>🌟</span> <span>สกินพรีเมียม ✨</span> <span style="background:rgba(255,255,255,0.28); border-radius:10px; padding:1px 6px; font-size:10px; margin-left:2px;">21</span>
       </button>
@@ -15462,11 +15697,501 @@ function renderFashionShop() {
       </button>
     </div>
 
-    <!-- Fashion Items Grid -->
-    <div class="fashion-grid">
-      ${renderFashionItemsCardsHtml(activeFashionTab)}
+    <!-- Fashion Items Grid / Prank Cards -->
+    ${activeFashionTab === 'pranks' ? `
+      ${renderPrankCardsShopHtml()}
+    ` : `
+      <div class="fashion-grid">
+        ${renderFashionItemsCardsHtml(activeFashionTab)}
+      </div>
+    `}
+  `;
+}
+
+// -------------------------------------------------------------
+// Prank Cards & Mischief Shop Implementation (ตลาดการ์ดแกล้งเพื่อน 🃏😈)
+// -------------------------------------------------------------
+async function fetchPranksData() {
+  if (!currentUser) return;
+  try {
+    const [cardsRes, activeRes, recentRes] = await Promise.all([
+      fetch('/api/pranks/cards').then(r => r.json()).catch(() => ({ cards: [] })),
+      fetch(`/api/pranks/active?userId=${encodeURIComponent(currentUser.id)}`).then(r => r.json()).catch(() => ({ activePranks: [], shieldActive: false })),
+      fetch('/api/pranks/recent').then(r => r.json()).catch(() => ({ pranks: [] }))
+    ]);
+    if (cardsRes.cards && Array.isArray(cardsRes.cards)) {
+      prankCardsList = cardsRes.cards;
+    }
+    if (activeRes.activePranks && Array.isArray(activeRes.activePranks)) {
+      userActivePranks = activeRes.activePranks;
+      isShieldActive = !!activeRes.shieldActive;
+    }
+    if (recentRes.pranks && Array.isArray(recentRes.pranks)) {
+      recentGangPranks = recentRes.pranks;
+    }
+  } catch (err) {
+    console.error('fetchPranksData error:', err);
+  }
+}
+
+function renderPrankCardsShopHtml() {
+  const userCoins = Number(currentUser?.coins) || 0;
+  const cards = (prankCardsList && prankCardsList.length > 0) ? prankCardsList : [
+    {
+      id: 'steal_score',
+      name: 'การ์ดดูดแต้มวินัย 🧲',
+      icon: '🧲',
+      price: 25,
+      tag: 'ยอดนิยม 🔥',
+      gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)',
+      shortDesc: 'ดูดแต้มเพื่อน -15 pt มาเป็นของเรา +10 pt',
+      fullDesc: 'แกล้งเพื่อนที่คะแนนนำหน้า! ดูดคะแนนวินัยของเพื่อนลดลง 15 แต้ม และโอนมาเพิ่มให้เราทันที 10 แต้ม 😈'
+    },
+    {
+      id: 'extra_quest',
+      name: 'การ์ดการบ้านงอก 📜',
+      icon: '📜',
+      price: 20,
+      tag: 'ท้าทาย ⚡',
+      gradient: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+      shortDesc: 'ส่งภารกิจพิเศษฉุกเฉินให้เพื่อน 1 อย่าง',
+      fullDesc: 'ยัดเยียดภารกิจพิเศษฉุกเฉินให้เพื่อนทำภายในวันนี้! (เช่น ดื่มน้ำเพิ่ม หรือถ่ายรูปมื้อสุขภาพ)'
+    },
+    {
+      id: 'water_force',
+      name: 'การ์ดแก้วน้ำบังคับ 💧',
+      icon: '💧',
+      price: 15,
+      tag: 'รักสุขภาพ 🫧',
+      gradient: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+      shortDesc: 'สั่งเพื่อนดื่มน้ำเพิ่ม +500 ml วันนี้',
+      fullDesc: 'แกล้งเพื่อนสายไม่ชอบจิบน้ำ! บังคับเพิ่มเป้าหมายน้ำดื่มของเพื่อน +500 ml วันนี้ พร้อมแจ้งเตือนเตือนดื่มน้ำ'
+    },
+    {
+      id: 'clown_curse',
+      name: 'การ์ดสาปหน้ามึนตึ้บ 🤡',
+      icon: '🤡',
+      price: 18,
+      tag: 'กวนประสาท 🤣',
+      gradient: 'linear-gradient(135deg, #EC4899, #F43F5E)',
+      shortDesc: 'สาปหน้าโมจิเพื่อนเป็นหน้ามึนงง 24 ชม.',
+      fullDesc: 'เสกคาถาสาปให้ใบหน้าน้องโมจิของเพื่อนเปลี่ยนเป็นหน้า Dizzy / มึนงง ตลอด 24 ชม. ทั้งในฟีดและโปรไฟล์!'
+    },
+    {
+      id: 'sugar_lock',
+      name: 'การ์ดล็อกโควตาน้ำตาล 📉',
+      icon: '📉',
+      price: 25,
+      tag: 'ดัดนิสัย 🍬',
+      gradient: 'linear-gradient(135deg, #10B981, #0D9488)',
+      shortDesc: 'บีบโควตาน้ำตาลเพื่อนลดลง 5g วันนี้',
+      fullDesc: 'บีบเพดานน้ำตาลของเพื่อนให้ลดลง 5g วันนี้! ใครติดหวานโดนการ์ดนี้รับรองว่าต้องคุมเข้ม!'
+    },
+    {
+      id: 'shield',
+      name: 'การ์ดโล่สะท้อนมหาเวทย์ 🛡️',
+      icon: '🛡️',
+      price: 30,
+      tag: 'ไอเทมป้องกัน 🔮',
+      gradient: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+      shortDesc: 'สะท้อนการ์ดแกล้งกลับไปหาผู้ส่ง 100%',
+      fullDesc: 'เปิดเกราะป้องกันตัว 1 ครั้ง! หากมีเพื่อนส่งการ์ดแกล้งมา โล่จะดูดซับและสะท้อนผลกลับไปหาคนส่งทันที!'
+    }
+  ];
+
+  return `
+    <div style="margin-bottom:16px;">
+      <!-- Shield Status / Protection Alert Banner -->
+      ${isShieldActive ? `
+        <div style="background:linear-gradient(135deg, #EFF6FF, #F5F3FF); border:2px solid #818CF8; border-radius:16px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 4px 15px rgba(99, 102, 241, 0.15);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg, #3B82F6, #8B5CF6); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; flex-shrink:0; box-shadow:0 3px 8px rgba(59,130,246,0.3);">🛡️</div>
+            <div>
+              <b style="font-size:13px; color:#3730A3; font-family:'Mali',sans-serif; display:block;">โล่สะท้อนมหาเวทย์เปิดใช้งานอยู่! 🛡️✨</b>
+              <span style="font-size:11.5px; color:#4F46E5;">พร้อมสะท้อนการ์ดแกล้งถัดไปกลับสู่ผู้ส่ง 100% (คุ้มครอง 1 ครั้ง)</span>
+            </div>
+          </div>
+          <span style="font-size:11px; font-weight:800; background:#4F46E5; color:#fff; padding:3px 8px; border-radius:10px; white-space:nowrap;">ปลอดภัย ✨</span>
+        </div>
+      ` : `
+        <div style="background:linear-gradient(135deg, #FAF5FF, #FDF2F8); border:1.5px dashed #D8B4FE; border-radius:16px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:24px;">🛡️</span>
+            <div>
+              <b style="font-size:12.5px; color:#6B21A8; font-family:'Mali',sans-serif; display:block;">ยังไม่มีเกราะป้องกันตัว!</b>
+              <span style="font-size:11px; color:#7E22CE;">ซื้อ "การ์ดโล่สะท้อนมหาเวทย์" ติดตัวไว้เพื่อสะท้อนคำสาปกลับไปหาเพื่อน 😈</span>
+            </div>
+          </div>
+          <button class="btn sm" style="background:linear-gradient(135deg, #3B82F6, #8B5CF6); color:#fff; border:none; padding:6px 12px; font-size:11px; border-radius:12px; font-weight:700; white-space:nowrap; box-shadow:0 3px 8px rgba(59,130,246,0.25);" onclick="buyAndUseShieldCard()">
+            🛡️ ซื้อโล่ (30 🪙)
+          </button>
+        </div>
+      `}
+
+      <!-- Active Curses / Pranks on User -->
+      ${(userActivePranks && userActivePranks.filter(p => p.card_id !== 'shield').length > 0) ? `
+        <div style="background:linear-gradient(135deg, #FFF1F2, #FFE4E6); border:1.5px solid #FDA4AF; border-radius:16px; padding:12px 14px; margin-bottom:14px; box-shadow:0 3px 10px rgba(244,63,94,0.1);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:20px;">⚠️</span>
+              <b style="font-size:13px; color:#9F1239; font-family:'Mali',sans-serif;">คุณกำลังติดสถานะคำสาปโดนเพื่อนแกล้ง!</b>
+            </div>
+            <span style="font-size:11px; color:#BE123C; font-weight:700;">${userActivePranks.filter(p => p.card_id !== 'shield').length} คำสาป</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${userActivePranks.filter(p => p.card_id !== 'shield').map(p => `
+              <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.7); border:1px solid #FECDD3; border-radius:10px; padding:6px 10px; font-size:11.5px; color:#881337;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span>${p.card_icon || '🃏'}</span>
+                  <span><b>${esc(p.card_name || p.name)}</b>: ${esc(p.card_effect || '')}</span>
+                </div>
+                <span style="font-size:10px; color:#E11D48; white-space:nowrap;">หมดเวลา: ${formatTimeAgo(p.expires_at)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Shop Sub-Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:18px;">🃏</span>
+          <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">แคตตาล็อกการ์ดแกล้งเพื่อน</b>
+        </div>
+        <span style="font-size:11px; color:var(--mute);">ใช้เหรียญ 🪙 ซื้อส่งไปป่วนเพื่อน</span>
+      </div>
+
+      <!-- Prank Cards Grid -->
+      <div class="prank-shop-grid">
+        ${cards.map(card => {
+          const isShield = card.id === 'shield';
+          const canAfford = userCoins >= card.price;
+          const isShieldEquipped = isShield && isShieldActive;
+
+          return `
+            <div class="prank-card" style="border-top: 3px solid ${card.id === 'steal_score' ? '#F59E0B' : card.id === 'shield' ? '#3B82F6' : '#A855F7'};">
+              <span class="prank-card-tag">${card.tag}</span>
+              <div class="prank-card-icon-wrap" style="background:${card.gradient}; color:#fff;">
+                ${card.icon}
+              </div>
+              <div class="prank-card-title">${esc(card.name)}</div>
+              <div class="prank-card-desc">${esc(card.shortDesc)}</div>
+
+              <div style="margin-top:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:11.5px;">
+                  <span style="color:var(--mute);">ราคา</span>
+                  <span style="font-weight:800; color:${canAfford ? '#D97706' : 'var(--red)'}; font-family:'Mali',sans-serif;">🪙 ${card.price}</span>
+                </div>
+
+                ${isShieldEquipped ? `
+                  <button class="prank-card-btn" style="background:#E2E8F0; color:#64748B; cursor:not-allowed;" disabled>
+                    <span>🛡️</span> <span>เปิดใช้อยู่</span>
+                  </button>
+                ` : isShield ? `
+                  <button class="prank-card-btn" style="background:linear-gradient(135deg, #3B82F6, #8B5CF6); color:#fff;" onclick="buyAndUseShieldCard()">
+                    <span>🛡️</span> <span>เปิดเกราะ (${card.price} 🪙)</span>
+                  </button>
+                ` : `
+                  <button class="prank-card-btn" style="background:${card.gradient}; color:#fff;" onclick="openSelectFriendPrankModal('${card.id}')">
+                    <span>😈</span> <span>แกล้งเพื่อน (${card.price} 🪙)</span>
+                  </button>
+                `}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Recent Gang Pranks Activity Box -->
+      <div style="background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:14px; margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:18px;">⚡</span>
+            <b style="font-size:13.5px; font-family:'Mali',sans-serif; color:var(--ink);">ประวัติความป่วนในแก๊งล่าสุด</b>
+          </div>
+          <span style="font-size:11px; color:var(--mute);">อัปเดตเรียลไทม์ 📡</span>
+        </div>
+
+        ${(!recentGangPranks || recentGangPranks.length === 0) ? `
+          <div style="text-align:center; padding:18px 12px; color:var(--mute); font-size:12px;">
+            ยังไม่มีใครเริ่มก่อสงครามการ์ดแกล้งในแก๊ง! เป็นคนแรกที่เริ่มแกล้งเพื่อนเลยสิ 😈✨
+          </div>
+        ` : `
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${recentGangPranks.slice(0, 5).map(prank => `
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; background:rgba(0,0,0,0.02); border-radius:12px; font-size:11.5px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:20px;">${prank.card_icon || '🃏'}</span>
+                  <div>
+                    <span style="color:var(--ink);">
+                      <b>${esc(prank.from_nickname)}</b> ใช้ [<b>${esc(prank.card_name)}</b>] ใส่ <b>${esc(prank.to_nickname)}</b>
+                    </span>
+                    ${prank.prank_note ? `<div style="font-size:10.5px; color:#A855F7; font-style:italic;">"${esc(prank.prank_note)}"</div>` : ''}
+                  </div>
+                </div>
+                <span style="font-size:10px; color:var(--mute); white-space:nowrap;">${formatTimeAgo(prank.created_at)}</span>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
     </div>
   `;
+}
+
+function openSelectFriendPrankModal(cardId) {
+  if (!currentUser) {
+    toast('กรุณาเลือกโปรไฟล์ก่อนน้า');
+    return;
+  }
+  selectedPrankCardId = cardId;
+  const card = (prankCardsList || []).find(c => c.id === cardId) || {
+    id: cardId,
+    name: 'การ์ดแกล้งเพื่อน',
+    icon: '🃏',
+    price: 20,
+    shortDesc: 'ส่งผลแกล้งเพื่อนในแก๊ง'
+  };
+
+  const userCoins = Number(currentUser.coins) || 0;
+  if (userCoins < card.price) {
+    toast(`เหรียญไม่พอจ้า! ต้องใช้ ${card.price} 🪙 (คุณมี ${userCoins} 🪙) ทำภารกิจเก็บเหรียญก่อนนะ ✨`);
+    return;
+  }
+
+  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  if (friends.length === 0) {
+    toast('ยังไม่มีเพื่อนในแก๊งให้แกล้งเลย! สร้างตัวละครเพื่อนเพิ่ม หรือชวนเพื่อนมาเล่นด้วยกันนะ 🍡');
+    return;
+  }
+
+  if (!selectedPrankTargetFriendId || !friends.some(f => f.id === selectedPrankTargetFriendId)) {
+    selectedPrankTargetFriendId = friends[0].id;
+  }
+  prankQuickNote = '';
+
+  const sheetEl = $('#sheet');
+  if (!sheetEl) return;
+  sheetEl.hidden = false;
+  renderSelectFriendPrankModalContent();
+}
+
+function selectPrankTargetFriend(friendId) {
+  selectedPrankTargetFriendId = friendId;
+  renderSelectFriendPrankModalContent();
+}
+
+function setPrankQuickNote(note) {
+  prankQuickNote = note;
+  const inputEl = $('#prankNoteInput');
+  if (inputEl) inputEl.value = note;
+}
+
+function renderSelectFriendPrankModalContent() {
+  const sheetEl = $('#sheet');
+  if (!sheetEl) return;
+
+  const card = (prankCardsList || []).find(c => c.id === selectedPrankCardId) || {
+    id: selectedPrankCardId,
+    name: 'การ์ดแกล้งเพื่อน',
+    icon: '🃏',
+    price: 20,
+    shortDesc: 'ส่งผลแกล้งเพื่อนในแก๊ง',
+    fullDesc: 'ส่งผลแกล้งเพื่อนในแก๊ง'
+  };
+
+  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  const targetFriend = friends.find(f => f.id === selectedPrankTargetFriendId) || friends[0];
+
+  const quickNotes = [
+    'ระวังตัวไว้เถอะ! 😜',
+    'โดนแน่เจ้าตัวแสบ 😈',
+    'แกล้งเล่นเฉยๆ น้า 555 🤣',
+    'รักหรอกจึงหยอกเล่น 💖',
+    'ดื่มน้ำเยอะๆ สุขภาพดีนะเพื่อน 💧',
+    'สู้ๆ นะ การบ้านงอกแล้ว 📜'
+  ];
+
+  sheetEl.innerHTML = `
+    <div class="sh" style="max-height:88vh; display:flex; flex-direction:column;">
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">🃏</span>
+          <div>
+            <h2 class="hd" style="font-size:17px; margin:0;">เลือกเพื่อนที่จะส่งการ์ดแกล้ง 😈</h2>
+            <div style="font-size:11.5px; color:var(--mute);">การ์ด: <b>${esc(card.name)}</b> (ใช้ ${card.price} 🪙)</div>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="closeSheet()" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <div style="overflow-y:auto; flex:1; padding-right:2px; margin-bottom:12px;">
+        <!-- Card Highlight Preview -->
+        <div style="background:linear-gradient(135deg, rgba(243,232,255,0.7), rgba(253,242,248,0.7)); border:1.5px solid #E9D5FF; border-radius:16px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:12px;">
+          <div style="width:48px; height:48px; border-radius:14px; background:${card.gradient || 'linear-gradient(135deg, #A855F7, #EC4899)'}; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; flex-shrink:0; box-shadow:0 3px 8px rgba(168,85,247,0.3);">
+            ${card.icon}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <b style="font-size:13.5px; color:var(--ink); font-family:'Mali',sans-serif;">${esc(card.name)}</b>
+              <span style="font-size:11.5px; font-weight:800; color:#D97706;">🪙 ${card.price}</span>
+            </div>
+            <div style="font-size:11.5px; color:var(--mute); margin-top:2px; line-height:1.35;">${esc(card.fullDesc || card.shortDesc)}</div>
+          </div>
+        </div>
+
+        <!-- Friend Selector Section -->
+        <div style="font-size:12px; font-weight:800; color:var(--ink); font-family:'Mali',sans-serif; margin-bottom:8px;">
+          1. เลือกเป้าหมายเพื่อนในแก๊ง 🎯
+        </div>
+        <div style="max-height:190px; overflow-y:auto; margin-bottom:14px; padding-right:2px;">
+          ${friends.map(f => {
+            const isSelected = f.id === targetFriend?.id;
+            return `
+              <div class="prank-target-friend-card ${isSelected ? 'selected' : ''}" onclick="selectPrankTargetFriend('${f.id}')">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.04); flex-shrink:0;">
+                    ${f.avatar_image ? `<img src="${esc(f.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(f.avatar_face, f.avatar_color, 36, f.avatar_hat)}
+                  </div>
+                  <div>
+                    <div style="font-size:13px; font-weight:800; color:var(--ink); font-family:'Mali',sans-serif;">${esc(f.nickname)}</div>
+                    <div style="font-size:11px; color:var(--mute);">
+                      วินัย: <b>${f.goal_score || 150} pt</b> · เหรียญ: <b>${f.coins || 0} 🪙</b>
+                    </div>
+                  </div>
+                </div>
+                <div style="font-size:18px;">
+                  ${isSelected ? '🎯' : '⚪'}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Tease Note Section -->
+        <div style="font-size:12px; font-weight:800; color:var(--ink); font-family:'Mali',sans-serif; margin-bottom:8px;">
+          2. ฝากข้อความแซวเพื่อน (ไม่บังคับ) 💬
+        </div>
+        <input type="text" id="prankNoteInput" class="ipt" placeholder="พิมพ์ข้อความแซว เช่น 'ระวังตัวไว้นะเจ้าตัวแสบ 😈'..." value="${esc(prankQuickNote)}" style="width:100%; margin-bottom:8px;" maxlength="60">
+
+        <!-- Quick note chips -->
+        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:14px;">
+          ${quickNotes.map(n => `
+            <button type="button" class="btn s sm" style="font-size:10.5px; padding:4px 8px; border-radius:10px; background:var(--card); border:1px solid var(--line);" onclick="setPrankQuickNote('${esc(n)}')">
+              ${esc(n)}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div style="border-top:1px solid var(--line); padding-top:10px; display:flex; gap:8px;">
+        <button class="btn g sm" style="flex:1;" onclick="closeSheet()">ยกเลิก</button>
+        <button class="btn sm" style="flex:2; background:linear-gradient(135deg, #9333EA, #EC4899); color:#fff; border:none; font-weight:800; box-shadow:0 3px 10px rgba(147,51,234,0.3);" onclick="submitPrankCardExecution()">
+          🚀 ปล่อยการ์ดแกล้งเลย! (ใช้ ${card.price} 🪙)
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function buyAndUseShieldCard() {
+  if (!currentUser) return toast('กรุณาเลือกโปรไฟล์ก่อนน้า');
+  const shieldCard = (prankCardsList || []).find(c => c.id === 'shield') || { price: 30 };
+  const userCoins = Number(currentUser.coins) || 0;
+  if (userCoins < shieldCard.price) {
+    return toast(`เหรียญไม่พอจ้า! โล่สะท้อนมหาเวทย์ราคา ${shieldCard.price} 🪙 (คุณมี ${userCoins} 🪙)`);
+  }
+
+  try {
+    const res = await fetch('/api/pranks/use', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        fromUserId: currentUser.id,
+        toUserId: currentUser.id,
+        cardId: 'shield',
+        prankNote: 'เปิดใช้งานโล่สะท้อนมหาเวทย์'
+      })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      return toast(data.error || 'เปิดใช้งานโล่ไม่สำเร็จ');
+    }
+
+    if (data.user) {
+      currentUser = data.user;
+    } else {
+      currentUser.coins = Math.max(0, userCoins - shieldCard.price);
+    }
+    isShieldActive = true;
+    playMojiSound('shield');
+    if (typeof fireConfetti === 'function') fireConfetti();
+    toast('🛡️ กางโล่สะท้อนมหาเวทย์เรียบร้อย! หากเพื่อนคนไหนแกล้งจะสะท้อนผลกลับทันที ✨');
+    await fetchPranksData();
+    render();
+  } catch (err) {
+    console.error('buyAndUseShieldCard error:', err);
+    toast('เกิดข้อผิดพลาดในการซื้อโล่');
+  }
+}
+
+async function submitPrankCardExecution() {
+  if (!currentUser) return;
+  const cardId = selectedPrankCardId;
+  const toUserId = selectedPrankTargetFriendId;
+  const noteInput = $('#prankNoteInput');
+  const prankNote = (noteInput ? noteInput.value : prankQuickNote) || '';
+
+  if (!cardId || !toUserId) {
+    return toast('กรุณาเลือกการ์ดและเพื่อนที่จะแกล้ง');
+  }
+
+  const friends = (users || []).filter(u => u.id !== currentUser.id);
+  const targetFriend = friends.find(f => f.id === toUserId);
+  const targetName = targetFriend ? targetFriend.nickname : 'เพื่อน';
+
+  try {
+    const res = await fetch('/api/pranks/use', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({
+        fromUserId: currentUser.id,
+        toUserId,
+        cardId,
+        prankNote
+      })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      return toast(data.error || 'ปล่อยการ์ดแกล้งไม่สำเร็จ');
+    }
+
+    if (data.user) {
+      currentUser = data.user;
+    }
+
+    closeSheet();
+
+    if (data.reflected) {
+      // Shield reflection sound & dramatic alert!
+      playMojiSound('shield');
+      setTimeout(() => playMojiSound('prank'), 300);
+      toast(`💥 พลิกล็อค! ${targetName} เปิดโล่สะท้อนไว้ การ์ดถูกสะท้อนกลับใส่คุณเต็มๆ! 🤣`);
+    } else {
+      playMojiSound('prank');
+      if (typeof fireConfetti === 'function') fireConfetti();
+      toast(`😈 ส่งการ์ดแกล้ง ${targetName} สำเร็จ! ข่าวถูกกระจายลงฟีดแก๊งแล้ว! ✨`);
+    }
+
+    await Promise.all([fetchPranksData(), fetchUsers(), fetchActivities(), fetchQuests()]);
+    render();
+  } catch (err) {
+    console.error('submitPrankCardExecution error:', err);
+    toast('เกิดข้อผิดพลาดในการปล่อยการ์ดแกล้ง');
+  }
 }
 
 function promptGoShop(tab, title) {
@@ -18008,7 +18733,8 @@ async function installPwaApp() {
     fetchChatHistory(),
     fetchActivities(),
     fetchLeaderboard(),
-    fetchWeightLogs()
+    fetchWeightLogs(),
+    fetchPranksData()
   ]);
   render();
 
