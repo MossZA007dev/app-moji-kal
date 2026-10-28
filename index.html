@@ -2740,6 +2740,159 @@ textarea { resize: none; margin-bottom: 8px; }
   margin-right: 4px;
 }
 
+/* Enhanced Comments with Reply & Delete */
+.ig-comment-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  transition: background 0.2s ease;
+}
+.ig-comment-avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: var(--bg);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.ig-comment-bubble {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.ig-comment-author {
+  font-family: 'Mali', sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  margin-right: 5px;
+}
+.ig-comment-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+  padding-left: 4px;
+  font-size: 10.5px;
+  color: var(--mute);
+}
+.ig-comment-action-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.ig-comment-action-link:hover {
+  color: var(--pink);
+}
+.ig-comment-action-link.delete-btn:hover {
+  color: #DC2626;
+}
+.mention-tag {
+  color: #0284C7;
+  background: #E0F2FE;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.comment-input-focus-pulse {
+  animation: inputGlowPulse 0.8s ease;
+}
+@keyframes inputGlowPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 158, 181, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 158, 181, 0.3); border-color: var(--pink); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 158, 181, 0); }
+}
+
+/* Water History Modal UI */
+.water-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.water-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  transition: all 0.2s ease;
+}
+.water-history-item:hover {
+  border-color: #BAE6FD;
+  background: #F0F9FF;
+}
+.water-history-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.water-history-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #E0F2FE;
+  color: #0284C7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.water-history-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: 'Mali', sans-serif;
+}
+.water-history-time {
+  font-size: 11px;
+  color: var(--mute);
+}
+.water-history-ml {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0284C7;
+}
+.water-history-del-btn {
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: background 0.15s ease;
+}
+.water-history-del-btn:hover {
+  background: #FCA5A5;
+  color: #991B1B;
+}
+
 /* Quick Cheer Popup Pills */
 .quick-cheer-tray {
   display: flex;
@@ -6018,8 +6171,9 @@ async function fetchLogs() {
     const data = await res.json();
     const serverLogs = data.logs || [];
 
-    // Self-Healing: If server redeployed and has empty logs, but client has cached logs today, restore them!
-    if (serverLogs.length === 0) {
+    // Self-Healing: If server redeployed and has empty logs, but client has cached logs today, restore them (only if user did not intentionally delete)
+    const userDeletedToday = sessionStorage.getItem('mochi_user_deleted_' + key());
+    if (serverLogs.length === 0 && !userDeletedToday) {
       const cachedLogsStr = localStorage.getItem(storageKey);
       if (cachedLogsStr) {
         try {
@@ -6038,6 +6192,7 @@ async function fetchLogs() {
             });
             const refData = await refetched.json();
             currentLogs = refData.logs || cached;
+            localStorage.setItem(storageKey, JSON.stringify(currentLogs));
             return;
           }
         } catch (_) {}
@@ -6045,9 +6200,7 @@ async function fetchLogs() {
     }
 
     currentLogs = serverLogs;
-    if (serverLogs.length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(serverLogs));
-    }
+    localStorage.setItem(storageKey, JSON.stringify(serverLogs));
   } catch (err) {
     console.error('Fetch logs error:', err);
     const cached = localStorage.getItem(storageKey);
@@ -6512,10 +6665,75 @@ async function sendQuickCheer(postId, cheerText) {
         });
         toast(`ส่งข้อความ "${cheerText.length > 20 ? cheerText.slice(0, 18) + '...' : cheerText}" สำเร็จ (+1 🪙) 💬💖`);
         renderFeed();
+        if (typeof pollServerNotifications === 'function') {
+          setTimeout(pollServerNotifications, 500);
+        }
       }
     }
   } catch (e) {
     console.error(e);
+  }
+}
+
+function replyToPostComment(postId, nickname) {
+  const input = document.getElementById(`commentInput_${postId}`);
+  if (!input) return;
+  const mention = `@${nickname} `;
+  if (!input.value.startsWith(mention)) {
+    input.value = mention + input.value.replace(/^@[\w\u0E00-\u0E7F]+\s*/, '');
+  }
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+  input.classList.remove('comment-input-focus-pulse');
+  void input.offsetWidth;
+  input.classList.add('comment-input-focus-pulse');
+}
+
+function replyToDetailComment(mealId, nickname) {
+  const input = document.getElementById(`detailCommentInput_${mealId}`);
+  if (!input) return;
+  const mention = `@${nickname} `;
+  if (!input.value.startsWith(mention)) {
+    input.value = mention + input.value.replace(/^@[\w\u0E00-\u0E7F]+\s*/, '');
+  }
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+  input.classList.remove('comment-input-focus-pulse');
+  void input.offsetWidth;
+  input.classList.add('comment-input-focus-pulse');
+}
+
+async function deletePostCommentItem(commentId, postId) {
+  if (!confirm('ต้องการลบคอมเมนต์นี้ใช่ไหม?')) return;
+  try {
+    const res = await fetch(`/api/feed/comment/${commentId}?userId=${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    if (data.success) {
+      toast('ลบคอมเมนต์เรียบร้อยแล้ว 💬');
+      // Update local socialPosts
+      const p = socialPosts.find(x => x.id === postId);
+      if (p && p.reactions && p.reactions.comments) {
+        p.reactions.comments = p.reactions.comments.filter(c => c.id !== commentId);
+      }
+      renderFeed();
+
+      // If food detail modal is open, update and re-render it
+      if (currentMemberProfileData) {
+        const meal = (currentMemberProfileData.allMeals || []).find(m => m.id === postId);
+        if (meal && meal.reactions && meal.reactions.comments) {
+          meal.reactions.comments = meal.reactions.comments.filter(c => c.id !== commentId);
+          openFoodPostDetailModal(postId);
+        }
+      }
+    } else {
+      toast(data.error || 'ไม่สามารถลบคอมเมนต์ได้');
+    }
+  } catch (err) {
+    console.error('deletePostCommentItem error:', err);
+    toast('เกิดข้อผิดพลาดในการลบคอมเมนต์');
   }
 }
 
@@ -7156,6 +7374,13 @@ function markNotificationRead(id) {
       const dot = card.querySelector('.notif-unread-dot');
       if (dot) dot.remove();
     }
+    if (currentUser) {
+      fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+        body: JSON.stringify({ id, userId: currentUser.id })
+      }).catch(() => {});
+    }
   }
 }
 
@@ -7170,6 +7395,13 @@ function markAllNotificationsAsRead() {
     updateNotificationBadge();
     renderNotificationDrawerContent();
     toast('อ่านการแจ้งเตือนทั้งหมดแล้ว ✨');
+    if (currentUser) {
+      fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).catch(() => {});
+    }
   }
 }
 
@@ -7179,6 +7411,12 @@ function deleteNotificationItem(id) {
   saveStoredNotifications(notifs);
   updateNotificationBadge();
   renderNotificationDrawerContent();
+  if (currentUser) {
+    fetch(`/api/notifications/${id}?userId=${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser.id }
+    }).catch(() => {});
+  }
 }
 
 function clearAllNotifications() {
@@ -7207,9 +7445,17 @@ function executeNotificationAction(action) {
   } else if (action === 'openQuests') {
     go('quests');
     setQuestTab('daily');
-  } else if (action === 'openFeed') {
+  } else if (action === 'openFeed' || action === 'openGang') {
     go('feed');
     setFeedSubTab('activities');
+  } else if (action && action.startsWith('openPost:')) {
+    const postId = action.replace('openPost:', '');
+    go('feed');
+    setFeedSubTab('activities');
+    setTimeout(() => {
+      const el = document.getElementById(`comm_row_${postId}`) || document.getElementById(`commentInput_${postId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 350);
   } else if (action === 'openRecommend') {
     openRecommendMealModal();
   } else if (action === 'openSheet') {
@@ -7217,6 +7463,81 @@ function executeNotificationAction(action) {
   } else if (action === 'openToday') {
     go('today');
   }
+}
+
+// Server Notifications Polling (Cross-user sync for comments, mentions & cheers)
+let lastSeenServerNotifTs = 0;
+let serverNotifPollingTimer = null;
+
+async function pollServerNotifications() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(`/api/notifications?userId=${currentUser.id}&limit=50`, {
+      headers: { 'x-user-id': currentUser.id }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const serverList = data.notifications || [];
+    const serverUnreadCount = data.unreadCount || 0;
+
+    const localList = getStoredNotifications();
+    const localIdSet = new Set(localList.map(n => n.id));
+
+    // First time initializing: sync any unread notifications from server
+    if (!lastSeenServerNotifTs) {
+      if (serverList.length > 0) {
+        lastSeenServerNotifTs = Math.max(...serverList.map(n => n.created_at || 0));
+        let hasChanges = false;
+        for (const sn of serverList) {
+          if (!localIdSet.has(sn.id)) {
+            localList.unshift({
+              id: sn.id,
+              type: sn.type,
+              icon: sn.icon,
+              title: sn.title,
+              body: sn.body,
+              time: new Date(sn.created_at).toISOString(),
+              read: Boolean(sn.is_read),
+              action: sn.action,
+              actionLabel: sn.action_label
+            });
+            hasChanges = true;
+          }
+        }
+        if (hasChanges) {
+          saveStoredNotifications(localList.slice(0, 60));
+          updateNotificationBadge();
+        }
+      } else {
+        lastSeenServerNotifTs = Date.now();
+      }
+      return;
+    }
+
+    // Process new notifications that arrived from other users!
+    const newItems = serverList.filter(sn => sn.created_at > lastSeenServerNotifTs && !localIdSet.has(sn.id));
+    if (newItems.length > 0) {
+      lastSeenServerNotifTs = Math.max(...newItems.map(n => n.created_at || 0));
+      for (const sn of newItems) {
+        pushMojiNotification({
+          type: sn.type,
+          icon: sn.icon || '🔔',
+          title: sn.title,
+          body: sn.body,
+          action: sn.action,
+          actionLabel: sn.action_label
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('pollServerNotifications error:', err);
+  }
+}
+
+function startNotificationPolling() {
+  if (serverNotifPollingTimer) clearInterval(serverNotifPollingTimer);
+  pollServerNotifications();
+  serverNotifPollingTimer = setInterval(pollServerNotifications, 6000);
 }
 
 function testNotificationFromDrawer() {
@@ -7974,6 +8295,9 @@ function renderToday() {
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn s sm" style="font-size:11px; padding:3px 9px; border-radius:12px; background:#F0FDF4; border:1px solid #BBF7D0; color:#15803D;" onclick="openWaterHistoryModal()" title="ดูประวัติการดื่มน้ำและจัดการ">
+            📋 ประวัติ (${waterCount})
+          </button>
           <button class="btn s sm" style="font-size:11px; padding:3px 9px; border-radius:12px; background:#F0F9FF; border:1px solid #BAE6FD; color:#0369A1;" onclick="openWaterBottleModal()" title="เปลี่ยนขวดน้ำหรือเป้าหมาย">
             ⚙️ เปลี่ยนขวด
           </button>
@@ -8016,8 +8340,8 @@ function renderToday() {
               const isCurrent = i === roundsCompleted;
               return `
                 <div class="water-checkpoint-pill ${isDone ? 'completed' : isCurrent ? 'current' : ''}" 
-                     onclick="${isDone && i === roundsCompleted - 1 ? 'undoWaterLog()' : !isDone ? 'triggerWaterLog()' : ''}"
-                     title="${isDone ? 'ดื่มรอบนี้แล้ว (แตะรอบล่าสุดเพื่อยกเลิก)' : `แตะเพื่อบันทึก ${bottleUnit}ที่ ${i + 1}`}">
+                     onclick="${isDone ? 'openWaterHistoryModal()' : 'triggerWaterLog()'}"
+                     title="${isDone ? `ดื่มรอบที่ ${i + 1} แล้ว (แตะเพื่อดูประวัติหรือลบ)` : `แตะเพื่อบันทึก ${bottleUnit}ที่ ${i + 1}`}">
                   <span>${isDone ? '✓' : (i + 1)}</span>
                   <span>${bottleUnit}ที่ ${i + 1}</span>
                 </div>
@@ -8038,6 +8362,7 @@ function renderToday() {
         </span>
         <div style="display:flex; gap:6px;">
           ${waterCount > 0 ? `
+            <button class="btn g sm" style="font-size:11px; padding:4px 8px; color:var(--mute);" onclick="openWaterHistoryModal()" title="ดูและจัดการประวัติดื่มน้ำ">📋 ประวัติ</button>
             <button class="btn g sm" style="font-size:11px; padding:4px 8px; color:var(--mute);" onclick="undoWaterLog()" title="ยกเลิกรอบล่าสุด">- ลบล่าสุด</button>
           ` : ''}
           <button class="btn s sm" style="font-size:11.5px; padding:5px 12px; display:flex; align-items:center; gap:4px;" onclick="triggerWaterLog()">
@@ -8687,6 +9012,7 @@ async function triggerWaterLog() {
 }
 
 async function undoWaterLog() {
+  sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
   const res = await fetch('/api/water/undo', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
@@ -8694,12 +9020,167 @@ async function undoWaterLog() {
   });
   const data = await res.json();
   if (data.success) {
+    if (data.removedId) {
+      currentLogs = (currentLogs || []).filter(l => l.id !== data.removedId);
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
+    }
     await fetchLogs();
     render();
     toast('ยกเลิกบันทึกรอบน้ำล่าสุดแล้ว 💧');
   } else {
     toast(data.message || 'ไม่มีรายการดื่มน้ำ');
   }
+}
+
+async function deleteWaterLogItem(logId) {
+  if (!confirm('ต้องการลบประวัติการดื่มน้ำรายการนี้ใช่ไหม?')) return;
+  try {
+    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+    const res = await fetch(`/api/water/${logId}?userId=${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': currentUser.id }
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentLogs = (currentLogs || []).filter(l => l.id !== logId);
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
+      await fetchLogs();
+      render();
+      toast('ลบรายการดื่มน้ำเรียบร้อยแล้ว 💧');
+      renderWaterHistoryModalContent();
+    } else {
+      toast(data.error || 'ไม่สามารถลบรายการได้');
+    }
+  } catch (err) {
+    console.error('deleteWaterLogItem error:', err);
+    toast('เกิดข้อผิดพลาดในการลบรายการ');
+  }
+}
+
+async function resetTodayWater() {
+  if (!confirm('⚠️ ยืนยันการรีเซ็ตประวัติดื่มน้ำของวันนี้ทั้งหมดใช่ไหม?')) return;
+  try {
+    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+    const res = await fetch('/api/water/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+      body: JSON.stringify({ userId: currentUser.id, date: key() })
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentLogs = (currentLogs || []).filter(l => !l.water_ml && !l.name.includes('น้ำ'));
+      localStorage.setItem(`mochi_logs_${currentUser.id}_${key()}`, JSON.stringify(currentLogs));
+      await fetchLogs();
+      render();
+      toast(data.message || 'รีเซ็ตประวัติดื่มน้ำเรียบร้อยแล้ว');
+      closeSheet();
+    } else {
+      toast(data.error || 'ไม่สามารถรีเซ็ตได้');
+    }
+  } catch (err) {
+    console.error('resetTodayWater error:', err);
+    toast('เกิดข้อผิดพลาดในการรีเซ็ต');
+  }
+}
+
+function openWaterHistoryModal() {
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+  renderWaterHistoryModalContent();
+}
+
+function renderWaterHistoryModalContent() {
+  const el = $('#sheet');
+  if (!el) return;
+
+  const waterBottleMl = Number(currentUser?.water_bottle_ml) || 500;
+  const waterDailyTarget = Number(currentUser?.water_daily_target_ml) || 2000;
+  const waterBottleName = currentUser?.water_bottle_name || 'ขวดน้ำ 500 ml';
+  const bottleUnit = waterBottleName.includes('แก้ว') ? 'แก้ว' : waterBottleName.includes('ถัง') ? 'ถัง' : 'ขวด';
+
+  const waterLogs = (currentLogs || []).filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำ')));
+  const totalWaterMl = waterLogs.reduce((sum, l) => sum + (Number(l.water_ml) || waterBottleMl), 0);
+  const targetRounds = Math.max(1, Math.ceil(waterDailyTarget / waterBottleMl));
+  const roundsCompleted = Math.min(targetRounds, Math.floor(totalWaterMl / waterBottleMl));
+  const waterPct = Math.min(100, Math.round((totalWaterMl / waterDailyTarget) * 100));
+
+  el.innerHTML = `
+    <div class="sh" style="max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:24px;">💧</span>
+          <div>
+            <h2 class="hd" style="font-size:17px; margin:0;">ประวัติการดื่มน้ำวันนี้</h2>
+            <div style="font-size:11.5px; color:var(--mute);">${fmt(totalWaterMl)} / ${fmt(waterDailyTarget)} ml (${roundsCompleted}/${targetRounds} ${bottleUnit}) · ${waterPct}%</div>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="closeSheet()" style="font-size:18px; line-height:1; padding:4px 8px; border-radius:50%; background:var(--card); border:1px solid var(--line); cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Overview Status Bar -->
+      <div style="background:#F0F9FF; border:1px solid #BAE6FD; border-radius:14px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <b style="font-size:13px; color:#0369A1; font-family:'Mali',sans-serif;">
+            ${waterLogs.length > 0 ? `ดื่มไปแล้ว ${waterLogs.length} ครั้ง รวม ${fmt(totalWaterMl)} ml` : 'ยังไม่ได้ดื่มน้ำวันนี้'}
+          </b>
+          <div style="font-size:11px; color:#0284C7;">ขวดปัจจุบัน: ${esc(waterBottleName)}</div>
+        </div>
+        <button class="btn s sm" style="font-size:11px; padding:4px 10px;" onclick="openWaterBottleModal()">⚙️ ตั้งค่าขวด</button>
+      </div>
+
+      <!-- Water Drink Logs List -->
+      <div style="overflow-y:auto; flex:1; padding-right:2px;">
+        ${waterLogs.length === 0 ? `
+          <div style="text-align:center; padding:36px 16px; color:var(--mute);">
+            <div style="font-size:42px; margin-bottom:8px;">🍶</div>
+            <b style="font-size:14px; color:var(--ink); font-family:'Mali',sans-serif; display:block; margin-bottom:4px;">ยังไม่มีบันทึกการดื่มน้ำวันนี้</b>
+            <p style="font-size:12px; margin:0 0 14px;">จิบน้ำบ่อยๆ ช่วยให้สมองสดชื่น ผิวเปล่งปลั่งน้า</p>
+            <button class="btn sm" onclick="triggerWaterLog(); renderWaterHistoryModalContent();">💧 บันทึกดื่มน้ำ 1 ${bottleUnit} (+2 🪙)</button>
+          </div>
+        ` : `
+          <div class="water-history-list">
+            ${waterLogs.map((item, idx) => {
+              const ml = Number(item.water_ml) || waterBottleMl;
+              const timeStr = item.created_at ? new Date(item.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : 'วันนี้';
+              return `
+                <div class="water-history-item">
+                  <div class="water-history-info">
+                    <div class="water-history-icon">💧</div>
+                    <div>
+                      <div class="water-history-title">รอบที่ ${waterLogs.length - idx}: ${esc(item.name || waterBottleName)}</div>
+                      <div class="water-history-time">🕒 ${timeStr}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="water-history-ml">+${fmt(ml)} ml</span>
+                    <button class="water-history-del-btn" onclick="deleteWaterLogItem('${item.id}')" title="ลบรอบนี้">
+                      🗑️ ลบ
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn sm" style="flex:1; background:linear-gradient(135deg, #38BDF8, #2563EB); color:#fff; border:none; padding:10px; font-weight:700;" onclick="triggerWaterLog(); setTimeout(renderWaterHistoryModalContent, 300);">
+            + ดื่มอีก 1 ${bottleUnit} (+2 🪙)
+          </button>
+          ${waterLogs.length > 0 ? `
+            <button class="btn g sm" style="color:#DC2626; border-color:#FECACA; background:#FFF; font-weight:700; padding:10px 14px;" onclick="resetTodayWater()">
+              🔄 รีเซ็ตทั้งหมด
+            </button>
+          ` : ''}
+        </div>
+        <button class="btn g" style="width:100%;" onclick="closeSheet()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
 }
 
 // Weight Tracker Modal & Progress Chart
@@ -9335,6 +9816,9 @@ function formatTimeAgo(ts) {
 function resolveFoodPhoto(dishName = '', uploadedPhoto = null) {
   if (uploadedPhoto && String(uploadedPhoto).trim()) return uploadedPhoto;
   const name = String(dishName || '').toLowerCase();
+  if (name.includes('น้ำ') || name.includes('water')) {
+    return 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=700&auto=format&fit=crop&q=80';
+  }
   if (name.includes('กะเพรา') || name.includes('กระเพรา') || name.includes('basil')) {
     return 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=700&auto=format&fit=crop&q=80';
   }
@@ -10128,11 +10612,32 @@ function renderFeed() {
               <!-- Comments / Cheers -->
               ${p.reactions?.comments?.length ? `
                 <div class="ig-comments-list">
-                  ${p.reactions.comments.map(c => `
-                    <div class="ig-comment-item">
-                      <b>${esc(c.nickname)}:</b> ${esc(c.text)}
-                    </div>
-                  `).join('')}
+                  ${p.reactions.comments.map(c => {
+                    const isMyComment = currentUser && c.user_id === currentUser.id;
+                    const isPostOwner = currentUser && p.user_id === currentUser.id;
+                    const canDelete = isMyComment || isPostOwner || isCurrentUserDev();
+                    const formattedText = esc(c.text).replace(/@([a-zA-Z0-9_\u0E00-\u0E7F]+)/g, '<span class="mention-tag">@$1</span>');
+                    return `
+                      <div class="ig-comment-row" id="comm_row_${c.id}">
+                        <div class="ig-comment-avatar">
+                          ${c.avatar_image ? `<img src="${esc(c.avatar_image)}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">` : '👤'}
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                          <div class="ig-comment-bubble">
+                            <b class="ig-comment-author" onclick="openMemberDetailModal('${c.user_id}')" style="cursor:pointer;">${esc(c.nickname)}</b>
+                            <span>${formattedText}</span>
+                          </div>
+                          <div class="ig-comment-meta-bar">
+                            <span>${formatTimeAgo(c.created_at)}</span>
+                            <button class="ig-comment-action-link" onclick="replyToPostComment('${p.id}', '${esc(c.nickname)}')">↩ ตอบกลับ</button>
+                            ${canDelete ? `
+                              <button class="ig-comment-action-link delete-btn" onclick="deletePostCommentItem('${c.id}', '${p.id}')">🗑️ ลบ</button>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
                 </div>
               ` : ''}
 
@@ -11107,12 +11612,33 @@ function openFoodPostDetailModal(mealId) {
 
       <!-- Comments List -->
       ${comments.length ? `
-        <div class="ig-comments-list" style="margin-bottom:12px; max-height:160px; overflow-y:auto;">
-          ${comments.map(c => `
-            <div class="ig-comment-item">
-              <b>${esc(c.nickname)}:</b> ${esc(c.text)}
-            </div>
-          `).join('')}
+        <div class="ig-comments-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;">
+          ${comments.map(c => {
+            const isMyComment = currentUser && c.user_id === currentUser.id;
+            const isPostOwner = currentUser && (meal.user_id === currentUser.id || u.id === currentUser.id);
+            const canDelete = isMyComment || isPostOwner || isCurrentUserDev();
+            const formattedText = esc(c.text).replace(/@([a-zA-Z0-9_\u0E00-\u0E7F]+)/g, '<span class="mention-tag">@$1</span>');
+            return `
+              <div class="ig-comment-row" id="detail_comm_row_${c.id}">
+                <div class="ig-comment-avatar">
+                  ${c.avatar_image ? `<img src="${esc(c.avatar_image)}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">` : '👤'}
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div class="ig-comment-bubble">
+                    <b class="ig-comment-author" onclick="openMemberDetailModal('${c.user_id}')" style="cursor:pointer;">${esc(c.nickname)}</b>
+                    <span>${formattedText}</span>
+                  </div>
+                  <div class="ig-comment-meta-bar">
+                    <span>${formatTimeAgo(c.created_at)}</span>
+                    <button class="ig-comment-action-link" onclick="replyToDetailComment('${meal.id}', '${esc(c.nickname)}')">↩ ตอบกลับ</button>
+                    ${canDelete ? `
+                      <button class="ig-comment-action-link delete-btn" onclick="deletePostCommentItem('${c.id}', '${meal.id}')">🗑️ ลบ</button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       ` : '<div style="font-size:11.5px; color:var(--mute); padding:4px 0 10px;">ยังไม่มีคอมเมนต์ เป็นคนแรกที่ให้กำลังใจเพื่อนเลย!</div>'}
 
@@ -11167,12 +11693,16 @@ async function commentFoodPostFromDetail(mealId) {
           id: data.commentId,
           user_id: currentUser.id,
           nickname: currentUser.nickname,
+          avatar_image: currentUser.avatar_image,
           text: text,
           created_at: Date.now()
         });
       }
       toast('ส่งความคิดเห็นแล้ว! 💬 (+1 🪙)');
       openFoodPostDetailModal(mealId);
+      if (typeof pollServerNotifications === 'function') {
+        setTimeout(pollServerNotifications, 500);
+      }
     }
   } catch (e) {
     toast('ส่งความคิดเห็นไม่สำเร็จ');
@@ -17013,6 +17543,11 @@ async function saveMeal() {
 async function deleteMeal(id) {
   if (!confirm('ต้องการลบมื้อนี้ใช่ไหม?')) return;
   try {
+    sessionStorage.setItem('mochi_user_deleted_' + key(), 'true');
+    const storageKey = `mochi_logs_${currentUser.id}_${key()}`;
+    currentLogs = (currentLogs || []).filter(l => l.id !== id);
+    localStorage.setItem(storageKey, JSON.stringify(currentLogs));
+
     const res = await fetch(`/api/logs/${id}?userId=${currentUser.id}`, {
       method: 'DELETE',
       headers: { 'x-user-id': currentUser.id }
@@ -17480,6 +18015,9 @@ async function installPwaApp() {
   // Initialize Notification Scheduler & Badge Counter
   if (typeof initNotificationScheduler === 'function') {
     initNotificationScheduler();
+  }
+  if (typeof startNotificationPolling === 'function') {
+    startNotificationPolling();
   }
 
   // Trigger PWA banner after initial load if not standalone

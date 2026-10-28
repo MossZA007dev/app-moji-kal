@@ -169,9 +169,25 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- In-App & Push Notifications
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    icon TEXT DEFAULT '🔔',
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    action TEXT,
+    action_label TEXT,
+    is_read INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE INDEX IF NOT EXISTS idx_logs_user_date ON logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
   CREATE INDEX IF NOT EXISTS idx_weight_logs_user_date ON weight_logs(user_id, date);
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_date ON notifications(user_id, created_at DESC);
 `);
 
 // Idempotent column migrations for users table
@@ -802,6 +818,88 @@ export function restoreDeletedLog(log) {
     console.error('Goal sync error on restoreDeletedLog:', err);
   }
   return log;
+}
+
+export function deleteWaterLog(id, userId) {
+  const log = db.prepare('SELECT * FROM logs WHERE id = ?').get(id);
+  if (!log) return { success: false, error: 'ไม่พบรายการดื่มน้ำนี้' };
+
+  const user = getUser(userId);
+  const isDev = user?.role === 'dev' || user?.is_dev === 1;
+  if (log.user_id !== userId && !isDev) {
+    return { success: false, error: 'ไม่มีสิทธิ์ลบรายการนี้' };
+  }
+
+  db.prepare('DELETE FROM logs WHERE id = ?').run(id);
+
+  // Clean up matching activity (within +-15 seconds of log creation)
+  if (log.created_at) {
+    try {
+      const act = db.prepare(`
+        SELECT id FROM activities
+        WHERE user_id = ? AND type = 'water'
+          AND created_at >= ? AND created_at <= ?
+        ORDER BY created_at DESC LIMIT 1
+      `).get(log.user_id, log.created_at - 15000, log.created_at + 15000);
+      if (act) {
+        db.prepare('DELETE FROM activities WHERE id = ?').run(act.id);
+      }
+    } catch (_) {}
+  }
+
+  // Deduct 2 coins safely
+  try {
+    db.prepare('UPDATE users SET coins = MAX(0, COALESCE(coins, 0) - 2) WHERE id = ?').run(log.user_id);
+  } catch (_) {}
+
+  try {
+    syncDailyGoalScore(log.user_id, log.date);
+  } catch (_) {}
+
+  return { success: true, removedId: id, log };
+}
+
+export function resetWaterLogs(userId, date) {
+  const targetDate = date || new Date().toISOString().slice(0, 10);
+  const logs = db.prepare(`
+    SELECT id, created_at FROM logs
+    WHERE user_id = ? AND date = ? AND (water_ml > 0 OR name LIKE '%น้ำ%')
+  `).all(userId, targetDate);
+
+  if (!logs.length) {
+    return { success: true, count: 0, message: 'ไม่มีประวัติดื่มน้ำวันนี้' };
+  }
+
+  const ids = logs.map(l => l.id);
+  const placeholders = ids.map(() => '?').join(',');
+  db.prepare(`DELETE FROM logs WHERE id IN (${placeholders})`).run(...ids);
+
+  // Clean up activities for that date
+  const dayStart = new Date(`${targetDate}T00:00:00`).getTime() || 0;
+  const dayEnd = dayStart + 86400000;
+  try {
+    db.prepare(`
+      DELETE FROM activities
+      WHERE user_id = ? AND type = 'water'
+        AND created_at >= ? AND created_at <= ?
+    `).run(userId, dayStart, dayEnd);
+  } catch (_) {}
+
+  // Deduct coins (2 per drink, capped at 0)
+  const coinsToRemove = logs.length * 2;
+  try {
+    db.prepare('UPDATE users SET coins = MAX(0, COALESCE(coins, 0) - ?) WHERE id = ?').run(coinsToRemove, userId);
+  } catch (_) {}
+
+  try {
+    syncDailyGoalScore(userId, targetDate);
+  } catch (_) {}
+
+  return {
+    success: true,
+    count: logs.length,
+    message: `ลบประวัติดื่มน้ำทั้งหมด ${logs.length} รายการเรียบร้อยแล้ว 💧`
+  };
 }
 
 // Group Verified Knowledge Cache (Point 3)
@@ -1889,6 +1987,19 @@ export function sendCheer(fromUserId, toUserId, cheerType = 'heart') {
   recordActivity(fromUserId, 'cheer', `ส่งกำลังใจ "${label}" ให้ ${toUser.nickname} (+2 🪙)`, 2);
   addCoins(toUserId, 3); // recipient gets +3 coins!
 
+  // In-app Notification for recipient
+  if (toUserId !== fromUserId) {
+    createNotification({
+      userId: toUserId,
+      type: 'social',
+      icon: '✨',
+      title: `${fromUser.nickname} ส่งกำลังใจให้คุณ!`,
+      body: `ส่งกำลังใจ "${label}" พร้อมมอบ +3 🪙 ให้คุณในก๊วนเพื่อน`,
+      action: 'openFeed',
+      actionLabel: 'ดูก๊วนเพื่อน'
+    });
+  }
+
   return {
     success: true,
     fromNickname: fromUser.nickname,
@@ -1896,6 +2007,98 @@ export function sendCheer(fromUserId, toUserId, cheerType = 'heart') {
     cheerType,
     label
   };
+}
+
+// -----------------------------------------------------------------------------
+// In-App & Push Notifications System
+// -----------------------------------------------------------------------------
+
+export function createNotification({ userId, type = 'system', icon = '🔔', title, body = '', action = null, actionLabel = null }) {
+  if (!userId || !title) return null;
+  const user = getUser(userId);
+  if (!user) return null;
+  const id = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const createdAt = Date.now();
+  db.prepare(`
+    INSERT INTO notifications (id, user_id, type, icon, title, body, action, action_label, is_read, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(id, userId, type, icon, title, body, action, actionLabel, createdAt);
+
+  return {
+    id,
+    user_id: userId,
+    type,
+    icon,
+    title,
+    body,
+    action,
+    action_label: actionLabel,
+    is_read: 0,
+    created_at: createdAt
+  };
+}
+
+export function getUserNotifications(userId, limit = 50) {
+  const notifications = db.prepare(`
+    SELECT * FROM notifications
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT ?
+  `).all(userId, limit);
+
+  const unreadCount = db.prepare(`
+    SELECT COUNT(*) as c FROM notifications
+    WHERE user_id = ? AND is_read = 0
+  `).get(userId)?.c || 0;
+
+  return { notifications, unreadCount };
+}
+
+export function markNotificationRead(id, userId) {
+  db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?').run(id, userId);
+  return { success: true };
+}
+
+export function markAllNotificationsRead(userId) {
+  db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?').run(userId);
+  return { success: true };
+}
+
+export function deleteNotification(id, userId) {
+  db.prepare('DELETE FROM notifications WHERE id = ? AND user_id = ?').run(id, userId);
+  return { success: true };
+}
+
+export function getPostAuthorId(postId) {
+  if (!postId) return null;
+  const logAuthor = db.prepare('SELECT user_id FROM logs WHERE id = ?').get(postId);
+  if (logAuthor) return logAuthor.user_id;
+  const actAuthor = db.prepare('SELECT user_id FROM activities WHERE id = ?').get(postId);
+  if (actAuthor) return actAuthor.user_id;
+  return null;
+}
+
+export function deletePostComment(commentId, userId) {
+  const comment = db.prepare('SELECT * FROM post_reactions WHERE id = ?').get(commentId);
+  if (!comment) return { success: false, error: 'ไม่พบคอมเมนต์นี้' };
+
+  const user = getUser(userId);
+  const isDev = user?.role === 'dev' || user?.is_dev === 1;
+
+  let isAllowed = comment.user_id === userId || isDev;
+  if (!isAllowed) {
+    const authorId = getPostAuthorId(comment.post_id);
+    if (authorId && authorId === userId) {
+      isAllowed = true;
+    }
+  }
+
+  if (!isAllowed) {
+    return { success: false, error: 'ไม่มีสิทธิ์ลบคอมเมนต์นี้' };
+  }
+
+  db.prepare('DELETE FROM post_reactions WHERE id = ?').run(commentId);
+  return { success: true, removedId: commentId, postId: comment.post_id };
 }
 
 // -----------------------------------------------------------------------------
@@ -1907,15 +2110,51 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
   if (!user) return { success: false, error: 'User not found' };
 
   if (commentText && commentText.trim()) {
+    const text = commentText.trim();
     const commentId = `comm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     db.prepare(`
       INSERT INTO post_reactions (id, post_id, user_id, reaction_type, comment_text, created_at)
       VALUES (?, ?, ?, 'comment', ?, ?)
-    `).run(commentId, postId, userId, commentText.trim(), Date.now());
+    `).run(commentId, postId, userId, text, Date.now());
 
     // Reward user for cheering
     addCoins(userId, 1);
-    return { success: true, type: 'comment', commentId, commentText: commentText.trim(), userNickname: user.nickname };
+
+    // Notify post author
+    const authorId = getPostAuthorId(postId);
+    if (authorId && authorId !== userId) {
+      createNotification({
+        userId: authorId,
+        type: 'social',
+        icon: '💬',
+        title: `${user.nickname} แสดงความคิดเห็นบนโพสต์ของคุณ`,
+        body: text,
+        action: `openPost:${postId}`,
+        actionLabel: 'ดูโพสต์'
+      });
+    }
+
+    // Mention notifications: @nickname
+    const mentions = text.match(/@([a-zA-Z0-9_\u0E00-\u0E7F]+)/g);
+    if (mentions) {
+      for (const m of mentions) {
+        const nick = m.slice(1);
+        const mentionedUser = db.prepare('SELECT id, nickname FROM users WHERE nickname = ? COLLATE NOCASE').get(nick);
+        if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== authorId) {
+          createNotification({
+            userId: mentionedUser.id,
+            type: 'social',
+            icon: '🏷️',
+            title: `${user.nickname} แท็กคุณในความคิดเห็น`,
+            body: text,
+            action: `openPost:${postId}`,
+            actionLabel: 'ดูความคิดเห็น'
+          });
+        }
+      }
+    }
+
+    return { success: true, type: 'comment', commentId, commentText: text, userNickname: user.nickname };
   }
 
   // Heart Reaction (Toggle Like)
@@ -1936,16 +2175,19 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
     // Give coins
     addCoins(userId, 1);
 
-    // Try finding post author to reward them +1 coin
-    let authorId = null;
-    const logAuthor = db.prepare('SELECT user_id FROM logs WHERE id = ?').get(postId);
-    if (logAuthor) authorId = logAuthor.user_id;
-    else {
-      const actAuthor = db.prepare('SELECT user_id FROM activities WHERE id = ?').get(postId);
-      if (actAuthor) authorId = actAuthor.user_id;
-    }
+    // Try finding post author to reward them +1 coin and notify
+    const authorId = getPostAuthorId(postId);
     if (authorId && authorId !== userId) {
       addCoins(authorId, 1);
+      createNotification({
+        userId: authorId,
+        type: 'social',
+        icon: '💖',
+        title: `${user.nickname} ถูกใจโพสต์ของคุณ`,
+        body: 'ส่งกำลังใจและความรักให้คุณนะ!',
+        action: `openPost:${postId}`,
+        actionLabel: 'ดูโพสต์'
+      });
     }
 
     return { success: true, liked: true };
@@ -1953,7 +2195,7 @@ export function togglePostReaction(postId, userId, reactionType = 'heart', comme
 }
 
 export function getSocialFeedPosts(limit = 40, currentUserId = '') {
-  // 1. Fetch recent meals from logs
+  // 1. Fetch recent meals from logs (Exclude water logs completely so they never show as food)
   const mealRows = db.prepare(`
     SELECT l.id, l.user_id, l.date, l.name, l.calorie, l.sugar, l.carbs, l.protein, l.fat, l.sodium,
            l.portion_size, l.sweetness_level, l.is_private, l.image_url, l.water_ml, l.created_at,
@@ -1963,6 +2205,9 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     JOIN users u ON l.user_id = u.id
     WHERE (l.is_private = 0 OR l.user_id = ?)
       AND (u.privacy_level = 'full' OR l.user_id = ?)
+      AND (l.water_ml IS NULL OR l.water_ml = 0)
+      AND l.name NOT LIKE '%ดื่มน้ำ%'
+      AND l.name NOT LIKE '%น้ำเปล่า%'
     ORDER BY l.created_at DESC
     LIMIT ?
   `).all(currentUserId, currentUserId, limit);

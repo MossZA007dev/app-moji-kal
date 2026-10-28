@@ -478,6 +478,44 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, result);
       }
 
+      // 10.0.1.1 Delete Social Feed Comment
+      if (pathname.startsWith('/api/feed/comment/') && req.method === 'DELETE') {
+        const commentId = pathname.replace('/api/feed/comment/', '');
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const result = db.deletePostComment(commentId, userId);
+        return sendJson(res, result.success ? 200 : 403, result);
+      }
+
+      // 10.0.1.2 In-App Notifications API
+      if (pathname === '/api/notifications' && req.method === 'GET') {
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const limit = Number(parsedUrl.searchParams.get('limit')) || 50;
+        const result = db.getUserNotifications(userId, limit);
+        return sendJson(res, 200, result);
+      }
+
+      if (pathname === '/api/notifications/read' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        if (body.id) {
+          db.markNotificationRead(body.id, userId);
+        } else {
+          db.markAllNotificationsRead(userId);
+        }
+        return sendJson(res, 200, { success: true });
+      }
+
+      if (pathname.startsWith('/api/notifications/') && req.method === 'DELETE') {
+        const notifId = pathname.replace('/api/notifications/', '');
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        db.deleteNotification(notifId, userId);
+        return sendJson(res, 200, { success: true });
+      }
+
       // 10.0.2 Gaming Quests (Daily, Weekly, Main Tasks)
       if (pathname === '/api/quests' && req.method === 'GET') {
         const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId') || '';
@@ -597,12 +635,31 @@ const server = http.createServer(async (req, res) => {
         const userId = req.headers['x-user-id'] || body.userId;
         if (!userId) return sendJson(res, 400, { error: 'userId is required' });
         const date = body.date || new Date().toISOString().slice(0, 10);
-        const waterLogs = db.getLogs(userId, date).filter(l => l.name && l.name.includes('น้ำเปล่า'));
+        const waterLogs = db.getLogs(userId, date).filter(l => (l.water_ml && l.water_ml > 0) || (l.name && l.name.includes('น้ำ')));
         if (waterLogs.length > 0) {
-          db.deleteLog(waterLogs[0].id, userId);
-          return sendJson(res, 200, { success: true, removedId: waterLogs[0].id });
+          const result = db.deleteWaterLog(waterLogs[0].id, userId);
+          return sendJson(res, 200, { success: true, removedId: waterLogs[0].id, details: result });
         }
         return sendJson(res, 200, { success: false, message: 'ไม่มีประวัติดื่มน้ำวันนี้' });
+      }
+
+      // Delete specific water log item
+      if (pathname.startsWith('/api/water/') && pathname !== '/api/water/undo' && pathname !== '/api/water/reset' && req.method === 'DELETE') {
+        const logId = pathname.replace('/api/water/', '');
+        const userId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const result = db.deleteWaterLog(logId, userId);
+        return sendJson(res, result.success ? 200 : 400, result);
+      }
+
+      // Reset all water logs for a day
+      if (pathname === '/api/water/reset' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const userId = req.headers['x-user-id'] || body.userId;
+        if (!userId) return sendJson(res, 400, { error: 'userId is required' });
+        const date = body.date || new Date().toISOString().slice(0, 10);
+        const result = db.resetWaterLogs(userId, date);
+        return sendJson(res, 200, result);
       }
 
       // 10.6 Weight Tracking & Journey
