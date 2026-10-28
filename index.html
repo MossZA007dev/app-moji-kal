@@ -7054,7 +7054,12 @@ async function fetchChatHistory() {
 }
 
 function updateUserHeader() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    if ($('#uName')) $('#uName').innerHTML = 'ยังไม่ได้เข้าสู่ระบบ 👤';
+    if ($('#uPrivacy')) $('#uPrivacy').textContent = 'แตะเพื่อเลือกโปรไฟล์หรือสร้างตัวละคร ▾';
+    if ($('#uAvatar')) $('#uAvatar').innerHTML = '<span style="font-size:22px;">🍡</span>';
+    return;
+  }
   $('#uName').innerHTML = `${esc(currentUser.nickname)} ${currentUser.google_id ? '<span style="color:#4285F4; font-size:12px;" title="เชื่อมต่อ Google">●</span>' : ''}`;
   if (currentUser.avatar_image) {
     $('#uAvatar').innerHTML = `<img src="${esc(currentUser.avatar_image)}" alt="Profile">`;
@@ -8293,22 +8298,29 @@ function go(t) {
 // 1. TODAY VIEW
 function renderToday() {
   if (!currentUser) {
+    const hasUsers = users && users.length > 0;
     $('#main').innerHTML = `
       <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0; border:2px solid var(--pink); background:radial-gradient(circle at 50% 20%, #FFF5F7, var(--card));">
         <div style="font-size:54px; margin-bottom:12px;">🍡✨</div>
         <h2 class="hd" style="font-size:20px; margin-bottom:8px;">ยินดีต้อนรับสู่ Moji Kal!</h2>
         <p style="font-size:13px; color:var(--mute); margin-bottom:20px; line-height:1.6;">
           แอปนับแคลอรีและคุมน้ำตาลสไตล์แก๊งโมจิสุดน่ารัก<br>
-          เริ่มต้นสร้างตัวละครและตั้งเป้าหมายสุขภาพของคุณกันเลย!
+          ${hasUsers ? 'มีสมาชิกในแก๊งอยู่แล้ว เลือกโปรไฟล์เดิมและใส่ PIN หรือสร้างตัวละครใหม่' : 'เริ่มต้นสร้างตัวละครและตั้งเป้าหมายสุขภาพของคุณกันเลย!'}
         </p>
-        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px; font-size:15px; padding:12px 16px;" onclick="openOnboardingModal({ isNewUser: true })">
-          ✨ สร้างตัวละครโมจิของคุณ ➜
-        </button>
-        <button class="btn s" style="width:100%; max-width:280px; margin:0 auto 12px; font-size:13.5px; padding:9px 16px;" onclick="openSelectExistingProfileModal()">
-          👤 มีตัวละครอยู่แล้ว: เลือกโปรไฟล์ของคุณ
-        </button>
+        ${hasUsers ? `
+          <button class="btn" style="width:100%; max-width:290px; margin:0 auto 10px; font-size:15px; padding:12px 16px; font-weight:800; box-shadow:0 4px 14px rgba(255,107,138,0.25);" onclick="openSelectExistingProfileModal()">
+            👤 มีตัวละครอยู่แล้ว: เลือกโปรไฟล์ & ใส่ PIN ➜
+          </button>
+          <button class="btn s" style="width:100%; max-width:290px; margin:0 auto 12px; font-size:13.5px; padding:10px 16px; font-weight:700;" onclick="openOnboardingModal({ isNewUser: true })">
+            ✨ ผู้เล่นใหม่: สร้างตัวละครโมจิ
+          </button>
+        ` : `
+          <button class="btn" style="width:100%; max-width:290px; margin:0 auto 10px; font-size:15px; padding:12px 16px; font-weight:800;" onclick="openOnboardingModal({ isNewUser: true })">
+            ✨ สร้างตัวละครโมจิของคุณ ➜
+          </button>
+        `}
         <div>
-          <button class="btn s sm" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</button>
+          <button class="btn s sm" style="margin-top:4px;" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</button>
         </div>
       </div>
     `;
@@ -9825,7 +9837,7 @@ function sendQuickMessage(text) {
 async function sendChatMessage() {
   if (!currentUser) {
     toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนคุยน้า 🍡');
-    openOnboardingModal({ isNewUser: true });
+    promptLoginOrOnboard();
     return;
   }
   const input = $('#chatInput');
@@ -10354,16 +10366,22 @@ function openLeaderboardInfoModal() {
 function renderQuests() {
   try {
     if (!currentUser) {
-    $('#main').innerHTML = `
-      <div class="card" style="text-align:center; padding:36px 18px; margin:20px 0; border:2px dashed var(--pink); border-radius:24px;">
-        <div style="font-size:50px; margin-bottom:12px;">🎯✨</div>
-        <h2 class="hd" style="font-size:20px; margin-bottom:8px;">กระดานภารกิจโมจิ</h2>
-        <p style="font-size:13px; color:var(--mute); margin-bottom:18px;">กรุณาสร้างตัวละครหรือเข้าสู่ระบบเพื่อเริ่มทำภารกิจสะสมเหรียญ</p>
-        <button class="btn" style="max-width:260px; margin:0 auto;" onclick="openOnboardingModal({ isNewUser: true })">✨ เริ่มต้นสร้างตัวละคร</button>
-      </div>
-    `;
-    return;
-  }
+      const hasUsers = users && users.length > 0;
+      $('#main').innerHTML = `
+        <div class="card" style="text-align:center; padding:36px 18px; margin:20px 0; border:2px dashed var(--pink); border-radius:24px;">
+          <div style="font-size:50px; margin-bottom:12px;">🎯✨</div>
+          <h2 class="hd" style="font-size:20px; margin-bottom:8px;">กระดานภารกิจโมจิ</h2>
+          <p style="font-size:13px; color:var(--mute); margin-bottom:18px;">กรุณาเลือกโปรไฟล์หรือสร้างตัวละครเพื่อเริ่มทำภารกิจสะสมเหรียญ</p>
+          ${hasUsers ? `
+            <button class="btn" style="max-width:260px; margin:0 auto 10px; width:100%; font-weight:800;" onclick="openSelectExistingProfileModal()">👤 เลือกโปรไฟล์เดิม & ใส่ PIN ➜</button>
+            <button class="btn s" style="max-width:260px; margin:0 auto; width:100%;" onclick="openOnboardingModal({ isNewUser: true })">✨ ผู้เล่นใหม่: สร้างตัวละคร</button>
+          ` : `
+            <button class="btn" style="max-width:260px; margin:0 auto;" onclick="openOnboardingModal({ isNewUser: true })">✨ เริ่มต้นสร้างตัวละคร</button>
+          `}
+        </div>
+      `;
+      return;
+    }
 
   const dateTh = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   const dailyList = userQuests?.daily || [];
@@ -12958,14 +12976,24 @@ async function showDayDetail(dateStr) {
 async function renderSettings() {
   await fetchSettings();
   if (!currentUser) {
+    const hasUsers = users && users.length > 0;
     $('#main').innerHTML = `
       <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0;">
         <div style="font-size:48px; margin-bottom:12px;">⚙️</div>
         <h2 class="hd" style="font-size:18px; margin-bottom:8px;">ตั้งค่า & สมาชิก</h2>
         <p style="font-size:12.5px; color:var(--mute); margin-bottom:18px;">ยังไม่ได้เลือกโปรไฟล์สมาชิกบนอุปกรณ์นี้</p>
-        <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px;" onclick="openOnboardingModal({ isNewUser: true })">
-          ✨ สร้างตัวละครใหม่
-        </button>
+        ${hasUsers ? `
+          <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px; font-weight:800;" onclick="openSelectExistingProfileModal()">
+            👤 มีตัวละครอยู่แล้ว: เลือกโปรไฟล์ & ใส่ PIN ➜
+          </button>
+          <button class="btn s" style="width:100%; max-width:280px; margin:0 auto 10px;" onclick="openOnboardingModal({ isNewUser: true })">
+            ✨ สร้างตัวละครใหม่
+          </button>
+        ` : `
+          <button class="btn" style="width:100%; max-width:280px; margin:0 auto 10px;" onclick="openOnboardingModal({ isNewUser: true })">
+            ✨ สร้างตัวละครใหม่
+          </button>
+        `}
         <button class="btn s sm" style="width:100%; max-width:280px; margin:0 auto;" onclick="openDevLoginModal()">
           🔐 เข้าสู่ระบบผู้ดูแล (Developer PIN)
         </button>
@@ -13841,7 +13869,9 @@ function renderOnboardingStep() {
         <button class="btn" onclick="nextOnboardingStep(2)">ถัดไป: สรีระร่างกาย (เพศ, อายุ, สส, นน) ➜</button>
 
         <div style="text-align:center; margin-top:14px; display:flex; flex-direction:column; gap:8px;">
-          <a style="font-size:12px; color:var(--pink); font-weight:700; cursor:pointer;" onclick="openSelectExistingProfileModal()">👤 มีตัวละครในแก๊งอยู่แล้ว? เลือกโปรไฟล์เดิมของคุณ</a>
+          <button type="button" class="btn s sm" style="font-size:12px; color:var(--pink); font-weight:700; background:#FFF5F7; border:1px solid #FFE4E8;" onclick="openSelectExistingProfileModal()">
+            👤 มีตัวละครในแก๊งอยู่แล้ว? เลือกโปรไฟล์ & ใส่ PIN
+          </button>
           <a style="font-size:11px; color:var(--mute); cursor:pointer; text-decoration:underline;" onclick="openDevLoginModal()">🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Developer (Dev PIN)</a>
         </div>
       </div>
@@ -14379,7 +14409,7 @@ async function saveProfileFromModal() {
 // Main Account & Personal Profile Management Modal (Private to this Device)
 function openMyProfileModal() {
   if (!currentUser) {
-    openOnboardingModal({ isNewUser: true });
+    promptLoginOrOnboard();
     return;
   }
   const el = $('#sheet');
@@ -14555,6 +14585,7 @@ async function updatePrivacySetting(level) {
 
 function openDevLoginModal() {
   const el = $('#sheet');
+  if (!el) return;
   el.hidden = false;
   el.innerHTML = `
     <div class="sh">
@@ -14566,12 +14597,12 @@ function openDevLoginModal() {
 
       <div style="margin-bottom:16px;">
         <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px;">รหัส PIN ผู้ดูแล</label>
-        <input type="password" id="devPinInput" placeholder="ใส่รหัส PIN" maxlength="10" style="font-size:18px; text-align:center; letter-spacing:4px; font-weight:700;">
+        <input type="password" id="devPinInput" placeholder="ใส่รหัส PIN" maxlength="10" style="font-size:18px; text-align:center; letter-spacing:4px; font-weight:700;" onkeydown="if(event.key==='Enter') submitDevPinLogin()">
       </div>
 
       <div style="display:flex; flex-direction:column; gap:8px;">
         <button class="btn" onclick="submitDevPinLogin()">ยืนยันรหัส PIN ➜</button>
-        <button class="btn g" onclick="closeSheet()">ยกเลิก</button>
+        <button class="btn g" onclick="${!currentUser ? 'openWelcomeGateModal()' : 'closeSheet()'}">${!currentUser ? '⬅️ ย้อนกลับ' : 'ยกเลิก'}</button>
       </div>
     </div>
   `;
@@ -14598,7 +14629,16 @@ async function submitDevPinLogin() {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
-      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
+      await Promise.all([
+        fetchUsers(),
+        fetchLogs(),
+        fetchStreak(),
+        fetchLeaderboard(),
+        fetchFeed(),
+        fetchWeightLogs(),
+        fetchQuests(),
+        fetchPranksData()
+      ]);
       render();
       fireConfetti();
       toast('🎉 เข้าสู่ระบบ Developer เรียบร้อยแล้ว ยินดีต้อนรับคุณมอส!');
@@ -14619,6 +14659,73 @@ function logoutThisDevice() {
   }
 }
 
+// Prompt for Welcome Gate or Onboarding based on existing user accounts
+function promptLoginOrOnboard() {
+  if (users && users.length > 0) {
+    openWelcomeGateModal();
+  } else {
+    openOnboardingModal({ isNewUser: true });
+  }
+}
+
+// Welcome Gate Modal: Asking user if they already have a character
+function openWelcomeGateModal() {
+  const el = $('#sheet');
+  if (!el) return;
+  el.hidden = false;
+
+  const userCount = (users || []).length;
+
+  el.innerHTML = `
+    <div class="sh" style="padding-bottom:24px;">
+      <div style="text-align:center; margin-bottom:18px; padding-top:6px;">
+        <div style="width:72px; height:72px; margin:0 auto 12px; border-radius:50%; background:linear-gradient(135deg, #FFE4E8, #FFF5F7); border:2.5px solid var(--pink); display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(255,107,138,0.22); animation: floatSlow 3s ease-in-out infinite;">
+          <span style="font-size:38px;">🍡</span>
+        </div>
+        <h2 class="hd" style="font-size:20px; margin-bottom:6px; color:var(--ink);">ยินดีต้อนรับสู่ Moji Kal! ✨</h2>
+        <p style="font-size:13.5px; color:var(--mute); line-height:1.5; margin:0 auto; max-width:290px;">
+          คุณเคยสร้างตัวละครในแก๊งโมจิแล้วหรือยัง?
+        </p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+        <!-- Option A: มีบัญชีอยู่แล้ว -> เลือกโปรไฟล์ & ใส่ PIN -->
+        <button class="btn" style="padding:14px 16px; border-radius:18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 14px rgba(255,107,138,0.3); text-align:left;" onclick="openSelectExistingProfileModal()">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:28px;">👤</span>
+            <div>
+              <div style="font-size:15px; font-weight:800; color:#fff;">ฉันเคยสร้างตัวละครแล้ว</div>
+              <div style="font-size:11.5px; opacity:0.92; font-weight:normal; color:#fff;">เลือกโปรไฟล์เดิม & ใส่รหัส PIN ${userCount > 0 ? `(${userCount} สมาชิก)` : ''}</div>
+            </div>
+          </div>
+          <span style="font-size:20px; color:#fff;">➜</span>
+        </button>
+
+        <!-- Option B: ยังไม่เคย -> สร้างตัวละครใหม่ -->
+        <button class="btn s" style="padding:14px 16px; border-radius:18px; display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1.5px solid var(--pink); color:var(--pink-ink); text-align:left;" onclick="openOnboardingModal({ isNewUser: true })">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:28px;">✨</span>
+            <div>
+              <div style="font-size:14.5px; font-weight:700; color:var(--ink);">ยังไม่เคย (ผู้เล่นใหม่)</div>
+              <div style="font-size:11.5px; color:var(--mute); font-weight:normal;">สร้างตัวละครโมจิใหม่ & ตั้งเป้าหมายสุขภาพ</div>
+            </div>
+          </div>
+          <span style="font-size:20px; color:var(--pink);">➜</span>
+        </button>
+      </div>
+
+      <div style="text-align:center; padding-top:10px; border-top:1px dashed var(--line); display:flex; justify-content:center; gap:12px;">
+        <button type="button" class="btn g sm" style="font-size:11.5px; color:var(--mute); border:none; background:transparent; cursor:pointer;" onclick="openDevLoginModal()">
+          🔐 สำหรับผู้ดูแล: เข้าสู่ระบบ Dev PIN
+        </button>
+        <button type="button" class="btn g sm" style="font-size:11.5px; color:var(--mute); border:none; background:transparent; cursor:pointer;" onclick="closeSheet()">
+          ข้ามไปหน้าหลักก่อน
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 async function openSelectExistingProfileModal() {
   await fetchUsers();
   const el = $('#sheet');
@@ -14631,7 +14738,7 @@ async function openSelectExistingProfileModal() {
         <span style="font-size:36px; display:block; margin-bottom:4px;">👥</span>
         <h2 class="hd" style="font-size:18px; margin-bottom:4px;">เลือกโปรไฟล์ของคุณในแก๊ง</h2>
         <span style="font-size:12px; color:var(--mute); line-height:1.4; display:block;">
-          แตะชื่อของคุณเพื่อเข้าสู่ระบบบนเครื่องนี้ ข้อมูลอาหาร น้ำ และคอยน์จะซิงก์ตรงกับในมือถือทันที
+          แตะชื่อของคุณเพื่อใส่รหัส PIN เข้าสู่ระบบบนเครื่องนี้ ข้อมูลสุขภาพและคอยน์จะซิงก์ตรงกับในมือถือทันที
         </span>
       </div>
 
@@ -14672,7 +14779,7 @@ async function openSelectExistingProfileModal() {
 
       <div style="display:flex; gap:8px;">
         <button class="btn s" style="flex:1;" onclick="openOnboardingModal({ isNewUser: true })">+ สร้างตัวละครใหม่</button>
-        <button class="btn g" style="flex:1;" onclick="closeSheet()">ปิด</button>
+        <button class="btn g" style="flex:1;" onclick="${!currentUser ? 'openWelcomeGateModal()' : 'closeSheet()'}">${!currentUser ? '⬅️ ย้อนกลับ' : 'ปิด'}</button>
       </div>
     </div>
   `;
@@ -14715,7 +14822,7 @@ function openUserPinModal(targetUser) {
         <label style="font-size:12px; font-weight:700; color:var(--ink); display:block; margin-bottom:6px; text-align:center;">
           ${hasPin ? 'รหัส PIN 4 หลัก' : 'ตั้งรหัส PIN 4 หลักใหม่'}
         </label>
-        <input type="password" id="targetUserPinInput" placeholder="••••" maxlength="6" style="font-size:22px; text-align:center; letter-spacing:8px; font-weight:800; max-width:200px; margin:0 auto; display:block;">
+        <input type="password" id="targetUserPinInput" placeholder="••••" maxlength="6" style="font-size:22px; text-align:center; letter-spacing:8px; font-weight:800; max-width:200px; margin:0 auto; display:block;" onkeydown="if(event.key==='Enter') submitUserPinLogin('${targetUser.id}', ${hasPin})">
       </div>
 
       <div style="display:flex; gap:8px;">
@@ -14759,7 +14866,16 @@ async function submitUserPinLogin(userId, hasPin) {
       localStorage.setItem('mochi_onboarded', 'true');
       closeSheet();
       updateUserHeader();
-      await Promise.all([fetchUsers(), fetchLogs(), fetchStreak(), fetchLeaderboard(), fetchFeed(), fetchWeightLogs()]);
+      await Promise.all([
+        fetchUsers(),
+        fetchLogs(),
+        fetchStreak(),
+        fetchLeaderboard(),
+        fetchFeed(),
+        fetchWeightLogs(),
+        fetchQuests(),
+        fetchPranksData()
+      ]);
       render();
       fireConfetti();
       toast(`🎉 ยืนยันตัวตนสำเร็จ! ยินดีต้อนรับ ${currentUser.nickname} ✨`);
@@ -15907,12 +16023,18 @@ function renderFashionItemsCardsHtml(cat) {
 
 function renderFashionShop() {
   if (!currentUser) {
+    const hasUsers = users && users.length > 0;
     $('#main').innerHTML = `
       <div class="card" style="text-align:center; padding:32px 18px; margin:20px 0;">
         <div style="font-size:48px; margin-bottom:12px;">🛍️</div>
         <h2 class="hd" style="font-size:18px; margin-bottom:8px;">ห้องเสื้อโมจิ (Fashion Shop)</h2>
         <p style="font-size:12.5px; color:var(--mute); margin-bottom:18px;">กรุณาเลือกโปรไฟล์หรือสร้างตัวละครก่อนมาช้อปปิ้งแต่งตัวน้า</p>
-        <button class="btn" onclick="openOnboardingModal({ isNewUser: true })">✨ สร้างตัวละครใหม่</button>
+        ${hasUsers ? `
+          <button class="btn" style="max-width:260px; margin:0 auto 10px; width:100%; font-weight:800;" onclick="openSelectExistingProfileModal()">👤 เลือกโปรไฟล์เดิม & ใส่ PIN ➜</button>
+          <button class="btn s" style="max-width:260px; margin:0 auto; width:100%;" onclick="openOnboardingModal({ isNewUser: true })">✨ ผู้เล่นใหม่: สร้างตัวละคร</button>
+        ` : `
+          <button class="btn" onclick="openOnboardingModal({ isNewUser: true })">✨ สร้างตัวละครใหม่</button>
+        `}
       </div>
     `;
     return;
@@ -17746,7 +17868,7 @@ const POPULAR_THAI_DISHES = [
 function openSheet() {
   if (!currentUser) {
     toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนบันทึกอาหารน้า 🍡');
-    openOnboardingModal({ isNewUser: true });
+    promptLoginOrOnboard();
     return;
   }
   const now = new Date();
@@ -18286,7 +18408,7 @@ let currentCameraFacing = 'environment'; // 'environment' (rear) | 'user' (front
 function openCameraFromToday() {
   if (!currentUser) {
     toast('กรุณาสร้างหรือเลือกสมาชิกโมจิก่อนถ่ายรูปน้า 🍡');
-    openOnboardingModal({ isNewUser: true });
+    promptLoginOrOnboard();
     return;
   }
   if (!draft) openSheet();
@@ -19080,13 +19202,15 @@ async function installPwaApp() {
   // Trigger PWA banner after initial load if not standalone
   setTimeout(renderPwaBanner, 1500);
 
-  // Only trigger onboarding if truly a first-time visitor who has never onboarded
-  const hasOnboarded = localStorage.getItem('mochi_onboarded') === 'true';
-  const savedId = localStorage.getItem('mochi_user_id');
-  if (!hasOnboarded && (!savedId || !currentUser)) {
-    setTimeout(() => {
-      openOnboardingModal({ isNewUser: true });
-    }, 400);
+  // Check user session on initial boot: Ask returning vs new user if no session is active
+  if (!currentUser) {
+    if (users && users.length > 0) {
+      setTimeout(openWelcomeGateModal, 350);
+    } else {
+      setTimeout(() => {
+        openOnboardingModal({ isNewUser: true });
+      }, 350);
+    }
   }
 })();
 </script>
