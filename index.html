@@ -2968,6 +2968,77 @@ textarea { resize: none; margin-bottom: 8px; }
   text-overflow: ellipsis;
 }
 
+/* User Online / Offline Status System */
+.status-indicator-dot {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  box-sizing: content-box;
+  z-index: 2;
+}
+.status-indicator-dot.online {
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+  animation: pulseGreen 2.2s infinite;
+}
+.status-indicator-dot.offline {
+  background: #94A3B8;
+  border-color: var(--card);
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.member-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+.member-status-pill.online {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+.member-status-pill.offline {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.profile-online-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-top: 4px;
+}
+.profile-online-badge.online {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #6EE7B7;
+}
+.profile-online-badge.offline {
+  background: #F8FAFC;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
 /* Instagram-Style Post Card */
 .ig-post-card {
   background: var(--card);
@@ -6409,6 +6480,76 @@ function isCurrentUserDev(u = currentUser) {
          (u.email && u.email.toLowerCase().includes('moss'));
 }
 
+// User Online / Offline Status Engine
+function getUserOnlineStatus(u) {
+  if (!u) return { isOnline: false, text: '⚪ ออฟไลน์', badgeClass: 'offline', lastActiveText: 'ออฟไลน์' };
+  
+  // If current logged-in user on this device, always online
+  if (currentUser && u.id === currentUser.id) {
+    return { isOnline: true, text: '🟢 ออนไลน์ (คุณ)', badgeClass: 'online', lastActiveText: 'กำลังใช้งาน' };
+  }
+  
+  const lastActive = Number(u.last_active_at) || 0;
+  if (!lastActive) {
+    return { isOnline: false, text: '⚪ ออฟไลน์', badgeClass: 'offline', lastActiveText: 'ออฟไลน์' };
+  }
+  
+  const diffMs = Date.now() - lastActive;
+  const diffMin = Math.floor(diffMs / 60000);
+  
+  // Active within 5 minutes = Online!
+  if (diffMin < 5) {
+    return { isOnline: true, text: '🟢 ออนไลน์', badgeClass: 'online', lastActiveText: 'กำลังใช้งาน' };
+  }
+  
+  let lastActiveText = '';
+  if (diffMin < 60) {
+    lastActiveText = `${diffMin} น. ที่แล้ว`;
+  } else {
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) {
+      lastActiveText = `${diffHr} ชม. ที่แล้ว`;
+    } else {
+      const diffDays = Math.floor(diffHr / 24);
+      if (diffDays === 1) lastActiveText = 'เมื่อวาน';
+      else lastActiveText = `${diffDays} วันก่อน`;
+    }
+  }
+  
+  return {
+    isOnline: false,
+    text: `⚪ ออฟไลน์ (${lastActiveText})`,
+    badgeClass: 'offline',
+    lastActiveText
+  };
+}
+
+// User Online Heartbeat
+function sendUserHeartbeat() {
+  if (!currentUser) return;
+  fetch('/api/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-user-id': currentUser.id },
+    body: JSON.stringify({ userId: currentUser.id })
+  }).catch(() => {});
+}
+
+// Heartbeat every 45s while visible
+setInterval(() => {
+  if (document.visibilityState === 'visible') {
+    sendUserHeartbeat();
+  }
+}, 45000);
+
+window.addEventListener('focus', sendUserHeartbeat);
+window.addEventListener('click', () => {
+  const now = Date.now();
+  if (!window._lastHeartbeat || now - window._lastHeartbeat > 30000) {
+    window._lastHeartbeat = now;
+    sendUserHeartbeat();
+  }
+});
+
 // Register Service Worker for PWA with auto-update
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(reg => {
@@ -9274,7 +9415,22 @@ function renderToday() {
           <button class="x" onclick="deleteMeal('${l.id}')" style="margin-top:2px;">×</button>
         </div>
       `;
-      }).join('') : `<p style="color:var(--mute); margin: 6px 0;">${isToday ? 'ยังไม่มีบันทึกสำหรับวันนี้ แตะปุ่มด้านบนเพิ่มมื้อแรกได้เลย' : 'ไม่มีบันทึกมื้ออาหารในวันที่เลือก'}</p>`}
+      }).join('') : `
+        <div style="text-align:center; padding:18px 10px; color:var(--mute);">
+          <div style="font-size:28px; margin-bottom:4px;">🍡</div>
+          <div style="font-size:13px; font-weight:700; color:var(--ink); margin-bottom:4px;">
+            ${isToday ? 'ยังไม่มีบันทึกมื้ออาหารสำหรับวันนี้' : 'ไม่มีบันทึกมื้ออาหารในวันที่ ' + dateTh}
+          </div>
+          <div style="font-size:11.5px; margin-bottom:10px;">
+            ${isToday ? 'ถ่ายรูปหรือพิมพ์บันทึกมื้อแรกของวันได้เลย หรือแตะดูประวัติเมื่อวาน' : 'แตะวันที่ด้านบนเพื่อเลือกดูวันอื่นๆ'}
+          </div>
+          ${isToday ? `
+            <button class="btn s sm" style="font-size:11.5px; padding:4px 12px; display:inline-flex; align-items:center; gap:5px;" onclick="changeViewingDate('${yesterdayStr}')">
+              <span>⏪</span> <span>ดูมื้ออาหารเมื่อวาน (${yesterdayStr})</span>
+            </button>
+          ` : ''}
+        </div>
+      `}
     </div>
   `;
 }
@@ -11266,15 +11422,17 @@ function renderFeed() {
         <!-- Friends Stories -->
         ${gangStoriesToShow.map(s => {
           const hasStories = !!s.has_stories;
+          const status = getUserOnlineStatus(s);
           const ringClass = hasStories ? 'has-story' : (s.goal_achieved ? 'achieved' : 'idle');
           const badgeText = hasStories ? `🍱 ${s.story_count}` : (s.goal_achieved ? '🎯 สำเร็จ' : `🔥 ${s.streak}d`);
           return `
-            <div class="ig-story-item" onclick="handleStoryCircleClick('${s.id}')" title="${hasStories ? `แตะดูสตอรี่ 24 ชม. ของ ${esc(s.nickname)}` : `ดูโปรไฟล์ของ ${esc(s.nickname)}`}">
+            <div class="ig-story-item" onclick="handleStoryCircleClick('${s.id}')" title="${hasStories ? `แตะดูสตอรี่ 24 ชม. ของ ${esc(s.nickname)} (${status.text})` : `ดูโปรไฟล์ของ ${esc(s.nickname)} (${status.text})`}">
               <div class="ig-story-avatar-wrap ${ringClass}">
                 <div class="ig-story-avatar">
                   ${s.avatar_image ? `<img src="${esc(s.avatar_image)}">` : mascotSVG(s.avatar_face, s.avatar_color, 52, s.avatar_hat)}
                 </div>
                 <div class="ig-story-badge" style="${hasStories ? 'background:linear-gradient(45deg, #f09433, #dc2743);' : ''}">${badgeText}</div>
+                <span class="status-indicator-dot ${status.badgeClass}" style="width:11px; height:11px; border-width:2px; bottom:2px; right:2px;" title="${status.text}"></span>
               </div>
               <span class="ig-story-name">${esc(s.nickname)} ${s.is_me ? '(ฉัน)' : ''}</span>
             </div>
@@ -11738,22 +11896,33 @@ function renderFeed() {
       </div>
 
       <div class="member-grid">
-        ${membersToShow.map(u => `
+        ${membersToShow.map(u => {
+          const status = getUserOnlineStatus(u);
+          return `
           <div class="member-card" onclick="openMemberDetailModal('${u.id}')">
-            <div style="margin-bottom:8px;">
-              ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:58px; height:58px; border-radius:50%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 58, u.avatar_hat)}
+            <div style="position:relative; width:58px; height:58px; margin:0 auto 8px;">
+              <div style="width:100%; height:100%; border-radius:50%; overflow:hidden; border:2.5px solid ${status.isOnline ? '#10B981' : 'var(--line)'}; background:var(--card); display:flex; align-items:center; justify-content:center;">
+                ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face, u.avatar_color, 58, u.avatar_hat)}
+              </div>
+              <span class="status-indicator-dot ${status.badgeClass}" title="${status.text}"></span>
             </div>
-            <b style="font-size:13.5px; font-family:'Mali',sans-serif; margin-bottom:3px; color:var(--ink);">
+
+            <div class="member-status-pill ${status.badgeClass}">
+              ${status.text}
+            </div>
+
+            <b style="font-size:13.5px; font-family:'Mali',sans-serif; margin-bottom:3px; color:var(--ink); display:block; text-align:center;">
               ${esc(u.nickname)} ${u.id === currentUser?.id ? '<span style="font-size:10px; color:var(--pink);">(ฉัน)</span>' : ''}
               ${isCurrentUserDev(u) ? '<span style="font-size:9.5px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 6px; border-radius:8px; margin-left:3px; vertical-align:middle;">🛠️ DEV</span>' : ''}
             </b>
-            <span style="font-size:11px; color:var(--mute); margin-bottom:6px;">
+            <span style="font-size:11px; color:var(--mute); margin-bottom:6px; display:block; text-align:center;">
               ${u.personality === 'cheerful' ? '🌟 ร่าเริง สดใส' : u.personality === 'disciplined' ? '📋 มีวินัยเป๊ะ' : '💖 ใจดี อบอุ่น'}
             </span>
             <span class="coin-pill" style="margin-bottom:10px;">🪙 ${u.coins || 120} คอยน์</span>
             <button class="btn s sm" style="width:100%; font-size:11.5px; padding:5px 8px;">ดูโปรไฟล์ 👤</button>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
 
       <!-- Friends Daily Meals Summary (In Members Tab) -->
@@ -11761,6 +11930,7 @@ function renderFeed() {
       ${feedDataToShow.map(item => {
         const u = item.user;
         const s = item.stats;
+        const status = getUserOnlineStatus(u);
         const isOverSugar = s.sugar > u.sugar_goal;
         const sugarStatus = isOverSugar ? 'alert' : s.sugar >= u.sugar_goal * 0.85 ? 'warn' : 'ok';
         const statusLabel = isOverSugar ? 'น้ำตาลเกิน 🚨' : s.sugar >= u.sugar_goal * 0.85 ? 'ใกล้เต็มโควตา ⚠️' : s.meal_count === 0 ? 'ยังไม่บันทึก 💤' : 'หวานกำลังดี 🍡';
@@ -11769,12 +11939,16 @@ function renderFeed() {
           <div class="friend-card">
             <div class="friend-header">
               <div class="friend-profile" style="cursor:pointer;" onclick="openMemberDetailModal('${u.id}')">
-                <div class="mini-avatar">
+                <div class="mini-avatar" style="position:relative;">
                   ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" alt="">` : mascotSVG(u.avatar_face, u.avatar_color, 42, u.avatar_hat)}
+                  <span class="status-indicator-dot ${status.badgeClass}" style="width:10px; height:10px; border-width:1.5px; bottom:-1px; right:-1px;"></span>
                 </div>
                 <div>
-                  <b>${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
-                  <div style="font-size:11px; color:var(--mute);">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <b style="font-size:14px; font-family:'Mali',sans-serif;">${esc(u.nickname)} ${u.is_me ? '<span style="font-size:11px; color:var(--pink);">(ฉัน)</span>' : ''}</b>
+                    <span class="member-status-pill ${status.badgeClass}" style="margin:0; font-size:9.5px; padding:1px 6px;">${status.text}</span>
+                  </div>
+                  <div style="font-size:11px; color:var(--mute); margin-top:2px;">${s.meal_count} มื้อวันนี้ · 🔥 ${u.streak || 0} วันติด · 🎯 ${u.goal_score || 150} pt · 🪙 ${u.coins || 120}</div>
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
@@ -12198,6 +12372,7 @@ function renderMemberProfileModalContent() {
   const hasStories = !!data.has_stories;
   const isMe = !!u.is_me;
   const isDev = isCurrentUserDev(u);
+  const status = getUserOnlineStatus(u);
 
   const goalTypeNames = {
     weight_loss: 'ลดน้ำหนัก',
@@ -12257,6 +12432,9 @@ function renderMemberProfileModalContent() {
           <span>${esc(u.nickname)}</span>
           ${isMe ? '<span style="font-size:11px; color:var(--pink); font-weight:700;">(ฉัน)</span>' : ''}
           ${isDev ? '<span style="font-size:10px; font-weight:800; background:linear-gradient(135deg, #3B82F6, #1D4ED8); color:#fff; padding:1px 7px; border-radius:8px;">🛠️ DEVELOPER</span>' : '<span style="font-size:10px; font-weight:700; background:var(--pinkS); color:var(--pink-ink); padding:1px 7px; border-radius:8px;">🍡 สมาชิกแก๊ง</span>'}
+        </div>
+        <div style="margin: 3px 0 6px;">
+          <span class="profile-online-badge ${status.badgeClass}">${status.isOnline ? '🟢 กำลังออนไลน์อยู่' : status.text}</span>
         </div>
         <div style="color:var(--mute); margin-bottom:4px;">${personalityText}</div>
         <div style="font-size:11.5px; color:var(--ink); line-height:1.5;">
@@ -15459,15 +15637,20 @@ async function openSelectExistingProfileModal() {
           }
           return regularUsers.map(u => {
             const isCurrent = currentUser && currentUser.id === u.id;
+            const status = getUserOnlineStatus(u);
             return `
               <div class="settings-row" style="cursor:pointer; padding:10px 12px; border-radius:16px; border:1.5px solid ${isCurrent ? 'var(--pink)' : 'var(--line)'}; background:var(--card);" onclick="selectExistingProfile('${u.id}')">
                 <div class="settings-row-left" style="display:flex; align-items:center; gap:10px;">
-                  <div style="width:44px; height:44px; border-radius:50%; overflow:hidden; background:var(--bg); border:1.5px solid var(--pink); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                    ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face || 'happy', u.avatar_color || '#FF9EB5', 40, u.avatar_hat)}
+                  <div style="position:relative; width:44px; height:44px; flex-shrink:0;">
+                    <div style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--bg); border:1.5px solid ${status.isOnline ? '#10B981' : 'var(--pink)'}; display:flex; align-items:center; justify-content:center;">
+                      ${u.avatar_image ? `<img src="${esc(u.avatar_image)}" style="width:100%; height:100%; object-fit:cover;">` : mascotSVG(u.avatar_face || 'happy', u.avatar_color || '#FF9EB5', 40, u.avatar_hat)}
+                    </div>
+                    <span class="status-indicator-dot ${status.badgeClass}" style="width:10px; height:10px; border-width:1.5px;"></span>
                   </div>
                   <div>
                     <div style="display:flex; align-items:center; gap:6px;">
                       <b style="font-size:14px; color:var(--ink);">${esc(u.nickname)}</b>
+                      <span class="member-status-pill ${status.badgeClass}" style="margin:0; font-size:9.5px; padding:1px 6px;">${status.text}</span>
                       ${isCurrent ? `<span style="font-size:9.5px; background:var(--pinkS); color:var(--pink); font-weight:700; padding:1px 6px; border-radius:8px;">ใช้งานอยู่</span>` : ''}
                     </div>
                     <div style="font-size:11px; color:var(--mute); margin-top:2px;">

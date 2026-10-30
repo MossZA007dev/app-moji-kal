@@ -245,7 +245,8 @@ const neededCols = [
   { name: 'unlocked_items', type: 'TEXT DEFAULT "[]"' },
   { name: 'role', type: 'TEXT DEFAULT "user"' },
   { name: 'is_dev', type: 'INTEGER DEFAULT 0' },
-  { name: 'pin', type: 'TEXT' }
+  { name: 'pin', type: 'TEXT' },
+  { name: 'last_active_at', type: 'INTEGER DEFAULT 0' }
 ];
 
 for (const col of neededCols) {
@@ -305,7 +306,7 @@ export function seedFromGangSeedJson() {
           water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml,
           water_bottle_setup, unlocked_items, privacy_level, role, is_dev, pin,
           gender, age, height, weight, activity_level, target_weight, consent_pdpa,
-          consent_at, created_at
+          consent_at, created_at, last_active_at
         ) VALUES (
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
@@ -313,7 +314,7 @@ export function seedFromGangSeedJson() {
           ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?,
-          ?, ?
+          ?, ?, ?
         )
       `);
 
@@ -325,7 +326,7 @@ export function seedFromGangSeedJson() {
           u.water_bottle_ml || 500, u.water_bottle_name || 'ขวดน้ำ 500 ml', u.water_bottle_icon || 'bottle_500', u.water_daily_target_ml || 2000,
           u.water_bottle_setup || 0, typeof u.unlocked_items === 'string' ? u.unlocked_items : JSON.stringify(u.unlocked_items || []), u.privacy_level || 'full', u.role || 'user', u.is_dev || 0, u.pin || null,
           u.gender || null, u.age || null, u.height || null, u.weight || null, u.activity_level || null, u.target_weight || null, u.consent_pdpa || 1,
-          u.consent_at || Date.now(), u.created_at || Date.now()
+          u.consent_at || Date.now(), u.created_at || Date.now(), u.last_active_at || Date.now()
         );
       }
       console.log(`[Seed] Seeded ${data.users.length} users from gang_seed.json`);
@@ -404,6 +405,13 @@ export function getAllGangLogs(limit = 200) {
   return db.prepare('SELECT * FROM logs ORDER BY created_at DESC LIMIT ?').all(limit);
 }
 
+export function touchUserActivity(userId) {
+  if (!userId) return;
+  try {
+    db.prepare('UPDATE users SET last_active_at = ? WHERE id = ?').run(Date.now(), userId);
+  } catch (_) {}
+}
+
 export function upsertFullUser(u) {
   if (!u || !u.id || !u.nickname) return null;
   const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(u.id);
@@ -415,7 +423,7 @@ export function upsertFullUser(u) {
       water_bottle_ml, water_bottle_name, water_bottle_icon, water_daily_target_ml,
       water_bottle_setup, unlocked_items, privacy_level, role, is_dev, pin,
       gender, age, height, weight, activity_level, target_weight, consent_pdpa,
-      consent_at, created_at
+      consent_at, created_at, last_active_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
@@ -423,7 +431,7 @@ export function upsertFullUser(u) {
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?, ?,
-      ?, ?
+      ?, ?, ?
     )
   `);
 
@@ -464,7 +472,8 @@ export function upsertFullUser(u) {
     u.target_weight || existing?.target_weight || null,
     u.consent_pdpa !== undefined ? u.consent_pdpa : (existing?.consent_pdpa || 1),
     u.consent_at || existing?.consent_at || Date.now(),
-    u.created_at || existing?.created_at || Date.now()
+    u.created_at || existing?.created_at || Date.now(),
+    u.last_active_at !== undefined ? u.last_active_at : (existing?.last_active_at || Date.now())
   );
 
   triggerGangSeedSave();
@@ -2362,6 +2371,7 @@ export function getGroupFeed(date, currentUserId) {
         goal_type: user.goal_type || 'weight_loss',
         goal_score: user.goal_score ?? 150,
         privacy_level: user.privacy_level,
+        last_active_at: user.last_active_at || 0,
         is_me: isMe,
         streak: streak.current
       },
@@ -2524,6 +2534,7 @@ export function getMemberDetail(targetUserId, requesterId) {
       water_daily_target_ml: user.water_daily_target_ml || 2000,
       privacy_level: user.privacy_level,
       created_at: user.created_at,
+      last_active_at: user.last_active_at || 0,
       is_me: isMe
     },
     todayGoal,
@@ -3549,6 +3560,7 @@ export function getGangStories(currentUserId = '') {
       avatar_face: u.avatar_face,
       avatar_hat: u.avatar_hat,
       is_me: isMe,
+      last_active_at: u.last_active_at || 0,
       streak: streak.current,
       today_meals: meals,
       today_water_ml: waterSum,

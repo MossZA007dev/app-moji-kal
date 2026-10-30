@@ -117,6 +117,20 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname.startsWith('/api/')) {
     try {
+      const activeUserId = req.headers['x-user-id'] || parsedUrl.searchParams.get('userId');
+      if (activeUserId) {
+        db.touchUserActivity(activeUserId);
+      }
+
+      // 0. User Online Heartbeat
+      if (pathname === '/api/heartbeat' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const hbUserId = req.headers['x-user-id'] || body.userId;
+        if (hbUserId) {
+          db.touchUserActivity(hbUserId);
+        }
+        return sendJson(res, 200, { success: true, timestamp: Date.now() });
+      }
       // 1. Google Auth
       if (pathname === '/api/auth/google' && req.method === 'POST') {
         const body = await parseJsonBody(req);
