@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-30T22:59:24.731Z",
+  "exported_at": "2026-10-30T23:36:02.063Z",
   "users": [
     {
       "id": "u1",
@@ -40,7 +40,8 @@
       "unlocked_items": "[]",
       "role": "dev",
       "is_dev": 1,
-      "pin": null
+      "pin": null,
+      "last_active_at": 1793403250043
     },
     {
       "id": "u_1793189569375",
@@ -81,7 +82,8 @@
       "unlocked_items": "[]",
       "role": "user",
       "is_dev": 0,
-      "pin": "2005"
+      "pin": "2005",
+      "last_active_at": 1793403250044
     },
     {
       "id": "u_1793189839115",
@@ -90,7 +92,7 @@
       "avatar_face": "happy",
       "calorie_goal": 1658,
       "sugar_goal": 25,
-      "privacy_level": "summary",
+      "privacy_level": "full",
       "created_at": 1793218097599,
       "google_id": null,
       "email": null,
@@ -122,7 +124,8 @@
       "unlocked_items": "[]",
       "role": "user",
       "is_dev": 0,
-      "pin": "2003"
+      "pin": "2003",
+      "last_active_at": 1793403250044
     },
     {
       "id": "u_1793189704988",
@@ -163,7 +166,8 @@
       "unlocked_items": "[]",
       "role": "user",
       "is_dev": 0,
-      "pin": "0000"
+      "pin": "0000",
+      "last_active_at": 1793403250045
     },
     {
       "id": "u_1793131061727",
@@ -186,9 +190,9 @@
       "activity_level": "sedentary",
       "avatar_hat": "none",
       "personality": "kind",
-      "coins": 680,
+      "coins": 710,
       "goal_type": "healthy_balance",
-      "goal_score": 1735,
+      "goal_score": 1835,
       "carbs_goal": 293,
       "protein_goal": 73,
       "fat_goal": 54,
@@ -204,7 +208,8 @@
       "unlocked_items": "[]",
       "role": "user",
       "is_dev": 0,
-      "pin": null
+      "pin": null,
+      "last_active_at": 1793403361085
     }
   ],
   "logs": [
@@ -276,7 +281,7 @@
       "sweetness_level": "normal",
       "is_private": 0,
       "image_url": null,
-      "created_at": 1793401163727,
+      "created_at": 1793403361060,
       "components_json": null,
       "carbs": null,
       "protein": null,

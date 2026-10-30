@@ -319,14 +319,19 @@ export function seedFromGangSeedJson() {
       `);
 
       for (const u of data.users) {
+        const existing = db.prepare('SELECT coins, goal_score, last_active_at FROM users WHERE id = ?').get(u.id);
+        const coins = Math.max(Number(u.coins) || 0, Number(existing?.coins) || 0);
+        const goalScore = Math.max(Number(u.goal_score) || 0, Number(existing?.goal_score) || 0);
+        const lastActive = Math.max(Number(u.last_active_at) || 0, Number(existing?.last_active_at) || 0) || Date.now();
+
         stmtUser.run(
           u.id, u.nickname, u.avatar_color || '#FF9EB5', u.avatar_face || 'happy', u.avatar_hat || 'none', u.avatar_accessory || 'none',
-          u.avatar_image || null, u.personality || 'kind', u.coins ?? 120, u.goal_score ?? 150, u.goal_type || 'weight_loss', u.calorie_goal || 2000,
+          u.avatar_image || null, u.personality || 'kind', coins, goalScore, u.goal_type || 'weight_loss', u.calorie_goal || 2000,
           u.sugar_goal || 25, u.carbs_goal || null, u.protein_goal || null, u.fat_goal || null, u.sodium_goal || 2000, u.water_goal || 8,
           u.water_bottle_ml || 500, u.water_bottle_name || 'ขวดน้ำ 500 ml', u.water_bottle_icon || 'bottle_500', u.water_daily_target_ml || 2000,
           u.water_bottle_setup || 0, typeof u.unlocked_items === 'string' ? u.unlocked_items : JSON.stringify(u.unlocked_items || []), u.privacy_level || 'full', u.role || 'user', u.is_dev || 0, u.pin || null,
           u.gender || null, u.age || null, u.height || null, u.weight || null, u.activity_level || null, u.target_weight || null, u.consent_pdpa || 1,
-          u.consent_at || Date.now(), u.created_at || Date.now(), u.last_active_at || Date.now()
+          u.consent_at || Date.now(), u.created_at || Date.now(), lastActive
         );
       }
       console.log(`[Seed] Seeded ${data.users.length} users from gang_seed.json`);
