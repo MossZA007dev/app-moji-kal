@@ -674,6 +674,7 @@ export function createUser({
     } catch (_) {}
   }
 
+  triggerGangSeedSave();
   return getUser(newId);
 }
 
@@ -780,6 +781,7 @@ export function updateUser(id, data) {
     role, is_dev, pin,
     id
   );
+  triggerGangSeedSave();
   return getUser(id);
 }
 
@@ -811,6 +813,7 @@ export function buyShopItem(userId, itemKey, price, itemName) {
 
   recordActivity(userId, 'shop', `ปลดล็อคแฟชั่น [${itemName || itemKey}] ในร้านค้า (-${price} 🪙) ✨`, -price);
 
+  triggerGangSeedSave();
   return { success: true, user: getUser(userId), unlocked };
 }
 
@@ -836,6 +839,7 @@ export function claimMissionItem(userId, itemKey, itemName) {
 
   recordActivity(userId, 'shop', `สำเร็จภารกิจและปลดล็อคแฟชั่น [${itemName || itemKey}] ฟรี! 🎯🎉`, 0);
 
+  triggerGangSeedSave();
   return { success: true, user: getUser(userId), unlocked };
 }
 
