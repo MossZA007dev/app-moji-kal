@@ -64,9 +64,9 @@
       "activity_level": "light",
       "avatar_hat": "none",
       "personality": "cheerful",
-      "coins": 376,
+      "coins": 140,
       "goal_type": "sugar_cut",
-      "goal_score": 1540,
+      "goal_score": 230,
       "carbs_goal": 317,
       "protein_goal": 72,
       "fat_goal": 57,
@@ -106,9 +106,9 @@
       "activity_level": "sedentary",
       "avatar_hat": "none",
       "personality": "cheerful",
-      "coins": 597,
+      "coins": 125,
       "goal_type": "weight_loss",
-      "goal_score": 3090,
+      "goal_score": 165,
       "carbs_goal": 271,
       "protein_goal": 130,
       "fat_goal": 60,
@@ -148,9 +148,9 @@
       "activity_level": "sedentary",
       "avatar_hat": "none",
       "personality": "kind",
-      "coins": 305,
+      "coins": 140,
       "goal_type": "muscle_gain",
-      "goal_score": 2100,
+      "goal_score": 230,
       "carbs_goal": 238,
       "protein_goal": 73,
       "fat_goal": 46,
@@ -319,11 +319,64 @@
   ],
   "quest_claims": [
     {
-      "id": "claim_1793128118697_ryiw",
+      "id": "claim_u1_daily_social_cheer",
       "user_id": "u1",
       "quest_id": "daily_social_cheer",
-      "period_key": "2026-10-27",
+      "period_key": "permanent",
       "claimed_at": 1793128118697
+    },
+    {
+      "id": "claim_u_1793189569375_daily_meals_2",
+      "user_id": "u_1793189569375",
+      "quest_id": "daily_meals_2",
+      "period_key": "permanent",
+      "claimed_at": 1793217980000
+    },
+    {
+      "id": "claim_u_1793189569375_daily_photo_post",
+      "user_id": "u_1793189569375",
+      "quest_id": "daily_photo_post",
+      "period_key": "permanent",
+      "claimed_at": 1793217980000
+    },
+    {
+      "id": "claim_u_1793189839115_daily_meals_2",
+      "user_id": "u_1793189839115",
+      "quest_id": "daily_meals_2",
+      "period_key": "permanent",
+      "claimed_at": 1793218097000
+    },
+    {
+      "id": "claim_u_1793189839115_daily_photo_post",
+      "user_id": "u_1793189839115",
+      "quest_id": "daily_photo_post",
+      "period_key": "permanent",
+      "claimed_at": 1793218097000
+    },
+    {
+      "id": "claim_u_1793189704988_daily_photo_post",
+      "user_id": "u_1793189704988",
+      "quest_id": "daily_photo_post",
+      "period_key": "permanent",
+      "claimed_at": 1793218030000
+    }
+  ],
+  "daily_goals": [
+    {
+      "user_id": "u_1793189569375",
+      "date": "2026-10-28",
+      "achieved": 1,
+      "score_awarded": 50,
+      "goal_type": "sugar_cut",
+      "updated_at": 1793217980000
+    },
+    {
+      "user_id": "u_1793189839115",
+      "date": "2026-10-28",
+      "achieved": 1,
+      "score_awarded": 50,
+      "goal_type": "healthy_balance",
+      "updated_at": 1793218097000
     }
   ]
 }

@@ -7240,13 +7240,15 @@ async function claimQuestReward(questId) {
         currentUser.coins = (currentUser.coins || 0) + coinsEarned;
         currentUser.goal_score = (currentUser.goal_score || 0) + scoreEarned;
       }
-      GangDB.set('claim_' + questId, { id: 'claim_' + questId, user_id: currentUser.id, quest_id: questId, period_key: 'all_time', claimed_at: Date.now() });
+      GangDB.set('claim_' + questId, { id: 'claim_' + questId, user_id: currentUser.id, quest_id: questId, period_key: 'permanent', claimed_at: Date.now() });
       await Promise.all([fetchQuests(), fetchFeed(), fetchLeaderboard()]);
       updateQuestNavBadge();
       if (tab === 'quests') renderQuests();
       else renderFeed();
     } else {
       toast(data.error || 'ยังทำภารกิจไม่สำเร็จ');
+      await fetchQuests();
+      if (tab === 'quests') renderQuests();
     }
   } catch (err) {
     console.error('claimQuestReward error:', err);
@@ -7275,8 +7277,12 @@ async function claimGangCoopReward() {
     if (data.success) {
       if (typeof fireConfetti === 'function') fireConfetti();
       toast(`🎉 สมาชิกแก๊งสุดยอดมาก! ได้รับรางวัลใหญ่ +${data.rewardCoins} 🪙 และ +${data.rewardScore} pt!`);
-      currentUser.coins = (currentUser.coins || 0) + data.rewardCoins;
-      currentUser.goal_score = (currentUser.goal_score || 0) + data.rewardScore;
+      if (data.user) {
+        currentUser = data.user;
+      } else {
+        currentUser.coins = (currentUser.coins || 0) + data.rewardCoins;
+        currentUser.goal_score = (currentUser.goal_score || 0) + data.rewardScore;
+      }
       GangDB.set('claim_' + (gangCoopData?.id || 'coop'), { id: 'claim_' + (gangCoopData?.id || 'coop'), user_id: currentUser.id, quest_id: gangCoopData?.id || 'coop', period_key: gangCoopData?.periodKey || 'current', claimed_at: Date.now() });
       await Promise.all([fetchQuests(), fetchFeed(), fetchLeaderboard()]);
       updateQuestNavBadge();
@@ -7284,6 +7290,8 @@ async function claimGangCoopReward() {
       else renderFeed();
     } else {
       toast(data.error || 'ภารกิจรวมพลังแก๊งยังไม่สำเร็จ');
+      await fetchQuests();
+      if (tab === 'quests') renderQuests();
     }
   } catch (err) {
     console.error('claimGangCoopReward error:', err);
@@ -11303,7 +11311,7 @@ function renderQuests() {
           <span style="font-size:18px;">📋</span>
           <b style="font-size:14px; font-family:'Mali',sans-serif; color:var(--ink);">รายการภารกิจสุขภาพ</b>
         </div>
-        <span style="font-size:11px; color:var(--mute);">รีเซ็ตทุกเที่ยงคืน ⏰</span>
+        <span style="font-size:11px; color:var(--mute);">ภารกิจพิชิตเป้าหมายแก๊งโมจิ 🏆 (รับรางวัลได้ภารกิจละ 1 ครั้ง)</span>
       </div>
 
       <!-- Category Tabs (Daily / Weekly / Main) -->

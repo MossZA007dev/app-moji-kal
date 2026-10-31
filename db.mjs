@@ -123,16 +123,17 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_post_reactions_post ON post_reactions(post_id);
 
-  -- Gamified Quest Claims (Daily, Weekly, Main Tasks)
+  -- Gamified Quest Claims (Daily, Weekly, Main Tasks - Permanent Once Claimed)
   CREATE TABLE IF NOT EXISTS quest_claims (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     quest_id TEXT NOT NULL,
-    period_key TEXT NOT NULL,
+    period_key TEXT NOT NULL DEFAULT 'permanent',
     claimed_at INTEGER NOT NULL,
     UNIQUE(user_id, quest_id, period_key)
   );
   CREATE INDEX IF NOT EXISTS idx_quest_claims_user ON quest_claims(user_id);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_quest_claims_user_quest ON quest_claims(user_id, quest_id);
 
   -- Group Verified Dishes Knowledge Cache (Learned from group confirmations)
   CREATE TABLE IF NOT EXISTS verified_dishes (
@@ -327,8 +328,8 @@ export function seedFromGangSeedJson() {
 
       for (const u of data.users) {
         const existing = db.prepare('SELECT coins, goal_score, last_active_at FROM users WHERE id = ?').get(u.id);
-        const coins = Math.max(Number(u.coins) || 0, Number(existing?.coins) || 0);
-        const goalScore = Math.max(Number(u.goal_score) || 0, Number(existing?.goal_score) || 0);
+        const coins = u.coins !== undefined ? Number(u.coins) : (Number(existing?.coins) || 120);
+        const goalScore = u.goal_score !== undefined ? Number(u.goal_score) : (Number(existing?.goal_score) || 150);
         const lastActive = Math.max(Number(u.last_active_at) || 0, Number(existing?.last_active_at) || 0) || Date.now();
 
         stmtUser.run(
@@ -374,14 +375,25 @@ export function seedFromGangSeedJson() {
       }
     }
 
-    // 4. Seed / Upsert Quest Claims
+    // 4. Seed / Upsert Quest Claims (Deduplicated & Permanent)
     if (Array.isArray(data.quest_claims)) {
       const stmtClaim = db.prepare(`
         INSERT OR REPLACE INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
         VALUES (?, ?, ?, ?, ?)
       `);
       for (const c of data.quest_claims) {
-        stmtClaim.run(c.id, c.user_id, c.quest_id, c.period_key, c.claimed_at || Date.now());
+        stmtClaim.run(c.id, c.user_id, c.quest_id, c.period_key || 'permanent', c.claimed_at || Date.now());
+      }
+    }
+
+    // 5. Seed / Upsert Daily Goals
+    if (Array.isArray(data.daily_goals)) {
+      const stmtGoal = db.prepare(`
+        INSERT OR REPLACE INTO daily_goals (user_id, date, achieved, score_awarded, goal_type, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      for (const g of data.daily_goals) {
+        stmtGoal.run(g.user_id, g.date, g.achieved ? 1 : 0, g.score_awarded || 50, g.goal_type || 'weight_loss', g.updated_at || Date.now());
       }
     }
   } catch (err) {
@@ -427,7 +439,8 @@ export function exportGangSeedJson() {
       users: currentUsers,
       logs: Array.from(logMap.values()),
       post_reactions: db.prepare("SELECT * FROM post_reactions WHERE user_id NOT IN ('u_1793131061727', 'u_skyblossom') AND post_id != 'log_skyblossom_salad_01'").all(),
-      quest_claims: db.prepare("SELECT * FROM quest_claims WHERE user_id NOT IN ('u_1793131061727', 'u_skyblossom')").all()
+      quest_claims: db.prepare("SELECT * FROM quest_claims WHERE user_id NOT IN ('u_1793131061727', 'u_skyblossom')").all(),
+      daily_goals: db.prepare("SELECT * FROM daily_goals WHERE user_id NOT IN ('u_1793131061727', 'u_skyblossom')").all()
     };
     fs.writeFileSync(seedFile, JSON.stringify(dump, null, 2), 'utf8');
     triggerGitHubRepoSync();
@@ -541,8 +554,8 @@ export function upsertFullUser(u) {
     u.avatar_accessory || existing?.avatar_accessory || 'none',
     u.avatar_image !== undefined ? u.avatar_image : (existing?.avatar_image || null),
     u.personality || existing?.personality || 'kind',
-    Math.max(Number(u.coins) || 0, Number(existing?.coins) || 0),
-    Math.max(Number(u.goal_score) || 0, Number(existing?.goal_score) || 0),
+    u.coins !== undefined ? Number(u.coins) : (Number(existing?.coins) || 120),
+    u.goal_score !== undefined ? Number(u.goal_score) : (Number(existing?.goal_score) || 150),
     u.goal_type || existing?.goal_type || 'weight_loss',
     Number(u.calorie_goal) || existing?.calorie_goal || 2000,
     Number(u.sugar_goal) || existing?.sugar_goal || 25,
@@ -1738,7 +1751,7 @@ export function getUserQuests(userId) {
   const todayWater = db.prepare("SELECT SUM(COALESCE(water_ml, 500)) as s FROM logs WHERE user_id = ? AND date = ? AND (water_ml IS NOT NULL OR name LIKE '%น้ำเปล่า%')").get(userId, todayStr)?.s || 0;
   const todaySugarRow = db.prepare('SELECT SUM(sugar) as s FROM logs WHERE user_id = ? AND date = ?').get(userId, todayStr);
   const todaySugar = todaySugarRow?.s || 0;
-  const todaySugarOk = todayMeals > 0 && todaySugar <= (user.sugar_goal || 25);
+  const todaySugarOk = todayMeals >= 2 && todaySugar <= (user.sugar_goal || 25);
   const todayPhotos = db.prepare('SELECT COUNT(*) as c FROM logs WHERE user_id = ? AND date = ? AND image_url IS NOT NULL').get(userId, todayStr)?.c || 0;
   
   const todayStartTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -1759,16 +1772,17 @@ export function getUserQuests(userId) {
   const myRank = (leaderboard.findIndex(u => u.id === userId) + 1) || 999;
   const myGoalScore = Number(user.goal_score) || 150;
 
-  // Fetch claimed quests for this user
-  const claims = db.prepare('SELECT quest_id, period_key FROM quest_claims WHERE user_id = ?').all(userId);
-  const isClaimed = (questId, periodKey) => claims.some(c => c.quest_id === questId && c.period_key === periodKey);
+  // Fetch claimed quests for this user (PERMANENT: once claimed, stays claimed forever!)
+  const claims = db.prepare('SELECT quest_id FROM quest_claims WHERE user_id = ?').all(userId);
+  const claimedQuestIds = new Set(claims.map(c => c.quest_id));
+  const isClaimed = (questId) => claimedQuestIds.has(questId);
 
-  // 1. DAILY TASKS (ภารกิจรายวัน - ทำง่าย ได้เหรียญพอดีๆ รีเซ็ตทุกวัน)
+  // 1. DAILY TASKS (ภารกิจรายวัน - ทำง่าย ได้เหรียญพอดีๆ รับได้ 1 ครั้งต่อภารกิจ)
   const dailyTasks = [
     {
       id: 'daily_meals_2',
       category: 'daily',
-      periodKey: todayStr,
+      periodKey: 'permanent',
       icon: '🍱',
       title: 'นักกินมีระเบียบ (2 มื้อ)',
       desc: 'บันทึกอาหารอย่างน้อย 2 มื้อในวันนี้',
@@ -1778,13 +1792,13 @@ export function getUserQuests(userId) {
       rewardCoins: 5,
       rewardScore: 15,
       isCompleted: todayMeals >= 2,
-      isClaimed: isClaimed('daily_meals_2', todayStr),
+      isClaimed: isClaimed('daily_meals_2'),
       actionType: 'meal'
     },
     {
       id: 'daily_water_1000',
       category: 'daily',
-      periodKey: todayStr,
+      periodKey: 'permanent',
       icon: '💧',
       title: 'จิบน้ำสดชื่น (1,000 ml)',
       desc: 'ดื่มน้ำให้ได้ 1,000 ml วันนี้ เพื่อระบบเผาผลาญ',
@@ -1794,29 +1808,29 @@ export function getUserQuests(userId) {
       rewardCoins: 5,
       rewardScore: 15,
       isCompleted: todayWater >= 1000,
-      isClaimed: isClaimed('daily_water_1000', todayStr),
+      isClaimed: isClaimed('daily_water_1000'),
       actionType: 'water'
     },
     {
       id: 'daily_sugar_control',
       category: 'daily',
-      periodKey: todayStr,
+      periodKey: 'permanent',
       icon: '🍬',
       title: 'คุมหวานชนะใจตน',
-      desc: `น้ำตาลวันนี้ไม่เกินเป้าหมาย (≤ ${user.sugar_goal || 25}g)`,
+      desc: `น้ำตาลวันนี้ไม่เกินเป้าหมาย (≤ ${user.sugar_goal || 25}g เมื่อทานครบ 2 มื้อ)`,
       progress: todaySugarOk ? 1 : 0,
       target: 1,
       unit: 'ครั้ง',
       rewardCoins: 10,
       rewardScore: 25,
       isCompleted: todaySugarOk,
-      isClaimed: isClaimed('daily_sugar_control', todayStr),
+      isClaimed: isClaimed('daily_sugar_control'),
       actionType: 'meal'
     },
     {
       id: 'daily_photo_post',
       category: 'daily',
-      periodKey: todayStr,
+      periodKey: 'permanent',
       icon: '📸',
       title: 'ช่างภาพอาหารตัวยง',
       desc: 'บันทึกอาหารพร้อมถ่ายรูปจานอาหาร 1 มื้อ',
@@ -1826,13 +1840,13 @@ export function getUserQuests(userId) {
       rewardCoins: 5,
       rewardScore: 15,
       isCompleted: todayPhotos >= 1,
-      isClaimed: isClaimed('daily_photo_post', todayStr),
+      isClaimed: isClaimed('daily_photo_post'),
       actionType: 'photo'
     },
     {
       id: 'daily_social_cheer',
       category: 'daily',
-      periodKey: todayStr,
+      periodKey: 'permanent',
       icon: '💖',
       title: 'มิตรภาพแก๊งโมจิ',
       desc: 'กดถูกใจ ❤️ หรือส่งเสียงเชียร์ให้เพื่อนในฟีด',
@@ -1842,7 +1856,7 @@ export function getUserQuests(userId) {
       rewardCoins: 5,
       rewardScore: 10,
       isCompleted: todaySocial >= 1,
-      isClaimed: isClaimed('daily_social_cheer', todayStr),
+      isClaimed: isClaimed('daily_social_cheer'),
       actionType: 'feed'
     }
   ];
@@ -1852,65 +1866,65 @@ export function getUserQuests(userId) {
     {
       id: 'weekly_streak_3',
       category: 'weekly',
-      periodKey: weekKey,
+      periodKey: 'permanent',
       icon: '🔥',
       title: 'สตรีคไฟแรง 3 วันติด',
       desc: 'บันทึกอาหารต่อเนื่องอย่างน้อย 3 วัน',
       progress: Math.min(3, streakInfo.current),
       target: 3,
       unit: 'วัน',
-      rewardCoins: 35,
-      rewardScore: 80,
+      rewardCoins: 25,
+      rewardScore: 50,
       isCompleted: streakInfo.current >= 3,
-      isClaimed: isClaimed('weekly_streak_3', weekKey),
+      isClaimed: isClaimed('weekly_streak_3'),
       actionType: 'streak'
     },
     {
       id: 'weekly_meals_8',
       category: 'weekly',
-      periodKey: weekKey,
+      periodKey: 'permanent',
       icon: '🍱',
       title: 'สัปดาห์แห่งวินัย (8 มื้อ)',
       desc: 'บันทึกอาหารสะสมในสัปดาห์นี้ครบ 8 มื้อ',
       progress: Math.min(8, weeklyMeals),
       target: 8,
       unit: 'มื้อ',
-      rewardCoins: 40,
-      rewardScore: 100,
+      rewardCoins: 30,
+      rewardScore: 60,
       isCompleted: weeklyMeals >= 8,
-      isClaimed: isClaimed('weekly_meals_8', weekKey),
+      isClaimed: isClaimed('weekly_meals_8'),
       actionType: 'meal'
     },
     {
       id: 'weekly_water_5000',
       category: 'weekly',
-      periodKey: weekKey,
+      periodKey: 'permanent',
       icon: '💧',
       title: 'ราชาแห่งการดื่มน้ำ (5,000 ml)',
       desc: 'ดื่มน้ำสะสมในสัปดาห์นี้ให้ได้ 5,000 ml',
       progress: Math.min(5000, weeklyWater),
       target: 5000,
       unit: 'ml',
-      rewardCoins: 35,
-      rewardScore: 90,
+      rewardCoins: 25,
+      rewardScore: 50,
       isCompleted: weeklyWater >= 5000,
-      isClaimed: isClaimed('weekly_water_5000', weekKey),
+      isClaimed: isClaimed('weekly_water_5000'),
       actionType: 'water'
     },
     {
       id: 'weekly_goal_3',
       category: 'weekly',
-      periodKey: weekKey,
+      periodKey: 'permanent',
       icon: '🎯',
       title: 'พิชิตเป้าหมายแก๊ง 3 วัน',
       desc: 'ทำตามเป้าหมายสุขภาพสำเร็จ 3 วันในสัปดาห์นี้',
       progress: Math.min(3, weeklyGoals),
       target: 3,
       unit: 'วัน',
-      rewardCoins: 50,
-      rewardScore: 120,
+      rewardCoins: 35,
+      rewardScore: 70,
       isCompleted: weeklyGoals >= 3,
-      isClaimed: isClaimed('weekly_goal_3', weekKey),
+      isClaimed: isClaimed('weekly_goal_3'),
       actionType: 'goal'
     }
   ];
@@ -1920,81 +1934,81 @@ export function getUserQuests(userId) {
     {
       id: 'main_streak_7',
       category: 'main',
-      periodKey: 'main',
+      periodKey: 'permanent',
       icon: '🏆',
       title: 'แชมป์ความสม่ำเสมอ 7 วันติด',
       desc: 'พิชิตสตรีคยาวนาน 7 วันไม่ขาดตอน (ระดับมือโปร)',
       progress: Math.min(7, streakInfo.best),
       target: 7,
       unit: 'วัน',
-      rewardCoins: 100,
-      rewardScore: 250,
+      rewardCoins: 50,
+      rewardScore: 100,
       isCompleted: streakInfo.best >= 7,
-      isClaimed: isClaimed('main_streak_7', 'main'),
+      isClaimed: isClaimed('main_streak_7'),
       actionType: 'streak'
     },
     {
       id: 'main_meals_25',
       category: 'main',
-      periodKey: 'main',
+      periodKey: 'permanent',
       icon: '🍱',
       title: 'นักชิมระดับตำนาน (25 มื้อ)',
       desc: 'สะสมการบันทึกอาหารรวมทั้งหมด 25 มื้อ',
       progress: Math.min(25, totalMeals),
       target: 25,
       unit: 'มื้อ',
-      rewardCoins: 120,
-      rewardScore: 300,
+      rewardCoins: 60,
+      rewardScore: 120,
       isCompleted: totalMeals >= 25,
-      isClaimed: isClaimed('main_meals_25', 'main'),
+      isClaimed: isClaimed('main_meals_25'),
       actionType: 'meal'
     },
     {
       id: 'main_weight_update',
       category: 'main',
-      periodKey: 'main',
+      periodKey: 'permanent',
       icon: '⚖️',
       title: 'ผู้ติดตามสรีระอย่างใกล้ชิด',
       desc: 'บันทึกชั่งน้ำหนักอัปเดตสถิติสม่ำเสมออย่างน้อย 2 ครั้ง',
       progress: Math.min(2, totalWeightLogs),
       target: 2,
       unit: 'ครั้ง',
-      rewardCoins: 80,
-      rewardScore: 200,
+      rewardCoins: 40,
+      rewardScore: 80,
       isCompleted: totalWeightLogs >= 2,
-      isClaimed: isClaimed('main_weight_update', 'main'),
+      isClaimed: isClaimed('main_weight_update'),
       actionType: 'weight'
     },
     {
       id: 'main_top3_gang',
       category: 'main',
-      periodKey: 'main',
+      periodKey: 'permanent',
       icon: '🥇',
-      title: 'ก้าวสู่อันดับ Top 3 ของแก๊ง',
-      desc: 'ขึ้นแท่นลีดเดอร์บอร์ดอันดับ 1-3 ของแก๊งโมจิ',
-      progress: myRank <= 3 ? 1 : 0,
+      title: 'แชมป์อันดับ 1 ของแก๊งโมจิ',
+      desc: 'ขึ้นแท่นครองอันดับ 1 ของแก๊งในกระดานคะแนนวินัย',
+      progress: myRank === 1 ? 1 : 0,
       target: 1,
       unit: 'อันดับ',
-      rewardCoins: 150,
-      rewardScore: 400,
-      isCompleted: myRank <= 3,
-      isClaimed: isClaimed('main_top3_gang', 'main'),
+      rewardCoins: 50,
+      rewardScore: 100,
+      isCompleted: myRank === 1,
+      isClaimed: isClaimed('main_top3_gang'),
       actionType: 'rank'
     },
     {
       id: 'main_goal_score_500',
       category: 'main',
-      periodKey: 'main',
+      periodKey: 'permanent',
       icon: '👑',
       title: 'ปรมาจารย์แห่งวินัย (500 pt)',
       desc: 'สะสมคะแนนวินัยเป้าหมายครบ 500 คะแนน',
       progress: Math.min(500, myGoalScore),
       target: 500,
       unit: 'pt',
-      rewardCoins: 200,
-      rewardScore: 500,
+      rewardCoins: 50,
+      rewardScore: 100,
       isCompleted: myGoalScore >= 500,
-      isClaimed: isClaimed('main_goal_score_500', 'main'),
+      isClaimed: isClaimed('main_goal_score_500'),
       actionType: 'goal'
     }
   ];
@@ -2023,12 +2037,12 @@ export function getUserQuests(userId) {
         curProg = todayMeals >= 1 ? 1 : 0;
       }
       const isDone = curProg >= reqTarget;
-      const isClaimedPrank = isClaimed(questId, todayStr) || pq.is_cleared === 1;
+      const isClaimedPrank = isClaimed(questId) || pq.is_cleared === 1;
 
       dailyTasks.unshift({
         id: questId,
         category: 'daily',
-        periodKey: todayStr,
+        periodKey: 'permanent',
         icon: '📜',
         title: `😈 โดน ${pq.sender_nickname} แกล้ง: ${extra.title || 'ภารกิจพิเศษ'}`,
         desc: extra.desc || 'รีบทำภารกิจให้สำเร็จเพื่อลบล้างคำสาปแกล้งจากเพื่อน!',
@@ -2050,6 +2064,10 @@ export function getUserQuests(userId) {
 }
 
 export function claimQuest(userId, questId) {
+  // Strict DB-level idempotency check:
+  const existingClaim = db.prepare('SELECT id FROM quest_claims WHERE user_id = ? AND quest_id = ?').get(userId, questId);
+  if (existingClaim) return { success: false, error: 'คุณรับรางวัลภารกิจนี้ไปแล้ว' };
+
   const quests = getUserQuests(userId);
   const all = [...quests.daily, ...quests.weekly, ...quests.main];
   const target = all.find(q => q.id === questId);
@@ -2061,8 +2079,8 @@ export function claimQuest(userId, questId) {
   const claimId = `claim_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   db.prepare(`
     INSERT INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(claimId, userId, target.id, target.periodKey, Date.now());
+    VALUES (?, ?, ?, 'permanent', ?)
+  `).run(claimId, userId, target.id, Date.now());
 
   // Award coins and goal score
   addCoins(userId, target.rewardCoins);
@@ -2202,6 +2220,9 @@ export function claimGangCoopReward(userId) {
   if (!coop.isCompleted) return { success: false, error: 'ภารกิจรวมพลังแก๊งยังไม่สำเร็จ' };
   if (coop.isClaimed) return { success: false, error: 'คุณรับรางวัลภารกิจนี้ไปแล้ว' };
 
+  const existingClaim = db.prepare('SELECT id FROM quest_claims WHERE user_id = ? AND quest_id = ? AND period_key = ?').get(userId, coop.id, coop.periodKey);
+  if (existingClaim) return { success: false, error: 'คุณรับรางวัลภารกิจนี้ไปแล้ว' };
+
   const claimId = `coop_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   db.prepare(`
     INSERT INTO quest_claims (id, user_id, quest_id, period_key, claimed_at)
@@ -2307,6 +2328,8 @@ export function evaluateUserGoalToday(user, targetDate) {
       progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
       if (mealCount === 0) {
         statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (mealCount < 2) {
+        statusText = `บันทึกแล้ว 1 มื้อ (น้ำตาล ${currentVal}/${targetVal}g) บันทึกเพิ่มเพื่อประเมินเป้าหมาย`;
       } else if (totalSugar <= sugGoal) {
         achieved = true;
         const left = Math.max(0, Math.round((sugGoal - totalSugar) * 10) / 10);
@@ -2326,6 +2349,8 @@ export function evaluateUserGoalToday(user, targetDate) {
       progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
       if (mealCount === 0) {
         statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (mealCount < 2) {
+        statusText = `บันทึกแล้ว 1 มื้อ (${currentVal}/${targetVal} kcal) บันทึกเพิ่มเพื่อประเมินเป้าหมาย`;
       } else if (totalCal <= calGoal && totalSugar <= sugGoal) {
         achieved = true;
         statusText = `สมดุลเป๊ะทั้งแคล & น้ำตาล! 🎉`;
@@ -2347,6 +2372,8 @@ export function evaluateUserGoalToday(user, targetDate) {
       progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
       if (mealCount === 0) {
         statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (mealCount < 2) {
+        statusText = `บันทึกแล้ว 1 มื้อ (${currentVal}/${targetVal} kcal) บันทึกเพิ่มเพื่อประเมินเป้าหมาย`;
       } else if (totalCal >= calGoal && totalSugar <= sugGoal) {
         achieved = true;
         statusText = `กินถึงเป้าพลังงานลีน! 💪`;
@@ -2367,6 +2394,8 @@ export function evaluateUserGoalToday(user, targetDate) {
       progressPercent = targetVal > 0 ? Math.min(100, Math.round((currentVal / targetVal) * 100)) : 0;
       if (mealCount === 0) {
         statusText = 'ยังไม่เริ่มบันทึก';
+      } else if (mealCount < 2) {
+        statusText = `บันทึกแล้ว 1 มื้อ (${currentVal}/${targetVal} kcal) บันทึกเพิ่มเพื่อประเมินเป้าหมาย`;
       } else if (totalCal <= calGoal) {
         achieved = true;
         const left = calGoal - Math.round(totalCal);
