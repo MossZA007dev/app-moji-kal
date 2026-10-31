@@ -6476,8 +6476,26 @@ function isCurrentUserDev(u = currentUser) {
          u.is_dev === 1 || 
          u.id === 'u1' || 
          u.nickname === 'มอส' || 
-         (u.nickname && u.nickname.toLowerCase().includes('dev')) ||
-         (u.email && u.email.toLowerCase().includes('moss'));
+         (u.nickname && u.nickname.toLowerCase() === 'dev');
+}
+
+// Check whether an account is a dev or legacy test account that should be hidden from gang views
+function isDevOrTestAccount(u) {
+  if (!u) return false;
+  const id = typeof u === 'string' ? u : (u.id || u.user_id || '');
+  const nickname = (typeof u === 'object' ? (u.nickname || u.author_nickname || '') : (typeof u === 'string' ? u : '')).trim();
+  const role = typeof u === 'object' ? (u.role || '') : '';
+  const isDev = typeof u === 'object' ? (u.is_dev || 0) : 0;
+  const isHidden = typeof u === 'object' ? (u.is_hidden || 0) : 0;
+
+  // Real active gang member: "มอส จอมเขมือบ" - NEVER HIDE THIS
+  if (id === 'u_1793189569375') return false;
+
+  // Dev & test accounts to hide completely from gang
+  if (id === 'u1' || id === 'u_1793131061727') return true;
+  if (nickname.toLowerCase() === 'moss' || nickname === 'มอส') return true;
+  if (role === 'dev' || isDev === 1 || isHidden === 1) return true;
+  return false;
 }
 
 // User Online / Offline Status Engine
@@ -6810,13 +6828,21 @@ async function fetchUsers() {
   try {
     const res = await fetch('/api/users');
     const data = await res.json();
-    users = data.users || [];
+    // Purge legacy test / dev accounts from cache and list
+    GangDB.delete('user_u_1793131061727').catch(() => {});
+    GangDB.delete('user_u1').catch(() => {});
+
+    users = (data.users || []).filter(u => !isDevOrTestAccount(u));
     for (const u of users) {
       if (u && u.id) {
         GangDB.set('user_' + u.id, u).catch(() => {});
       }
     }
-    const savedId = localStorage.getItem('mochi_user_id');
+    let savedId = localStorage.getItem('mochi_user_id');
+    if (savedId === 'u_1793131061727' || savedId === 'u1') {
+      savedId = 'u_1793189569375';
+      localStorage.setItem('mochi_user_id', savedId);
+    }
     let foundUser = savedId ? users.find(u => u.id === savedId) : null;
 
     // Self-Healing: If user was saved locally but missing on server (e.g. server restart/redeploy)
@@ -6831,7 +6857,7 @@ async function fetchUsers() {
           cached = await GangDB.get('user_' + savedId);
         } catch (_) {}
       }
-      if (cached && cached.nickname) {
+      if (cached && cached.nickname && !isDevOrTestAccount(cached)) {
         try {
           console.log('[Auto-Sync] Restoring user profile to server:', cached.nickname);
           const syncRes = await fetch('/api/users', {
@@ -6910,7 +6936,7 @@ async function autoRestoreAllCachedLogs() {
     const dbLogs = await GangDB.getAll('log_');
     for (const entry of dbLogs) {
       const item = entry.value;
-      if (item && item.id) {
+      if (item && item.id && !isDevOrTestAccount(item.user_id)) {
         const key = item.id;
         if (!localLogsMap.has(key)) {
           localLogsMap.set(key, item);
@@ -6931,7 +6957,7 @@ async function autoRestoreAllCachedLogs() {
   try {
     const dbClaims = await GangDB.getAll('claim_');
     for (const c of dbClaims) {
-      if (c.value) {
+      if (c.value && !isDevOrTestAccount(c.value.user_id)) {
         clientClaims.push(c.value);
       }
     }
@@ -6943,7 +6969,11 @@ async function autoRestoreAllCachedLogs() {
     const dbUsers = await GangDB.getAll('user_');
     for (const u of dbUsers) {
       if (u.value && u.value.id && u.value.nickname) {
-        clientUsers.push(u.value);
+        if (!isDevOrTestAccount(u.value)) {
+          clientUsers.push(u.value);
+        } else {
+          GangDB.delete('user_' + u.value.id).catch(() => {});
+        }
       }
     }
   } catch (_) {}
@@ -11396,9 +11426,8 @@ function renderFeed() {
   const yearAd = new Date().getFullYear();
   const periodLabel = `${monthName} ${yearAd}`;
 
-  // Hide Dev account ("มอส" / role dev) from regular friends in friends view
-  const isViewerDev = isCurrentUserDev();
-  const filteredLeaderboard = leaderboardData.filter(u => isViewerDev || !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+  // Hide Dev and legacy test accounts completely from gang view
+  const filteredLeaderboard = leaderboardData.filter(u => !isDevOrTestAccount(u));
   const sortedRank = leaderboardSort === 'coins'
     ? [...filteredLeaderboard].sort((a, b) => (b.coins || 0) - (a.coins || 0))
     : [...filteredLeaderboard].sort((a, b) => (b.goal_score || 0) - (a.goal_score || 0));
@@ -11406,9 +11435,9 @@ function renderFeed() {
   const top2 = sortedRank[1] || null;
   const top3 = sortedRank[2] || null;
 
-  const membersToShow = users.filter(u => isViewerDev || !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
-  const feedDataToShow = feedData.filter(item => isViewerDev || !(item.user.role === 'dev' || item.user.is_dev === 1 || item.user.id === 'u1' || item.user.nickname === 'มอส'));
-  const gangStoriesToShow = gangStories.filter(s => isViewerDev || !(s.role === 'dev' || s.is_dev === 1 || s.id === 'u1' || s.nickname === 'มอส'));
+  const membersToShow = users.filter(u => !isDevOrTestAccount(u));
+  const feedDataToShow = feedData.filter(item => !isDevOrTestAccount(item.user));
+  const gangStoriesToShow = gangStories.filter(s => !isDevOrTestAccount(s));
 
   $('#main').innerHTML = `
     <div class="top" style="align-items:flex-start;">
@@ -11501,7 +11530,7 @@ function renderFeed() {
       <!-- Feed Posts Stream -->
       ${(() => {
         const filteredPosts = socialPosts.filter(p => {
-          if (!isViewerDev && (p.user_id === 'u1' || p.role === 'dev' || p.author_nickname === 'มอส')) return false;
+          if (isDevOrTestAccount(p)) return false;
           if (socialFeedFilter === 'meal') return p.type === 'meal';
           if (socialFeedFilter === 'water') return p.type === 'water';
           if (socialFeedFilter === 'goal') return p.type === 'goal' || p.type === 'challenge';
@@ -12361,6 +12390,10 @@ let currentMemberProfileData = null;
 let currentMemberProfileTab = 'grid'; // 'grid' | 'list' | 'badges'
 
 async function openMemberDetailModal(userId, initialTab = 'grid') {
+  if (isDevOrTestAccount(userId)) {
+    toast('บัญชีนี้เป็นบัญชีทดสอบระบบ');
+    return;
+  }
   const el = $('#sheet');
   el.hidden = false;
   el.innerHTML = '<div class="sh" style="text-align:center; padding:40px;"><div style="font-size:28px; margin-bottom:8px;">🍡</div>กำลังโหลดโปรไฟล์...</div>';
@@ -15694,8 +15727,8 @@ async function openSelectExistingProfileModal() {
 
       <div style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; margin-bottom:16px; padding:2px;">
         ${(() => {
-          // Hide Dev account ("มอส" / role dev) from friends list
-          const regularUsers = users.filter(u => !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+          // Hide Dev and legacy test accounts from gang profile selector
+          const regularUsers = users.filter(u => !isDevOrTestAccount(u));
           if (!regularUsers.length) {
             return `
               <div style="text-align:center; padding:24px 12px; font-size:12.5px; color:var(--mute);">
@@ -15761,7 +15794,7 @@ async function selectExistingProfile(userId) {
   if (!target) return toast('ไม่พบสมาชิก');
 
   // If selecting developer profile, require Dev PIN for security
-  if (target.role === 'dev' || target.nickname === 'มอส') {
+  if (isDevOrTestAccount(target)) {
     openDevLoginModal();
     return;
   }
@@ -17813,7 +17846,7 @@ function openSelectFriendPrankModal(cardId) {
     return;
   }
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !isDevOrTestAccount(u));
   if (friends.length === 0) {
     toast('ยังไม่มีเพื่อนในแก๊งให้แกล้งเลย! สร้างตัวละครเพื่อนเพิ่ม หรือชวนเพื่อนมาเล่นด้วยกันนะ 🍡');
     return;
@@ -17864,7 +17897,7 @@ function renderSelectFriendPrankModalContent() {
   };
   const effectMeta = cardEffects[card.id] || { capsule: '✨ เอฟเฟกต์แกล้งเพื่อน', bg: '#F3E8FF', color: '#6B21A8', border: '#E9D5FF', accent: '#A855F7' };
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !isDevOrTestAccount(u));
   const targetFriend = friends.find(f => f.id === selectedPrankTargetFriendId) || friends[0];
 
   const quickNotes = [
@@ -18020,7 +18053,7 @@ async function submitPrankCardExecution() {
     return toast('กรุณาเลือกการ์ดและเพื่อนที่จะแกล้ง');
   }
 
-  const friends = (users || []).filter(u => u.id !== currentUser.id && !(u.role === 'dev' || u.is_dev === 1 || u.id === 'u1' || u.nickname === 'มอส'));
+  const friends = (users || []).filter(u => u.id !== currentUser.id && !isDevOrTestAccount(u));
   const targetFriend = friends.find(f => f.id === toUserId);
   const targetName = targetFriend ? targetFriend.nickname : 'เพื่อน';
 
@@ -20860,6 +20893,13 @@ async function installPwaApp() {
 
 // Initial Boot
 (async () => {
+  // Purge legacy test accounts from client storage on startup
+  try {
+    const curSaved = localStorage.getItem('mochi_user_id');
+    if (curSaved === 'u_1793131061727' || curSaved === 'u1') {
+      localStorage.setItem('mochi_user_id', 'u_1793189569375');
+    }
+  } catch (_) {}
   await fetchSettings();
   await fetchUsers();
   if (currentUser) {

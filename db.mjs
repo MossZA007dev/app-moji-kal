@@ -264,6 +264,13 @@ try {
        OR nickname = 'มอส' 
        OR email LIKE '%moss%' 
        OR nickname LIKE '%dev%';
+
+    -- Clean up legacy test account u_1793131061727 ("Moss")
+    DELETE FROM logs WHERE user_id = 'u_1793131061727';
+    DELETE FROM quest_claims WHERE user_id = 'u_1793131061727';
+    DELETE FROM post_reactions WHERE user_id = 'u_1793131061727';
+    DELETE FROM activities WHERE user_id = 'u_1793131061727';
+    DELETE FROM users WHERE id = 'u_1793131061727' OR (nickname = 'Moss' AND id != 'u_1793189569375');
   `);
 } catch (_) {}
 
@@ -385,12 +392,42 @@ export function seedFromGangSeedJson() {
 export function exportGangSeedJson() {
   try {
     const seedFile = path.join(dataDir, 'gang_seed.json');
+    let existingLogs = [];
+    if (fs.existsSync(seedFile)) {
+      try {
+        const existingData = JSON.parse(fs.readFileSync(seedFile, 'utf8'));
+        if (Array.isArray(existingData.logs)) existingLogs = existingData.logs;
+      } catch (_) {}
+    }
+
+    const currentUsers = db.prepare("SELECT * FROM users WHERE id NOT IN ('u_1793131061727') AND nickname != 'Moss'").all();
+    const currentLogs = db.prepare("SELECT * FROM logs WHERE user_id NOT IN ('u_1793131061727')").all();
+
+    // Defensive: never overwrite existing food logs with fewer logs if images are present
+    const logMap = new Map();
+    for (const l of existingLogs) {
+      if (l && l.id && l.user_id !== 'u_1793131061727') {
+        logMap.set(l.id, l);
+      }
+    }
+    for (const l of currentLogs) {
+      if (l && l.id && l.user_id !== 'u_1793131061727') {
+        if (!logMap.has(l.id)) {
+          logMap.set(l.id, l);
+        } else {
+          const old = logMap.get(l.id);
+          if (!l.image_url && old.image_url) l.image_url = old.image_url;
+          logMap.set(l.id, l);
+        }
+      }
+    }
+
     const dump = {
       exported_at: new Date().toISOString(),
-      users: db.prepare('SELECT * FROM users').all(),
-      logs: db.prepare('SELECT * FROM logs').all(),
-      post_reactions: db.prepare('SELECT * FROM post_reactions').all(),
-      quest_claims: db.prepare('SELECT * FROM quest_claims').all()
+      users: currentUsers,
+      logs: Array.from(logMap.values()),
+      post_reactions: db.prepare("SELECT * FROM post_reactions WHERE user_id NOT IN ('u_1793131061727')").all(),
+      quest_claims: db.prepare("SELECT * FROM quest_claims WHERE user_id NOT IN ('u_1793131061727')").all()
     };
     fs.writeFileSync(seedFile, JSON.stringify(dump, null, 2), 'utf8');
     triggerGitHubRepoSync();
@@ -626,7 +663,7 @@ export function clearAllDemoData() {
   }
 
   // Delete only legacy demo users and test accounts (preserve real friend accounts)
-  db.prepare("DELETE FROM users WHERE id IN ('u2', 'u3', 'u_1793104988179') OR nickname IN ('ต้นกล้า', 'แพรว', 'กานต์', 'โมจิจัง')").run();
+  db.prepare("DELETE FROM users WHERE id IN ('u2', 'u3', 'u_1793104988179', 'u_1793131061727') OR nickname IN ('ต้นกล้า', 'แพรว', 'กานต์', 'โมจิจัง', 'Moss')").run();
 
   return { success: true, message: 'ล้างข้อมูลทดสอบทั้งหมดเรียบร้อยแล้ว' };
 }
@@ -2395,7 +2432,7 @@ export function syncDailyGoalScore(userId, targetDate) {
 
 export function getGroupFeed(date, currentUserId) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
-  const users = getAllUsers();
+  const users = getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss'));
 
   const userLogsStmt = db.prepare('SELECT * FROM logs WHERE date = ? ORDER BY created_at DESC');
   const allLogsForDate = userLogsStmt.all(targetDate);
@@ -2530,6 +2567,10 @@ export function getLeaderboard(sortBy = 'goal') {
            COALESCE(goal_type, 'weight_loss') as goal_type,
            calorie_goal, sugar_goal, privacy_level, created_at
     FROM users
+    WHERE id NOT IN ('u1', 'u_1793131061727')
+      AND role != 'dev'
+      AND is_dev != 1
+      AND nickname NOT IN ('มอส', 'Moss')
     ORDER BY ${orderCol}
   `).all();
 
@@ -2549,8 +2590,9 @@ export function getLeaderboard(sortBy = 'goal') {
 }
 
 export function getMemberDetail(targetUserId, requesterId) {
+  if (targetUserId === 'u1' || targetUserId === 'u_1793131061727') return null;
   const user = getUser(targetUserId);
-  if (!user) return null;
+  if (!user || user.nickname === 'Moss' || user.nickname === 'มอส') return null;
 
   const isMe = targetUserId === requesterId;
   const streak = calculateUserStreak(targetUserId);
@@ -3448,6 +3490,10 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     WHERE (l.is_private = 0 OR l.user_id = ?)
       AND (u.privacy_level = 'full' OR l.user_id = ?)
       AND NOT (COALESCE(l.calorie, 0) = 0 AND (l.name LIKE '%ดื่มน้ำ%' OR l.name LIKE '%น้ำเปล่า%'))
+      AND u.id NOT IN ('u1', 'u_1793131061727')
+      AND u.role != 'dev'
+      AND u.is_dev != 1
+      AND u.nickname NOT IN ('มอส', 'Moss')
     ORDER BY l.created_at DESC
     LIMIT ?
   `).all(currentUserId, currentUserId, limit);
@@ -3473,6 +3519,10 @@ export function getSocialFeedPosts(limit = 40, currentUserId = '') {
     JOIN users u ON a.user_id = u.id
     WHERE a.type != 'meal'
       AND (u.privacy_level = 'full' OR a.user_id = ? OR a.type = 'prank')
+      AND u.id NOT IN ('u1', 'u_1793131061727')
+      AND u.role != 'dev'
+      AND u.is_dev != 1
+      AND u.nickname NOT IN ('มอส', 'Moss')
     ORDER BY a.created_at DESC
     LIMIT ?
   `).all(currentUserId, limit);
@@ -3583,7 +3633,7 @@ export function attachReactionsToPosts(posts = [], currentUserId = '') {
 }
 
 export function getGangStories(currentUserId = '') {
-  const users = getAllUsers();
+  const users = getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss'));
   const todayDate = new Date().toISOString().slice(0, 10);
   const since24h = Date.now() - 24 * 60 * 60 * 1000;
 

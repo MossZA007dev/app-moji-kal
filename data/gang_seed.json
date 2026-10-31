@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-10-31T00:15:33.456Z",
+  "exported_at": "2026-10-31T00:40:18.704Z",
   "users": [
     {
       "id": "u1",
@@ -44,48 +44,6 @@
       "last_active_at": 1793403250043
     },
     {
-      "id": "u_1793131061727",
-      "nickname": "Moss",
-      "avatar_color": "skin_3d_devil",
-      "avatar_face": "happy",
-      "calorie_goal": 1948,
-      "sugar_goal": 25,
-      "privacy_level": "full",
-      "created_at": 1793131061728,
-      "google_id": null,
-      "email": null,
-      "avatar_image": null,
-      "consent_pdpa": 1,
-      "consent_at": 1793131063607,
-      "gender": "male",
-      "age": 21,
-      "height": 178,
-      "weight": 61,
-      "activity_level": "sedentary",
-      "avatar_hat": "none",
-      "personality": "kind",
-      "coins": 1130,
-      "goal_type": "healthy_balance",
-      "goal_score": 3235,
-      "carbs_goal": 293,
-      "protein_goal": 73,
-      "fat_goal": 54,
-      "sodium_goal": 2000,
-      "water_goal": 8,
-      "target_weight": 61,
-      "avatar_accessory": "none",
-      "water_bottle_ml": 500,
-      "water_bottle_name": "ขวดน้ำพกพา 500 ml",
-      "water_bottle_icon": "bottle_500",
-      "water_daily_target_ml": 2700,
-      "water_bottle_setup": 0,
-      "unlocked_items": "[]",
-      "role": "user",
-      "is_dev": 0,
-      "pin": null,
-      "last_active_at": 1793405729190
-    },
-    {
       "id": "u_1793189569375",
       "nickname": "มอส จอมเขมือบ",
       "avatar_color": "#F43F5E",
@@ -125,7 +83,7 @@
       "role": "user",
       "is_dev": 0,
       "pin": "2005",
-      "last_active_at": 1793403398249
+      "last_active_at": 1793407213433
     },
     {
       "id": "u_1793189704988",
@@ -255,25 +213,6 @@
     }
   ],
   "logs": [
-    {
-      "id": "log_1793179647479_puueu",
-      "user_id": "u_1793131061727",
-      "date": "2026-10-28",
-      "name": "น้ำเปล่า 1000 ml",
-      "calorie": 0,
-      "sugar": 0,
-      "portion_size": "normal",
-      "sweetness_level": "normal",
-      "is_private": 0,
-      "image_url": null,
-      "created_at": 1793405682183,
-      "components_json": null,
-      "carbs": 0,
-      "protein": 0,
-      "fat": 0,
-      "sodium": 0,
-      "water_ml": 1000
-    },
     {
       "id": "log_1793192268000_grape",
       "user_id": "u_1793189569375",
@@ -407,22 +346,6 @@
       "created_at": 1793129005070
     },
     {
-      "id": "comm_1793179223676_jqf7",
-      "post_id": "act_1793132655642_ng16n",
-      "user_id": "u_1793131061727",
-      "reaction_type": "comment",
-      "comment_text": "เก่งมากก 👏",
-      "created_at": 1793179223676
-    },
-    {
-      "id": "comm_1793179228445_v680",
-      "post_id": "act_1793132655642_ng16n",
-      "user_id": "u_1793131061727",
-      "reaction_type": "comment",
-      "comment_text": "@Moss ่่",
-      "created_at": 1793179228445
-    },
-    {
       "id": "react_1793218182000",
       "post_id": "log_1793218156134_3xzih",
       "user_id": "u_1793189704988",
@@ -478,13 +401,6 @@
       "quest_id": "daily_social_cheer",
       "period_key": "2026-10-27",
       "claimed_at": 1793128118697
-    },
-    {
-      "id": "claim_1793179647488_yndx",
-      "user_id": "u_1793131061727",
-      "quest_id": "prank_quest_prank_1793179638762_xp9c",
-      "period_key": "2026-10-28",
-      "claimed_at": 1793179647488
     }
   ]
 }
