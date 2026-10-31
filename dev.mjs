@@ -888,11 +888,16 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/sync/mesh') {
         if (req.method === 'POST') {
           const body = await parseJsonBody(req);
-          const { clientUser, clientLogs, clientClaims } = body || {};
+          const { clientUser, clientUsers, clientLogs, clientClaims } = body || {};
 
-          // 1. Sync User Profile from client
+          // 1. Sync User Profiles from client
           if (clientUser && clientUser.id) {
             db.upsertFullUser(clientUser);
+          }
+          if (Array.isArray(clientUsers) && clientUsers.length > 0) {
+            for (const u of clientUsers) {
+              if (u && u.id) db.upsertFullUser(u);
+            }
           }
 
           // 2. Sync Meals & Photos from client
@@ -915,7 +920,8 @@ const server = http.createServer(async (req, res) => {
                 is_private: item.is_private,
                 image_url: item.image_url,
                 components_json: item.components_json || (item.components ? JSON.stringify(item.components) : null),
-                water_ml: item.water_ml
+                water_ml: item.water_ml,
+                created_at: item.created_at
               });
             }
           }
@@ -1006,6 +1012,31 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/backup' && req.method === 'GET') {
         db.runAutoBackup();
         return sendJson(res, 200, { success: true, message: 'ระบบสำรองข้อมูลเรียบร้อยแล้ว' });
+      }
+
+      if (pathname === '/api/backup/download' && req.method === 'GET') {
+        db.exportGangSeedJson();
+        const seedPath = path.join(__dirname, 'data', 'gang_seed.json');
+        if (!fs.existsSync(seedPath)) {
+          return sendJson(res, 404, { error: 'Backup not found' });
+        }
+        const data = fs.readFileSync(seedPath, 'utf8');
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': `attachment; filename="gang_backup_${new Date().toISOString().slice(0, 10)}.json"`
+        });
+        return res.end(data);
+      }
+
+      if (pathname === '/api/backup/upload' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        if (!body || !Array.isArray(body.users)) {
+          return sendJson(res, 400, { error: 'ไฟล์สำรองข้อมูลไม่ถูกต้อง (ต้องมีรายการผู้ใช้ users)' });
+        }
+        const seedPath = path.join(__dirname, 'data', 'gang_seed.json');
+        fs.writeFileSync(seedPath, JSON.stringify(body, null, 2), 'utf8');
+        db.seedFromGangSeedJson();
+        return sendJson(res, 200, { success: true, message: 'กู้คืนข้อมูลทั้งแก๊งสำเร็จแล้ว! 🎉' });
       }
 
       // 13. CSV Export

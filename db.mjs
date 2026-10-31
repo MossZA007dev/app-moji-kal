@@ -393,9 +393,64 @@ export function exportGangSeedJson() {
       quest_claims: db.prepare('SELECT * FROM quest_claims').all()
     };
     fs.writeFileSync(seedFile, JSON.stringify(dump, null, 2), 'utf8');
+    triggerGitHubRepoSync();
   } catch (err) {
     console.warn('[Gang Seed Save Warning]:', err);
   }
+}
+
+let githubSyncTimer = null;
+export function triggerGitHubRepoSync() {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO || 'MossZA007dev/app-moji-kal';
+  if (!token) return;
+
+  if (githubSyncTimer) clearTimeout(githubSyncTimer);
+  githubSyncTimer = setTimeout(async () => {
+    try {
+      const seedFile = path.join(dataDir, 'gang_seed.json');
+      if (!fs.existsSync(seedFile)) return;
+      const seedContent = fs.readFileSync(seedFile, 'utf8');
+      const base64Content = Buffer.from(seedContent).toString('base64');
+
+      const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/data/gang_seed.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Moji-Kal-Persistence-Engine'
+        }
+      });
+      let sha = null;
+      if (getRes.ok) {
+        const fileInfo = await getRes.json();
+        sha = fileInfo.sha;
+      }
+
+      const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/data/gang_seed.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Moji-Kal-Persistence-Engine',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: 'chore(persistence): auto-backup gang data and meal photos',
+          content: base64Content,
+          sha: sha || undefined
+        })
+      });
+
+      if (putRes.ok) {
+        console.log('[GitHub Cloud Backup] ☁️ Gang data & photos backed up to GitHub successfully!');
+      } else {
+        const errText = await putRes.text();
+        console.warn('[GitHub Cloud Backup Failed]:', errText);
+      }
+    } catch (ghErr) {
+      console.warn('[GitHub Auto-Sync Error]:', ghErr.message);
+    }
+  }, 10000);
 }
 
 let seedSaveTimer = null;
@@ -1259,7 +1314,7 @@ export function getLogsSecure(targetUserId, requesterId, date) {
   });
 }
 
-export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json, water_ml }) {
+export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components, components_json, water_ml, created_at }) {
   const targetDate = date || new Date().toISOString().slice(0, 10);
   const logId = id || `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const compStr = typeof components_json === 'string'
@@ -1267,6 +1322,11 @@ export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein,
     : (Array.isArray(components) || (typeof components === 'object' && components !== null))
     ? JSON.stringify(components)
     : (Array.isArray(components_json) ? JSON.stringify(components_json) : null);
+
+  const existingLog = db.prepare('SELECT image_url, components_json, created_at FROM logs WHERE id = ?').get(logId);
+  const finalImage = image_url || existingLog?.image_url || null;
+  const finalCompStr = compStr || existingLog?.components_json || null;
+  const finalCreatedAt = Number(created_at) || existingLog?.created_at || Date.now();
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO logs (id, user_id, date, name, calorie, sugar, carbs, protein, fat, sodium, portion_size, sweetness_level, is_private, image_url, components_json, water_ml, created_at)
@@ -1286,10 +1346,10 @@ export function addLog({ id, userId, date, name, calorie, sugar, carbs, protein,
     portion_size || 'normal',
     sweetness_level || 'normal',
     is_private ? 1 : 0,
-    image_url || null,
-    compStr,
+    finalImage,
+    finalCompStr,
     water_ml !== undefined && water_ml !== null ? Number(water_ml) : null,
-    Date.now()
+    finalCreatedAt
   );
 
   // Learn into Group Verified Knowledge Cache if valid name and values

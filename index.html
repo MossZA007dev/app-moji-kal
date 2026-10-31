@@ -6811,27 +6811,39 @@ async function fetchUsers() {
     const res = await fetch('/api/users');
     const data = await res.json();
     users = data.users || [];
+    for (const u of users) {
+      if (u && u.id) {
+        GangDB.set('user_' + u.id, u).catch(() => {});
+      }
+    }
     const savedId = localStorage.getItem('mochi_user_id');
     let foundUser = savedId ? users.find(u => u.id === savedId) : null;
 
     // Self-Healing: If user was saved locally but missing on server (e.g. server restart/redeploy)
     if (!foundUser) {
-      const cachedProfileStr = localStorage.getItem('mochi_user_profile');
-      if (cachedProfileStr) {
+      let cached = null;
+      try {
+        const cachedProfileStr = localStorage.getItem('mochi_user_profile');
+        if (cachedProfileStr) cached = JSON.parse(cachedProfileStr);
+      } catch (_) {}
+      if (!cached && savedId) {
         try {
-          const cached = JSON.parse(cachedProfileStr);
-          if (cached && cached.nickname) {
-            console.log('[Auto-Sync] Restoring user profile to server:', cached.nickname);
-            const syncRes = await fetch('/api/users', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(cached)
-            });
-            const syncData = await syncRes.json();
-            if (syncData.user) {
-              foundUser = syncData.user;
-              users.push(foundUser);
-            }
+          cached = await GangDB.get('user_' + savedId);
+        } catch (_) {}
+      }
+      if (cached && cached.nickname) {
+        try {
+          console.log('[Auto-Sync] Restoring user profile to server:', cached.nickname);
+          const syncRes = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cached)
+          });
+          const syncData = await syncRes.json();
+          if (syncData.user) {
+            foundUser = syncData.user;
+            users.push(foundUser);
+            await GangDB.set('user_' + foundUser.id, foundUser);
           }
         } catch (e) {
           console.warn('[Auto-Sync] Restore user warning:', e);
@@ -6893,13 +6905,13 @@ async function autoRestoreAllCachedLogs() {
     }
   }
 
-  // From GangDB (Native IndexedDB Vault)
+  // From GangDB (Native IndexedDB Vault: Gather ALL logs across the entire gang)
   try {
     const dbLogs = await GangDB.getAll('log_');
     for (const entry of dbLogs) {
       const item = entry.value;
-      if (item && item.user_id === currentUser.id) {
-        const key = item.id || `${item.user_id}_${item.date}_${item.name}`;
+      if (item && item.id) {
+        const key = item.id;
         if (!localLogsMap.has(key)) {
           localLogsMap.set(key, item);
         } else {
@@ -6919,8 +6931,19 @@ async function autoRestoreAllCachedLogs() {
   try {
     const dbClaims = await GangDB.getAll('claim_');
     for (const c of dbClaims) {
-      if (c.value && c.value.user_id === currentUser.id) {
+      if (c.value) {
         clientClaims.push(c.value);
+      }
+    }
+  } catch (_) {}
+
+  // Gather all known users from GangDB for distributed redundancy
+  const clientUsers = [];
+  try {
+    const dbUsers = await GangDB.getAll('user_');
+    for (const u of dbUsers) {
+      if (u.value && u.value.id && u.value.nickname) {
+        clientUsers.push(u.value);
       }
     }
   } catch (_) {}
@@ -6929,6 +6952,7 @@ async function autoRestoreAllCachedLogs() {
   try {
     const syncPayload = {
       clientUser: currentUser,
+      clientUsers,
       clientLogs: Array.from(localLogsMap.values()),
       clientClaims
     };
@@ -7120,6 +7144,21 @@ async function fetchFeed() {
       gangStories = socData.stories || [];
       if (typeof checkFriendPostNotifications === 'function') {
         checkFriendPostNotifications(socialPosts);
+      }
+      // REDUNDANT MESH VAULT: Cache all gang posts, stories & images into local IndexedDB
+      if (Array.isArray(socialPosts)) {
+        for (const p of socialPosts) {
+          if (p && p.id) {
+            GangDB.set('log_' + p.id, p).catch(() => {});
+          }
+        }
+      }
+      if (Array.isArray(gangStories)) {
+        for (const s of gangStories) {
+          if (s && s.id) {
+            GangDB.set('log_' + s.id, s).catch(() => {});
+          }
+        }
       }
     }
     if (questRes.ok) {
@@ -13989,16 +14028,45 @@ async function renderSettings() {
         </div>
       </div>
 
-      <div class="settings-row" onclick="triggerBackup()">
+      <div class="settings-row" onclick="downloadGangBackupJson()">
         <div class="settings-row-left">
-          <div class="settings-icon-box" style="background:#E0F2FE; color:#0369A1;">📦</div>
+          <div class="settings-icon-box" style="background:#E0F2FE; color:#0369A1;">📥</div>
           <div>
-            <span class="settings-label-title">สำรองข้อมูลอัตโนมัติ (Auto Backup)</span>
-            <span class="settings-label-sub">สำรองไฟล์ JSON รายสัปดาห์ / แตะเพื่อสำรองทันที</span>
+            <span class="settings-label-title">ดาวน์โหลดสำรองข้อมูลทั้งแก๊ง (.json)</span>
+            <span class="settings-label-sub">บันทึกรูปอาหาร สมาชิก และภารกิจทั้งหมดเก็บไว้ในเครื่อง</span>
           </div>
         </div>
         <div class="settings-row-right">
-          <span class="badge ok">สำรองทันที</span>
+          <span class="badge ok">ดาวน์โหลด</span>
+          <span class="settings-chev">›</span>
+        </div>
+      </div>
+
+      <div class="settings-row" onclick="document.getElementById('gangBackupFileInput')?.click()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#FEF3C7; color:#D97706;">📤</div>
+          <div>
+            <span class="settings-label-title">กู้คืนข้อมูลจากไฟล์สำรอง (.json)</span>
+            <span class="settings-label-sub">นำเข้าไฟล์สำรองข้อมูลเพื่อกู้คืนรูปและสมาชิกทันที</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span>เลือกไฟล์</span>
+          <span class="settings-chev">›</span>
+        </div>
+        <input type="file" id="gangBackupFileInput" accept=".json" style="display:none;" onchange="uploadGangBackupJson(event)">
+      </div>
+
+      <div class="settings-row" onclick="forceMeshSyncNow()">
+        <div class="settings-row-left">
+          <div class="settings-icon-box" style="background:#DCFCE7; color:#166534;">🔄</div>
+          <div>
+            <span class="settings-label-title">ซิงก์ตาข่ายแก๊งทันที (Force Mesh Sync)</span>
+            <span class="settings-label-sub">เชื่อมต่อความทรงจำของเพื่อนทุกคนและเซิร์ฟเวอร์แบบ 2 ทิศทาง</span>
+          </div>
+        </div>
+        <div class="settings-row-right">
+          <span class="badge ok">ซิงก์ทันที</span>
           <span class="settings-chev">›</span>
         </div>
       </div>
@@ -18569,7 +18637,73 @@ async function clearAllDemoDataFromDev() {
   }
 }
 
-// Trigger Manual Instant Backup (Pillar 2)
+// Trigger Manual Instant Backup & Download (Zero Data Loss)
+async function downloadGangBackupJson() {
+  toast('กำลังเตรียมไฟล์สำรองข้อมูลทั้งแก๊ง... ⏳');
+  try {
+    const res = await fetch('/api/backup/download');
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `moji_gang_full_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('ดาวน์โหลดไฟล์สำรองข้อมูลแก๊งเรียบร้อยแล้ว! 📦✨');
+  } catch (err) {
+    toast('ดาวน์โหลดสำรองข้อมูลไม่สำเร็จ');
+  }
+}
+
+async function uploadGangBackupJson(event) {
+  const file = event.target?.files?.[0];
+  if (!file) return;
+  toast('กำลังอ่านไฟล์และกู้คืนข้อมูล... ⏳');
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        const res = await fetch('/api/backup/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(json)
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast(data.message || 'กู้คืนข้อมูลสำเร็จแล้ว! 🎉');
+          await autoRestoreAllCachedLogs();
+          await Promise.all([fetchUsers(), fetchLogs(), fetchFeed(), fetchLeaderboard()]);
+          render();
+          fireConfetti();
+        } else {
+          toast(data.error || 'กู้คืนข้อมูลไม่สำเร็จ');
+        }
+      } catch (parseErr) {
+        toast('ไฟล์ JSON ไม่ถูกต้อง');
+      }
+    };
+    reader.readAsText(file);
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการกู้คืน');
+  }
+}
+
+async function forceMeshSyncNow() {
+  toast('กำลังซิงก์ข้อมูลตาข่ายกับแก๊งและเซิร์ฟเวอร์... 🔄');
+  try {
+    await autoRestoreAllCachedLogs();
+    await Promise.all([fetchUsers(), fetchLogs(), fetchFeed(), fetchLeaderboard()]);
+    render();
+    toast('ซิงก์ข้อมูลตาข่ายสำเร็จ ทุกรูปและสมาชิกอัปเดตตรงกันแล้ว! 🛡️✨');
+  } catch (err) {
+    toast('เกิดข้อผิดพลาดในการซิงก์');
+  }
+}
+
 async function triggerBackup() {
   try {
     const res = await fetch('/api/backup');
