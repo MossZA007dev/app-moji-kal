@@ -6491,9 +6491,9 @@ function isDevOrTestAccount(u) {
   // Real active gang member: "มอส จอมเขมือบ" - NEVER HIDE THIS
   if (id === 'u_1793189569375') return false;
 
-  // Dev & test accounts to hide completely from gang
-  if (id === 'u1' || id === 'u_1793131061727') return true;
-  if (nickname.toLowerCase() === 'moss' || nickname === 'มอส') return true;
+  // Dev & test / removed accounts to hide completely from gang
+  if (id === 'u1' || id === 'u_1793131061727' || id === 'u_skyblossom') return true;
+  if (nickname.toLowerCase() === 'moss' || nickname === 'มอส' || nickname.toLowerCase() === 'skyblossom') return true;
   if (role === 'dev' || isDev === 1 || isHidden === 1) return true;
   return false;
 }
@@ -6828,9 +6828,11 @@ async function fetchUsers() {
   try {
     const res = await fetch('/api/users');
     const data = await res.json();
-    // Purge legacy test / dev accounts from cache and list
+    // Purge legacy test / dev / removed accounts from cache and list
     GangDB.delete('user_u_1793131061727').catch(() => {});
     GangDB.delete('user_u1').catch(() => {});
+    GangDB.delete('user_u_skyblossom').catch(() => {});
+    GangDB.delete('log_skyblossom_salad_01').catch(() => {});
 
     users = (data.users || []).filter(u => !isDevOrTestAccount(u));
     for (const u of users) {
@@ -6839,7 +6841,7 @@ async function fetchUsers() {
       }
     }
     let savedId = localStorage.getItem('mochi_user_id');
-    if (savedId === 'u_1793131061727' || savedId === 'u1') {
+    if (savedId === 'u_1793131061727' || savedId === 'u1' || savedId === 'u_skyblossom') {
       savedId = 'u_1793189569375';
       localStorage.setItem('mochi_user_id', savedId);
     }
@@ -20896,7 +20898,7 @@ async function installPwaApp() {
   // Purge legacy test accounts from client storage on startup
   try {
     const curSaved = localStorage.getItem('mochi_user_id');
-    if (curSaved === 'u_1793131061727' || curSaved === 'u1') {
+    if (curSaved === 'u_1793131061727' || curSaved === 'u1' || curSaved === 'u_skyblossom') {
       localStorage.setItem('mochi_user_id', 'u_1793189569375');
     }
   } catch (_) {}

@@ -508,7 +508,7 @@ const server = http.createServer(async (req, res) => {
         const includeDev = parsedUrl.searchParams.get('includeDev') === 'true';
         let all = db.getAllUsers();
         if (!includeDev) {
-          all = all.filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss'));
+          all = all.filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.id === 'u_skyblossom' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss' || u.nickname === 'skyblossom'));
         }
         return sendJson(res, 200, { users: all });
       }
@@ -712,7 +712,7 @@ const server = http.createServer(async (req, res) => {
       const memberMatch = pathname.match(/^\/api\/members\/([^/]+)$/);
       if (memberMatch && req.method === 'GET') {
         const targetUserId = memberMatch[1];
-        if (targetUserId === 'u1' || targetUserId === 'u_1793131061727') {
+        if (targetUserId === 'u1' || targetUserId === 'u_1793131061727' || targetUserId === 'u_skyblossom') {
           return sendJson(res, 404, { error: 'Member not found or hidden' });
         }
         const requesterId = req.headers['x-user-id'] || parsedUrl.searchParams.get('requesterId') || targetUserId;
@@ -898,8 +898,8 @@ const server = http.createServer(async (req, res) => {
           const body = await parseJsonBody(req);
           const { clientUser, clientUsers, clientLogs, clientClaims } = body || {};
 
-          // 1. Sync User Profiles from client (Reject legacy test / dev accounts)
-          const isDevOrTest = (u) => !u || u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'Moss' || u.nickname === 'มอส';
+          // 1. Sync User Profiles from client (Reject legacy test / dev / removed accounts)
+          const isDevOrTest = (u) => !u || u.id === 'u1' || u.id === 'u_1793131061727' || u.id === 'u_skyblossom' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'Moss' || u.nickname === 'มอส' || u.nickname === 'skyblossom';
 
           if (clientUser && clientUser.id && !isDevOrTest(clientUser)) {
             db.upsertFullUser(clientUser);
@@ -913,7 +913,7 @@ const server = http.createServer(async (req, res) => {
           // 2. Sync Meals & Photos from client
           if (Array.isArray(clientLogs) && clientLogs.length > 0) {
             for (const item of clientLogs) {
-              if (!item || !item.id || !item.user_id || item.user_id === 'u_1793131061727' || item.user_id === 'u1') continue;
+              if (!item || !item.id || !item.user_id || item.user_id === 'u_1793131061727' || item.user_id === 'u1' || item.user_id === 'u_skyblossom' || item.id === 'log_skyblossom_salad_01') continue;
               db.addLog({
                 id: item.id,
                 userId: item.user_id,
@@ -939,7 +939,7 @@ const server = http.createServer(async (req, res) => {
           // 3. Sync Quest Claims from client
           if (Array.isArray(clientClaims) && clientClaims.length > 0) {
             for (const c of clientClaims) {
-              if (c && (c.user_id === 'u_1793131061727' || c.user_id === 'u1')) continue;
+              if (c && (c.user_id === 'u_1793131061727' || c.user_id === 'u1' || c.user_id === 'u_skyblossom')) continue;
               db.upsertQuestClaim(c);
             }
           }
@@ -947,8 +947,8 @@ const server = http.createServer(async (req, res) => {
           // Persist seed file
           db.exportGangSeedJson();
 
-          const allUsers = db.getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss'));
-          const allLogs = db.getAllGangLogs(200).filter(l => !(l.user_id === 'u1' || l.user_id === 'u_1793131061727'));
+          const allUsers = db.getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.id === 'u_skyblossom' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss' || u.nickname === 'skyblossom'));
+          const allLogs = db.getAllGangLogs(200).filter(l => !(l.user_id === 'u1' || l.user_id === 'u_1793131061727' || l.user_id === 'u_skyblossom' || l.id === 'log_skyblossom_salad_01'));
           const reqUserId = clientUser?.id || req.headers['x-user-id'] || '';
           const coop = db.getGangCoopStatus(reqUserId);
 
@@ -962,8 +962,8 @@ const server = http.createServer(async (req, res) => {
 
         if (req.method === 'GET') {
           const reqUserId = parsedUrl.searchParams.get('userId') || req.headers['x-user-id'] || '';
-          const allUsers = db.getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss'));
-          const allLogs = db.getAllGangLogs(200).filter(l => !(l.user_id === 'u1' || l.user_id === 'u_1793131061727'));
+          const allUsers = db.getAllUsers().filter(u => !(u.id === 'u1' || u.id === 'u_1793131061727' || u.id === 'u_skyblossom' || u.role === 'dev' || u.is_dev === 1 || u.nickname === 'มอส' || u.nickname === 'Moss' || u.nickname === 'skyblossom'));
+          const allLogs = db.getAllGangLogs(200).filter(l => !(l.user_id === 'u1' || l.user_id === 'u_1793131061727' || l.user_id === 'u_skyblossom' || l.id === 'log_skyblossom_salad_01'));
           const coop = db.getGangCoopStatus(reqUserId);
           return sendJson(res, 200, {
             success: true,
